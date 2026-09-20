@@ -1,0 +1,95 @@
+# Meme Survival
+
+A full-screen, top-down pixel-art zombie shooter for the browser. No build step, no dependencies.
+
+## Run it
+
+Open `index.html` in a browser, or serve the folder:
+
+```bash
+python3 -m http.server 8765
+```
+
+then visit <http://localhost:8765>.
+
+## Flow
+
+**Title → Choose Survivor → Choose Weapon → Choose Map → Play.** Your last loadout is remembered.
+
+| Survivor | Trait |
+|----------|-------|
+| Rookie | Balanced |
+| Runner | +28% speed, 75 HP. Ability **RUSH** (`Space`): 15 s of 1.8× speed, infinite ammo, no reloads, and every gun fires at minigun speed — even the Magnum and Rocket Launcher. 45 s recharge |
+| Heavy | 160 HP, +15% damage, slow. Ability **SQUAD** (`Space`): calls in 6 clones of himself for 20 s — they follow in formation, shoot zombies with SMGs, and zombies/bosses target them too. 35 s recharge |
+| Medic | Regenerates health, health packs heal double. Ability **MED FIELD** (`Space`): a green healing aura around him for 20 s, restoring 12 HP/s steadily (about a heart every 2 s); also heals clones inside it. 45 s recharge |
+| Canimal | A robot in disguise. Ability **ROLL OUT** (`Space`): transforms into an armoured red-and-blue truck for 25 s — WASD = the direction you want to go (the truck swings its nose toward it, brakes first if you reverse), momentum and drifting, ram zombies for speed-based damage, and two **M249 turrets** on the window sides that rotate 360° to follow your mouse and fire alternately with infinite ammo. 40% damage resistance, headlights on the horror map. 45 s recharge |
+| Samay Naina | Ability **CHAI TAPRI** (`Space`): his song (assets/audio/chai_tapri.mp3) plays and a red circle surrounds him for 30 s — every zombie that steps in gets stuck in a spider web for 5 s (bosses 2.5 s) and takes **double damage** while webbed; Race City's cannons get webbed (jammed) too. 50 s recharge |
+| Spider Mad | The meme spider. Ability **WEB ZIP** (`Space`, infinite): fires a web toward the cursor (up to 300 px, stops at walls or the first zombie) and yanks him to it at 820 px/s; landing next to zombies kicks them for 70 dmg. 0.3 s between zips. **WEB PULL** (`F`, 6 s recharge): yanks the zombie under your cursor (or nearest along your aim) to you at 900 px/s and freezes it in web for 3 s (takes double damage); bosses can't be pulled but get webbed for 1.5 s |
+| Genom | The Venom meme. **T** bonds with the symbiote (no time limit, **T** again to shed it): a black tendril-wrapped transformation, then 8 hearts, 45% damage resistance, faster, and no guns — **LMB sprays a continuous stream of black symbiote** (infinite, pierces, poisons, stains the ground), **RMB claws** (110 dmg swipe). **R = CAPTURE**: pick a boss within 340 px and drown it in liquid symbiote for 10 s; if it survives, it becomes a black-and-white **Venom ally** that follows you and attacks everything — zombies, the haunted house and its cannons — with heavy melee and its own weapon for the rest of the run. 30 s recharge |
+| Drone | A boy who **TRANSFORMS** (`Space`) into a hulking brute for 35 s: screen-shaking transformation with a shockwave, then he wields the **Flesh Cannon** (LMB: 3-shot bursts at minigun speed, 420 rounds — refilled by 20 kills while transformed; never sold or dropped), right-click to smash (150 dmg swipes), `Space` to leap onto zombies (area crush). 60% damage resistance, faster. 50 s recharge |
+
+**Weapons:** every survivor picks a **3-weapon loadout** from Shotgun · SMG · Rifle · Rocket Launcher ·
+Magnum · Flamethrower (sets zombies on fire) · Minigun. The Pistol (infinite reserve) is always in your
+holster as a 4th backup slot. Weapons you didn't bring drop in supply crates during the run.
+
+**Maps:** Urban City (parked cars can be driven: walk up to one and press `G` / click GET IN — WASD = direction to drive, shoot out the window, ram zombies; the car soaks up damage and explodes when wrecked; every parked car has its own HP too — zombies chew through cars in their way and explosions wreck them) · Suburbs · **Research Lab** (a sealed underground facility: server hall, specimen tanks, offices, storage, restrooms, corridors — zombies come in through four doors; on **wave 8** — and every 10 waves after — the lab suffers a **BLACKOUT**: the lights die, zombies come in giant-sized and armed with random guns, and you go giant too with 2.5× shots, a crushing leap and every weapon in the game handed to you) · **Race City** (a 1.5× bigger speedway: a wide oval circuit with red-and-white kerbs, a checkered start line, pit lane and garages, a paddock full of race cars, grandstands, tyre walls on the corners and a parking lot). Race City is a **siege**: a haunted house in the
+  infield (3000 HP, +500 per wave) spawns zombies endlessly and the wave only ends when you destroy it.
+  10–20 zombie soldiers with hand cannons guard it and chase you when you get close, four cannon
+  emplacements (destructible) shell you from range, bosses are 35% bigger, and sandbag / concrete cover
+  rings the house — enemy shells can't pass it) · **Industrial Zone (horror)** — the power is out: pitch black except your
+flashlight (blocked by walls), burning barrels and a few flickering lamps. Zombies are invisible until
+your beam hits them; only their glowing eyes give them away.
+
+## Controls
+
+| Key | Action |
+|-----|--------|
+| `W A S D` / arrows | Move |
+| Mouse | Aim |
+| Left click | Shoot |
+| `R` | Reload |
+| `1`–`4`, `Q`, scroll wheel | Switch weapon slot |
+| `B` / `Tab` (or click the cart) | Open the supply cart |
+| `E` / `Space` (or click the button) | Weapon ability — Minigun **OVERDRIVE**: 15 s of infinite fire, 35 s recharge |
+| `ESC` | Pause |
+| `F` (Shift+F as Spider Mad) | Fullscreen |
+
+## Gameplay
+
+- Enemies: Normal, Fast, Tank and Exploder zombies plus a summoning **Boss**.
+- Waves: 1–5 normal · 6–10 fast · 11–15 tank · 16–20 explosive · 20+ everything.
+- **A boss every wave.** Bosses scale in HP, damage, speed and fire rate with the wave number and
+  new kinds unlock as you go: Brute (charges) → Gunner (SMG bursts) → Shotgunner → Rifleman (laser
+  sight, then a sniper shot) → Rocketeer → Flamer → Warlord (minigun + charge + summons). Every 10th wave has its own unique milestone boss: **10 – Warlord** (minigun), **20 – Ravager**
+  (a hunched red demon with a cannon in each hand: single shells, five-shell salvos, a leap with a landing
+  shockwave, and a roar at half HP that summons fast zombies), **40 – Kraken** (a giant octopus with twin
+  miniguns, spiral sprays and a tentacle slam). Unassigned milestones (30, 50 …) reuse an earlier one. Two bosses
+  from wave 25, three from wave 40. The wave doesn't end until the boss is dead.
+- Pickups: Health, Ammo, Coins, XP.
+- **Supply cart:** coins you collect during the run are spent in the cart (`B`, or click the cart
+  icon in the HUD) — refill a weapon's reserve ammo, buy a health pack / full heal, buy extra max hearts (20 coins each, no limit), or buy a weapon
+  you didn't bring. The game pauses while the cart is open.
+- After every wave (and every XP level-up) choose one upgrade: **+ Damage**, **+ Fire Rate**,
+  **+ Max Health**, **+ Movement Speed**.
+- High score, best wave, loadout and settings are saved in `localStorage`.
+
+## Admin panel (hidden)
+
+Press **Ctrl+Shift+A** (Cmd+Shift+A on Mac, or the ` backtick key) to open a developer panel: jump to any wave, spawn any boss or a batch of zombies,
+god mode, infinite ammo, coins, full heal, all guns, reset ability cooldowns, force a level-up.
+Any run that touches it is marked as an admin run and never saves a high score.
+
+## Files
+
+```
+index.html      canvas + overlays (title, setup wizard, pause, level-up, game over, settings)
+css/style.css
+js/sprites.js   pixel-art sprites & procedural props
+js/config.js    weapons / enemies / waves / upgrades / characters / maps
+js/audio.js     WebAudio synthesized SFX + ambient loop
+js/map.js       three map generators, collision, flow-field pathfinding, minimap
+js/entities.js  Player, Zombie, Bullet, Pickup, Particle
+js/game.js      game loop, waves, spawning, combat, camera, HUD
+js/ui.js        title, loadout wizard, overlays, settings, save/load
+js/main.js      bootstrap
+```

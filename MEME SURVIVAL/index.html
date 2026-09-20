@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meme Survival</title>
+<meta name="description" content="Meme Survival — a top-down pixel-art zombie survival shooter. Pick a survivor, three weapons and a map, then survive as many waves as you can.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%A7%9F%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=71">
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" width="640" height="400"></canvas>
+
+  <!-- ============ TITLE ============ -->
+  <div class="overlay show" id="ov-title">
+    <div class="title-block">
+      <div class="ttl-zombie">MEME</div>
+      <div class="ttl-survival">SURVIVAL</div>
+    </div>
+    <button class="btn primary big" data-action="play">PLAY</button>
+    <button class="btn" data-action="settings">SETTINGS</button>
+    <p class="hint" id="titleBest">High score: 0</p>
+    <p class="hint small">WASD move · Mouse aim · Click shoot · R reload · 1-5 / scroll swap weapon · ESC pause · F fullscreen (Shift+F as Spider Mad)</p>
+  </div>
+
+  <!-- ============ SETUP (character / weapon / map) ============ -->
+  <div class="overlay" id="ov-setup">
+    <div class="setup">
+      <div class="steps">
+        <span class="step" data-step="0"><b>1</b> SURVIVOR</span>
+        <span class="step" data-step="1"><b>2</b> WEAPON</span>
+        <span class="step" data-step="2"><b>3</b> MAP</span>
+      </div>
+      <div class="setup-page" data-page="0">
+        <h2>CHOOSE YOUR SURVIVOR</h2>
+        <div class="cards" id="charCards"></div>
+      </div>
+      <div class="setup-page" data-page="1">
+        <h2>CHOOSE 3 WEAPONS</h2>
+        <p class="hint">Pick any three. The Pistol is always in your holster as a backup. Space toggles, Enter continues. <span id="weaponCount" class="count">0 / 3 selected</span></p>
+        <div class="cards" id="weaponCards"></div>
+      </div>
+      <div class="setup-page" data-page="2">
+        <h2>CHOOSE YOUR MAP</h2>
+        <div class="cards" id="mapCards"></div>
+      </div>
+      <div class="setup-foot">
+        <button class="btn" id="setupBack">◀ BACK</button>
+        <div class="loadout" id="loadoutSummary"></div>
+        <button class="btn primary" id="setupNext">NEXT ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAUSE ============ -->
+  <div class="overlay" id="ov-pause">
+    <h2>PAUSED</h2>
+    <button class="btn primary" data-action="resume">RESUME</button>
+    <button class="btn" data-action="settings">SETTINGS</button>
+    <button class="btn" data-action="loadout">CHANGE LOADOUT</button>
+    <button class="btn" data-action="menu">MAIN MENU</button>
+  </div>
+
+  <!-- ============ WAVE BANNER ============ -->
+  <div class="overlay banner" id="ov-wave"><div class="banner-text" id="waveBannerText">WAVE 1</div><div class="banner-sub" id="waveBannerSub"></div></div>
+
+  <!-- ============ LEVEL UP ============ -->
+  <div class="overlay" id="ov-levelup">
+    <h2>LEVEL UP</h2>
+    <p class="hint">Choose one upgrade</p>
+    <div class="upgrade-cards" id="levelupCards"></div>
+  </div>
+
+  <!-- ============ GAME OVER ============ -->
+  <div class="overlay" id="ov-gameover">
+    <div class="go-title">GAME OVER</div>
+    <div class="go-stats">
+      <div><span id="goWaves">You survived 0 waves</span></div>
+      <div class="go-score">Score: <span id="goScore">0</span></div>
+      <div class="go-new" id="goNew">★ NEW HIGH SCORE ★</div>
+      <div class="go-grid" id="goGrid"></div>
+    </div>
+    <div class="row">
+      <button class="btn danger" data-action="retry">RETRY</button>
+      <button class="btn" data-action="loadout">CHANGE LOADOUT</button>
+      <button class="btn" data-action="menu">MAIN MENU</button>
+    </div>
+  </div>
+
+  <!-- ============ SUPPLY CART ============ -->
+  <div class="overlay" id="ov-shop">
+    <div class="cart">
+      <header><canvas id="cartIcon" width="14" height="12"></canvas><span>SUPPLY CART</span><span class="coins"><span id="cartCoinIcon"></span> <b id="cartCoins">0</b></span><button class="icon-btn close" data-action="closeshop">✕</button></header>
+      <p class="hint">Spend the coins you collected this run. Game is paused. <kbd>B</kbd> / <kbd>ESC</kbd> closes.</p>
+      <h3>AMMO</h3>
+      <div class="cart-grid" id="cartAmmo"></div>
+      <h3>MEDICAL</h3>
+      <div class="cart-grid" id="cartHealth"></div>
+      <h3>WEAPONS</h3>
+      <div class="cart-grid" id="cartWeapons"></div>
+      <div class="cart-foot"><button class="btn primary" data-action="closeshop">BACK TO THE FIGHT</button></div>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS ============ -->
+  <div class="modal" id="modal-settings">
+    <div class="modal-box">
+      <header>SETTINGS<button class="icon-btn close" data-close>✕</button></header>
+      <label class="setting"><span>SFX Volume</span><input type="range" id="setSfx" min="0" max="100" value="70"></label>
+      <label class="setting"><span>Music Volume</span><input type="range" id="setMusic" min="0" max="100" value="40"></label>
+      <label class="setting"><span>Screen Shake</span><input type="checkbox" id="setShake" checked></label>
+      <label class="setting"><span>Blood &amp; Gore</span><input type="checkbox" id="setBlood" checked></label>
+      <label class="setting"><span>Show FPS</span><input type="checkbox" id="setFps"></label>
+      <label class="setting"><span>Aim Line</span><input type="checkbox" id="setAimLine" checked></label>
+      <label class="setting"><span>Minimap</span><input type="checkbox" id="setMinimap" checked></label>
+      <div class="setting-actions"><button class="btn danger small" id="resetProgress">RESET HIGH SCORE</button></div>
+    </div>
+  </div>
+
+  <!-- ============ ADMIN PANEL (Ctrl+Shift+A) ============ -->
+  <div class="modal" id="modal-admin">
+    <div class="modal-box admin">
+      <header>ADMIN PANEL <span class="adm-tag">runs with cheats don't save a high score</span><button class="icon-btn close" data-close>✕</button></header>
+      <h3>WAVE</h3>
+      <div class="adm-row"><input type="number" id="admWave" min="1" max="999" value="10"><button class="btn small" id="admGo">GO TO WAVE</button>
+        <button class="btn small" data-wave="8">8 · BLACKOUT</button><button class="btn small" data-wave="10">10</button><button class="btn small" data-wave="20">20</button><button class="btn small" data-wave="40">40</button><button class="btn small" data-wave="100">100</button></div>
+      <h3>SPAWN BOSS</h3>
+      <div class="adm-row" id="admBosses"></div>
+      <h3>SPAWN ZOMBIES</h3>
+      <div class="adm-row"><input type="number" id="admCount" min="1" max="200" value="10"><select id="admType"><option>normal</option><option>fast</option><option>tank</option><option>exploder</option></select><button class="btn small" id="admSpawn">SPAWN</button><button class="btn small" id="admClear">KILL ALL</button></div>
+      <h3>CHEATS</h3>
+      <div class="adm-row">
+        <label class="adm-toggle"><input type="checkbox" id="admGod"> God mode</label>
+        <label class="adm-toggle"><input type="checkbox" id="admAmmo"> Infinite ammo</label>
+        <button class="btn small" id="admCoins">+500 COINS</button><button class="btn small" id="admHeal">FULL HEAL</button>
+        <button class="btn small" id="admGuns">ALL GUNS</button><button class="btn small" id="admReady">ABILITIES READY</button><button class="btn small" id="admLevel">+ LEVEL UP</button>
+      </div>
+      <p class="hint">Ctrl+Shift+A (or Cmd+Shift+A / the ` backtick key) toggles this panel. ESC closes it.</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="js/sprites.js?v=71"></script>
+<script src="js/config.js?v=71"></script>
+<script src="js/audio.js?v=71"></script>
+<script src="js/map.js?v=71"></script>
+<script src="js/entities.js?v=71"></script>
+<script src="js/game.js?v=71"></script>
+<script src="js/ui.js?v=71"></script>
+<script src="js/main.js?v=71"></script>
+</body>
+</html>
