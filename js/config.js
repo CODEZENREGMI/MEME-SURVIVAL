@@ -117,6 +117,9 @@ const BOSSES = {
                 desc: 'A mountain of black rock with fire inside. The lights go out when it comes. It charges, it slams the ground, it breathes magma.',
                 gun: { cd: 3.0, spread: 0.05, speed: 220, dmg: 24, range: 320, pellets: 5, flame: true },
                 pal: { G: '#26262a', g: '#0e0e10', R: '#ff7a1a', J: '#3a3a40', j: '#1a1a1e' } },
+  sahur:      { name: 'TUNG TUNG SAHUR', minWave: 50, hp: 3200, speed: 50, damage: 52, scale: 3.2, weapon: null, keep: 0, summon: true, sahur: true, special: true,
+                desc: 'Tung. Tung. Tung. The log with the bat. Drum shockwaves, a boomerang bat, and a sahur call that brings the horde.',
+                pal: { G: '#b8632a', g: '#7a3d16', R: '#f4f2ea', J: '#e08a3a', j: '#a85a20' } },
   kraken:     { name: 'KRAKEN',     minWave: 40, hp: 1400, speed: 34, damage: 40, scale: 3, weapon: 'minigun', keep: 170, summon: true, kraken: true, special: true,
                 desc: 'Two miniguns. Eight tentacles. Spiral fire. Run.',
                 gun: { burst: 44, burstGap: 0.05, cd: 1.8, spread: 0.16, speed: 280, dmg: 6, range: 420, dual: true },
@@ -125,7 +128,7 @@ const BOSSES = {
 const BOSS_ORDER = Object.keys(BOSSES);
 function bossKindsForWave(wave) { return BOSS_ORDER.filter(k => BOSSES[k].minWave <= wave && !BOSSES[k].special); }
 /* every 10th wave has its own unique boss; unlisted milestones fall back to a random earlier one */
-const MILESTONE_BOSSES = { 10: 'warlord', 20: 'ravager', 30: 'bona', 40: 'kraken' };
+const MILESTONE_BOSSES = { 10: 'warlord', 20: 'ravager', 30: 'bona', 40: 'kraken', 50: 'sahur' };
 function milestoneBoss(wave) {
   if (MILESTONE_BOSSES[wave]) return MILESTONE_BOSSES[wave];
   const past = Object.keys(MILESTONE_BOSSES).map(Number).filter(w => w < wave).map(w => MILESTONE_BOSSES[w]);

@@ -69,7 +69,10 @@ your beam hits them; only their glowing eyes give them away.
   down, roars and charges through cars and zombies alike, rears up for a ground slam that hits everything within
   125 px, spits a fan of burning rock, and at 40% HP the rock cracks open: faster, meaner, and it calls fast zombies),
   **40 – Kraken** (a giant octopus with twin
-  miniguns, spiral sprays and a tentacle slam). Unassigned milestones (50 …) reuse an earlier one. Two bosses
+  miniguns, spiral sprays and a tentacle slam), **50 – Tung Tung Sahur** (the wooden log with the bat: a 1.5×-damage
+  bat swing up close, TUNG TUNG TUNG — three ground pounds that each send out a shockwave ring, a boomerang bat that
+  flies out to you and back, a sahur call that summons the horde every 12 s, and at half HP "SAHUR!!!" — 1.4× speed
+  and five fast zombies). Unassigned milestones (60 …) reuse an earlier one. Two bosses
   from wave 25, three from wave 40. The wave doesn't end until the boss is dead.
 - Pickups: Health, Ammo, Coins, XP.
 - **Supply cart:** coins you collect during the run are spent in the cart (`B`, or click the cart

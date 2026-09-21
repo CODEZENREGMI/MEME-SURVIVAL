@@ -300,6 +300,11 @@ class Game {
     for (let i = 0; i < 40; i++) { const a = i / 40 * TAU, sp = 120 + Math.random() * 120; this.particles.push(new Particle(z.x, z.y, Math.cos(a) * sp, Math.sin(a) * sp * 0.5 - 60, 0.8, i % 3 ? '#3a3a40' : '#ff7a1a', 4, 'blood')); }
     this.map.splat(z.x, z.y, 30, '#0e0e10'); this.lights.push({ x: z.x, y: z.y, r: 260, life: 0.8, max: 0.8 });
   }
+  sahurArrive(z) {
+    this.shake(8); Audio8.play('thud'); setTimeout(() => Audio8.play('thud'), 350); setTimeout(() => { Audio8.play('thud'); Audio8.play('roar'); }, 700);
+    this.ui.showBanner('TUNG TUNG TUNG SAHUR', 'The log has come. Bring earplugs.'); this.floatText(z.x, z.y - 80, 'TUNG', '#ffb060');
+    for (let i = 0; i < 24; i++) { const a = i / 24 * TAU; this.particles.push(new Particle(z.x, z.y, Math.cos(a) * 100, Math.sin(a) * 50 - 40, 0.7, i % 2 ? '#8a5a30' : '#e0863a', 3, 'blood')); }
+  }
   bonaGone() { if (!this.bonaDark) return; this.bonaDark = false; if (!this.event) { this.map.cfg.dark = false; this.map.lamps.forEach(l => l.broken = false); Audio8.stopMusic(); Audio8.startMusic(false); } }
   floatText(x, y, text, color) { this.particles.push(new Particle(x, y, 0, -28, 0.9, color, 0, 'text', String(text))); }
 

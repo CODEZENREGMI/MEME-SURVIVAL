@@ -1144,6 +1144,7 @@ class Zombie {
       this.gunCd = 2.5; this.burstLeft = 0; this.burstTimer = 0; this.aiming = 0; this.strafeDir = Math.random() < 0.5 ? -1 : 1; this.strafeT = 2; this.los = false;
       if (bk.ravager) { this.r = 24; this.gunSide = 0; this.shots = 0; this.leap = null; this.leapCd = 5; this.enraged = false; this.height = 0; this.muzzle = [0, 0]; }
       if (bk.bona) { this.r = 28; this.slam = 0; this.slamCd = 4; this.chargeCd = 3.5; this.rush = null; this.spitCd = 2; this.enraged = false; this.height = 0; this.ember = 0; this.cracks = Array.from({ length: 9 }, (_, i) => ({ x: -20 + (i * 37) % 44, y: -18 + (i * 23) % 26, l: 4 + (i * 7) % 6, v: (i % 3) - 1, ph: i * 1.3 })); game.bonaArrive(this); }
+      if (bk.sahur) { this.r = 22; this.drum = null; this.drumCd = 4; this.swing = 0; this.swingCd = 1; this.bat = null; this.batCd = 3; this.rings = []; this.enraged = false; this.summonCd = 8; this.height = 0; game.sahurArrive(this); }
       if (bk.kraken) { this.r = 26; this.gunSide = 0; this.spiral = false; this.spiralAngle = 0; this.slam = 0; this.slamCd = 3; this.enraged = false; this.summonCd = 5; }
     }
     this.flip = false; this.walk = Math.random() * 10; this.hit = 0; this.attackCd = Math.random() * 0.5; this.dead = false;
@@ -1274,7 +1275,7 @@ class Zombie {
     this.chargeCd -= dt; this.summonCd -= dt; this.strafeT -= dt;
     if (bk.charge && this.chargeCd <= 0 && this.aiming <= 0 && this.burstLeft <= 0) { this.charge = 1.1; this.chargeCd = 6 * this.cdMult + 2; Audio8.play('wave'); g.shake(3); g.floatText(this.x, this.y - 30 * this.scale / 2, 'CHARGE!', '#ff6a5a'); }
     if (this.charge > 0) { this.charge -= dt; speedMult *= 3.2; }
-    if (bk.summon && this.summonCd <= 0) { this.summonCd = 9; for (let i = 0; i < 3; i++) g.spawnZombie(this.wave >= 10 ? 'fast' : 'normal', this.x + (Math.random() - 0.5) * 40, this.y + (Math.random() - 0.5) * 40); g.floatText(this.x, this.y - 30, 'SUMMON!', '#c05aff'); }
+    if (bk.summon && !bk.sahur && this.summonCd <= 0) { this.summonCd = 9; for (let i = 0; i < 3; i++) g.spawnZombie(this.wave >= 10 ? 'fast' : 'normal', this.x + (Math.random() - 0.5) * 40, this.y + (Math.random() - 0.5) * 40); g.floatText(this.x, this.y - 30, 'SUMMON!', '#c05aff'); }
     if (bk.ravager) {
       if (!this.enraged && this.hp < this.maxHp * 0.5) { this.enraged = true; this.cdMult *= 0.6; this.speed *= 1.3; g.shake(9); g.floatText(this.x, this.y - 50, 'ROAR!', '#ff2a2a'); Audio8.play('roar'); for (let i = 0; i < 4; i++) g.spawnZombie('fast', this.x + (Math.random() - 0.5) * 60, this.y + (Math.random() - 0.5) * 60); }
       this.leapCd -= dt;
@@ -1285,6 +1286,35 @@ class Zombie {
           if (k >= 1) { this.height = 0; this.leap = null; this.leapCd = 7 * this.cdMult; const dl = Math.hypot(player.x - this.x, player.y - this.y); if (dl < 72) player.hurt(this.damage, this.x, this.y); g.shake(9); Audio8.play('thud'); g.map.splat(this.x, this.y, 12, '#3a0d0e'); for (let i = 0; i < 20; i++) { const a = i / 20 * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 20, this.y + 6 + Math.sin(a) * 8, Math.cos(a) * 90, Math.sin(a) * 40, 0.35, '#6b4b26', 3, 'dot')); } g.lights.push({ x: this.x, y: this.y, r: 90, life: 0.2, max: 0.2 }); } }
         return { speedMult, steer };
       } else if (this.leapCd <= 0 && d > 120 && d < 420 && this.los) { this.leap = { phase: 'crouch', t: 0 }; g.floatText(this.x, this.y - 50, 'LEAP!', '#ff6a5a'); }
+    }
+    if (bk.sahur) { // the log: bat swings up close, drum shockwaves, a boomerang bat, and it calls the horde
+      this.drumCd -= dt; this.swingCd -= dt; this.batCd -= dt; this.swing -= dt; this.los = g.map.los(this.x, this.y, player.x, player.y);
+      if (!this.enraged && this.hp < this.maxHp * 0.5) { this.enraged = true; this.cdMult *= 0.6; this.speed *= 1.4; g.shake(10); g.floatText(this.x, this.y - 70, 'SAHUR!!!', '#ffb060'); Audio8.play('roar'); Audio8.play('wave'); for (let i = 0; i < 5; i++) g.spawnZombie('fast', this.x + (Math.random() - 0.5) * 80, this.y + (Math.random() - 0.5) * 80); }
+      // shockwave rings from the drumming: a ring that sweeps over you hits once
+      for (const ring of this.rings) { ring.r += 360 * dt; const dr = Math.hypot(player.x - ring.x, player.y - ring.y); if (!ring.hit && Math.abs(dr - ring.r) < 16 + player.r) { ring.hit = true; player.hurt(Math.round(this.damage * 0.8), ring.x, ring.y, 0.35); g.shake(6); } }
+      this.rings = this.rings.filter(r => r.r < 240);
+      // the thrown bat: flies to where you were, then comes back to the hand
+      if (this.bat) { const B = this.bat; B.t += dt; B.spin += dt * 22;
+        if (B.phase === 'out') { B.x += B.vx * dt; B.y += B.vy * dt; if (B.t >= B.dur) { B.phase = 'back'; B.hit = false; } }
+        else { const bx = this.x - B.x, by = this.y - 10 - B.y, bd = Math.hypot(bx, by) || 1; B.x += bx / bd * 380 * dt; B.y += by / bd * 380 * dt; if (bd < 14) { this.bat = null; this.batCd = 6 * this.cdMult; } }
+        if (B && !B.hit && Math.hypot(player.x - B.x, player.y - B.y) < 18 + player.r) { B.hit = true; player.hurt(this.damage, B.x, B.y); g.shake(7); Audio8.play('thud'); }
+        for (const z of g.zombies) { if (z === this || z.dead || z.cfg.boss) continue; if (Math.hypot(z.x - B.x, z.y - B.y) < 16 + z.r) z.takeDamage(40, Math.atan2(z.y - B.y, z.x - B.x), undefined, 5); }
+      }
+      if (this.drum) { // TUNG TUNG TUNG: three pounds of the bat on the ground, each one a shockwave
+        const D = this.drum; D.t += dt; speedMult = 0; steer = { x: 0, y: 0 }; this.height = D.t % 0.5 < 0.25 ? (D.t % 0.5) / 0.25 * 10 : (1 - (D.t % 0.5 - 0.25) / 0.25) * 10;
+        if (D.t >= 0.5) { D.t = 0; D.count++; this.height = 0; this.rings.push({ x: this.x, y: this.y + 6, r: 10, hit: false }); g.shake(9); Audio8.play('thud'); g.floatText(this.x + (Math.random() - 0.5) * 40, this.y - 70 - Math.random() * 20, 'TUNG', '#ffb060'); g.map.splat(this.x, this.y + 6, 5, '#5a3010');
+          for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 16, this.y + 8 + Math.sin(a) * 6, Math.cos(a) * 90, Math.sin(a) * 40 - 20, 0.4, '#8a5a30', 3, 'dot')); }
+          if (D.count >= 3) { this.drum = null; this.drumCd = 7 * this.cdMult; g.floatText(this.x, this.y - 78, 'SAHUR', '#f4f2ea'); }
+        }
+        return { speedMult, steer };
+      }
+      if (this.swing > 0) { speedMult = 0.1; steer = null; if (!this.swung && this.swing <= 0.22) { this.swung = true; if (d < 70 + player.r) { player.hurt(Math.round(this.damage * 1.5), this.x, this.y, 0.5); g.shake(10); Audio8.play('thud'); } else Audio8.play('swap'); } return { speedMult, steer }; }
+      if (this.swingCd <= 0 && d < 62) { this.swing = 0.5; this.swung = false; this.swingCd = 1.6 * this.cdMult; Audio8.play('growl'); }
+      else if (this.drumCd <= 0 && d < 200) { this.drum = { t: 0, count: 0 }; g.floatText(this.x, this.y - 70, 'TUNG TUNG TUNG!', '#ffb060'); Audio8.play('wave'); }
+      else if (this.batCd <= 0 && !this.bat && d > 120 && d < 420 && this.los) { const a = Math.atan2(player.y - this.y, player.x - this.x), dd = Math.min(d + 30, 380); this.bat = { x: this.x, y: this.y - 10, vx: Math.cos(a) * 340, vy: Math.sin(a) * 340, dur: dd / 340, t: 0, phase: 'out', spin: 0, hit: false }; g.floatText(this.x, this.y - 70, 'BAT!', '#ffb060'); Audio8.play('rocket'); }
+      if (bk.summon && this.summonCd <= 0) { this.summonCd = 12 * this.cdMult; for (let i = 0; i < 4; i++) g.spawnZombie(this.wave >= 10 ? 'fast' : 'normal', this.x + (Math.random() - 0.5) * 60, this.y + (Math.random() - 0.5) * 60); g.floatText(this.x, this.y - 70, 'SAHUR CALL!', '#c05aff'); Audio8.play('wave'); }
+      if (d < 40) speedMult = 0.2;
+      return { speedMult, steer };
     }
     if (bk.bona) { // a brawler: no ranged kiting — it walks you down, charges, slams the ground and spits magma
       this.slamCd -= dt; this.chargeCd -= dt; this.spitCd -= dt; this.los = g.map.los(this.x, this.y, player.x, player.y);
@@ -1387,6 +1417,7 @@ class Zombie {
     if (this.bk && this.bk.kraken) { this.drawKraken(ctx); return; }
     if (this.bk && this.bk.ravager) { this.drawRavager(ctx); return; }
     if (this.bk && this.bk.bona) { this.drawBona(ctx); return; }
+    if (this.bk && this.bk.sahur) { this.drawSahur(ctx); return; }
     const spriteName = this.sprite || (this.game.map.id === 'lab' && !this.cfg.boss && Sprites.get(this.cfg.sprite + '_lab') ? this.cfg.sprite + '_lab' : this.cfg.sprite);
     const name = this.hit > 0 ? null : spriteName;
     if (name) Sprites.draw(ctx, name, this.x, this.y + bob, { flip: this.flip, scale: s, ox: -8 * s, oy: -9 * s });
@@ -1512,6 +1543,46 @@ class Zombie {
     // name + hp
     ctx.font = '7px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText('BONA', this.x + 1, this.y - 69 - h); ctx.fillStyle = en ? '#ff4a3a' : '#ffb060'; ctx.fillText(en ? 'BONA ★' : 'BONA', this.x, this.y - 70 - h); ctx.textAlign = 'left';
     if (this.hp < this.maxHp) { const w = 84, hh = 5, yy = this.y - 62 - h; ctx.fillStyle = '#111'; ctx.fillRect(this.x - w / 2 - 1, yy - 1, w + 2, hh + 2); ctx.fillStyle = en ? '#ff3a2a' : '#ff7a1a'; ctx.fillRect(this.x - w / 2, yy, w * clamp(this.hp / this.maxHp, 0, 1), hh); }
+  }
+  /* ---- Tung Tung Sahur: a wooden log with a face, thin arms and legs, and a bat ---- */
+  drawBat(ctx, x, y, ang, len = 30) { ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.fillStyle = '#5a3010'; ctx.fillRect(-2, -3, len, 6); ctx.fillStyle = '#c86a22'; ctx.fillRect(-1, -2, len - 2, 4); ctx.fillStyle = '#e0863a'; ctx.fillRect(len * 0.4, -3, len * 0.55, 3); ctx.beginPath(); ctx.arc(len - 2, 0, 4.5, 0, TAU); ctx.fillStyle = '#c86a22'; ctx.fill(); ctx.fillStyle = '#5a3010'; ctx.fillRect(-3, -3, 3, 6); ctx.restore(); }
+  drawSahur(ctx) {
+    const g = this.game, t = g.time, p = this.target || g.player, white = this.hit > 0, en = this.enraged, h = this.height;
+    const flip = p.x < this.x, S = 1.5;
+    const wood = white ? '#fff' : en ? '#c8501e' : '#b8632a', woodD = white ? '#e8e8e8' : en ? '#7a2a10' : '#7a3d16', woodL = white ? '#fff' : en ? '#e8823a' : '#d4823a', top = white ? '#fff' : '#e8b060', skin = white ? '#fff' : '#e08a3a', skinD = white ? '#eee' : '#a85a20';
+    const R = (x, y, w, hh, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(hh)); };
+    // shockwave rings on the ground
+    for (const ring of this.rings) { const k = ring.r / 240; ctx.strokeStyle = `rgba(255,190,110,${0.9 * (1 - k)})`; ctx.lineWidth = 4 - k * 2; ctx.beginPath(); ctx.ellipse(ring.x, ring.y, ring.r, ring.r * 0.55, 0, 0, TAU); ctx.stroke(); ctx.strokeStyle = `rgba(120,70,30,${0.5 * (1 - k)})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(ring.x, ring.y, ring.r - 5, (ring.r - 5) * 0.55, 0, 0, TAU); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 20, 24 - h * 0.3, 8 - h * 0.1, 0, 0, TAU); ctx.fill();
+    ctx.save(); ctx.translate(this.x, this.y + 6 - h); ctx.scale(flip ? -S : S, S);
+    const step = Math.sin(this.walk * 1.6), walking = this.moving !== false && !this.drum && this.swing <= 0;
+    // legs: thin, bare feet
+    [[-5, step], [4, -step]].forEach(([lx, ph]) => { const s2 = walking ? ph : 0; R(lx - 1, 6, 3, 9 + s2 * 1, skin); R(lx - 1, 15 + s2, 3, 3, skinD); R(lx - 3 + (flip ? 0 : 1), 17 + s2, 7, 2, skin); [0, 2, 4].forEach(c => R(lx - 3 + c + 1, 19 + s2, 1, 1, skinD)); });
+    // the log body
+    R(-11, -36, 22, 44, wood); R(-9, -38, 18, 3, top); R(-11, -36, 22, 2, woodL); R(-11, -36, 3, 44, woodD); R(8, -36, 3, 44, woodD);
+    [-28, -22, -6, 0, 3].forEach((gy, i) => R(-8 + (i % 2) * 4, gy, 10 - (i % 3) * 3, 1, woodD)); // grain
+    R(-7, -4, 14, 12, woodL); R(-6, 2, 12, 1, woodD);
+    // face: thick brows, big round eyes, a grin
+    R(-8, -30, 6, 2, '#2a1408'); R(2, -31, 6, 2, '#2a1408');
+    R(-8, -27, 6, 6, '#f4f2ea'); R(2, -27, 6, 6, '#f4f2ea'); R(-6, -26, 3, 4, '#5a3010'); R(4, -26, 3, 4, '#5a3010'); R(-5, -26, 1, 1, '#000'); R(5, -26, 1, 1, '#000'); R(-6, -25, 1, 1, '#fff'); R(4, -25, 1, 1, '#fff');
+    if (en) { R(-8, -27, 6, 1, '#c0201a'); R(2, -27, 6, 1, '#c0201a'); }
+    R(-1, -21, 2, 3, skinD); // nose
+    const grin = this.swing > 0 || this.drum ? 3 : 2; R(-5, -16, 10, grin, '#3a1408'); R(-4, -16, 8, 1, '#f4f2ea'); R(-6, -17, 1, 1, '#3a1408'); R(5, -17, 1, 1, '#3a1408');
+    // arms: thin; the far arm hangs, the near arm holds the bat
+    R(-13, -22, 3, 16, skin); R(-14, -7, 4, 3, skinD);
+    ctx.restore();
+    // near arm + bat in world space so it swings toward the player
+    const dir = flip ? -1 : 1, sx = this.x + dir * 12 * S, sy = this.y + 6 - h - 22 * S;
+    let hand, batAng;
+    if (this.swing > 0) { const k = 1 - this.swing / 0.5; batAng = flip ? Math.PI + 1.6 - k * 3.4 : -1.6 + k * 3.4; hand = { x: sx + Math.cos(batAng) * 10, y: sy + Math.sin(batAng) * 10 }; }
+    else if (this.drum) { const k = this.drum.t % 0.5 < 0.25 ? (this.drum.t % 0.5) / 0.25 : 1 - (this.drum.t % 0.5 - 0.25) / 0.25; batAng = dir > 0 ? -1.3 + k * 2.6 : Math.PI + 1.3 - k * 2.6; hand = { x: sx + dir * 6, y: sy + 8 }; }
+    else { batAng = dir > 0 ? 1.1 + Math.sin(t * 2) * 0.05 : Math.PI - 1.1 - Math.sin(t * 2) * 0.05; hand = { x: sx + dir * 4, y: sy + 14 }; }
+    ctx.strokeStyle = skinD; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hand.x, hand.y); ctx.stroke(); ctx.strokeStyle = skin; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hand.x, hand.y); ctx.stroke();
+    if (!this.bat) this.drawBat(ctx, hand.x, hand.y, batAng, 34); else this.drawBat(ctx, this.bat.x, this.bat.y, this.bat.spin, 34);
+    if (this.swing > 0 && this.swing < 0.3) { const k = this.swing / 0.3, a0 = Math.atan2(p.y - this.y, p.x - this.x); ctx.strokeStyle = `rgba(255,220,160,${k})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.x, this.y - 6, 60, a0 - 1.2, a0 + 1.2); ctx.stroke(); }
+    // name + hp
+    ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText('TUNG TUNG SAHUR', this.x + 1, this.y - 69 - h); ctx.fillStyle = en ? '#ff4a3a' : '#ffb060'; ctx.fillText(en ? 'TUNG TUNG SAHUR ★' : 'TUNG TUNG SAHUR', this.x, this.y - 70 - h); ctx.textAlign = 'left';
+    if (this.hp < this.maxHp) { const w = 84, hh = 5, yy = this.y - 62 - h; ctx.fillStyle = '#111'; ctx.fillRect(this.x - w / 2 - 1, yy - 1, w + 2, hh + 2); ctx.fillStyle = en ? '#ff3a2a' : '#e08a3a'; ctx.fillRect(this.x - w / 2, yy, w * clamp(this.hp / this.maxHp, 0, 1), hh); }
   }
   /* ---- the Kraken: procedural octopus with two miniguns ---- */
   drawKraken(ctx) {
@@ -1719,7 +1790,7 @@ class AllyBoss {
     this.sprite = boss.sprite || boss.cfg.sprite; this.maxHp = Math.round(boss.maxHp * 0.9); this.hp = this.maxHp; this.dead = false; this.name = 'VENOM ' + this.bk.name;
     this.angle = 0; this.flip = false; this.walk = 0; this.moving = false; this.fireTimer = 1; this.attackCd = 0.5; this.hurtFlash = 0; this.invuln = 0; this.spawnT = 0; this.speed = this.bk.speed * 1.3; this.dmgMult = 1 + game.wave * 0.05;
     // fields the procedural boss drawings (Ravager / Kraken) read
-    this.venomSkin = true; this.hit = 0; this.enraged = false; this.height = 0; this.leap = null; this.slam = 0; this.charge = 0; this.aiming = 0; this.burstLeft = 0; this.spiral = false; this.gunSide = 0; this.muzzle = [0, 0]; this.target = null; this.fuse = -1; this.rush = null; this.ember = 0; this.cracks = boss.cracks || [];
+    this.venomSkin = true; this.hit = 0; this.enraged = false; this.height = 0; this.leap = null; this.slam = 0; this.charge = 0; this.aiming = 0; this.burstLeft = 0; this.spiral = false; this.gunSide = 0; this.muzzle = [0, 0]; this.target = null; this.fuse = -1; this.rush = null; this.ember = 0; this.cracks = boss.cracks || []; this.rings = []; this.bat = null; this.drum = null; this.swing = 0;
   }
   gunTip(side) { return Zombie.prototype.gunTip.call(this, side); }
   hurt(dmg, fromX, fromY, invuln = 0.3) {
@@ -1764,6 +1835,7 @@ class AllyBoss {
   }
   draw(ctx) {
     const s = this.scale, bob = this.moving ? Math.sin(this.walk) * 1.2 : 0;
+    if (this.bk.sahur) { this.hit = this.hurtFlash > 0 ? 0.1 : 0; Zombie.prototype.drawSahur.call(this, ctx); ctx.fillStyle = 'rgba(95,211,90,0.25)'; ctx.fillRect(this.x - 30, this.y - 60, 60, 90); return; }
     if (this.bk.bona) { this.hit = this.hurtFlash > 0 ? 0.1 : 0; Zombie.prototype.drawBona.call(this, ctx); ctx.fillStyle = 'rgba(95,211,90,0.25)'; ctx.fillRect(this.x - 40, this.y - 60, 80, 90); return; } // Bona in venom green haze; the label is its own
     if (this.bk.ravager || this.bk.kraken) { // keep the boss's real body, just in symbiote black
       this.hit = this.hurtFlash > 0 ? 0.1 : 0;
