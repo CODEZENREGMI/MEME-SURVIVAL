@@ -199,10 +199,11 @@ const CHARACTERS = {
                     hop: { range: 220, cd: 1.3, dur: 0.45, smash: 130, radius: 80 },
                     army: { name: 'FROG ARMY', count: 10, duration: 15, cd: 40, hp: 60, damage: 260, bossDamage: 180, hop: 95, hopDur: 0.26, scale: 0.9, seek: 520 } } },  // R: ten little froglings that hop on zombies and rip their heads off
   bezuko:  { name: 'Bezuko', tag: 'Transforms · meme', hp: 100, speed: 1.05, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'bezuko', portrait: 'bezuko_portrait',
-            desc: 'Sus... the thug-life demon girl with the bamboo. AWAKEN (Space) unleashes her demon form for 30 s: horn, vine marks, glowing eyes — LMB sprays pink Exploding Blood that burns, RMB / Space is a demon kick that sends zombies flying, and she regenerates fast.',
+            desc: 'Sus... the thug-life demon girl with the bamboo. AWAKEN (Space) unleashes her demon form for 20 s: her song plays and a big pink circle of music draws every zombie inside it to her — then LMB swings her demon katana for insane damage, RMB / Space is a demon kick, and she regenerates fast.',
             pal: { K: '#141018', D: '#000000', H: '#33262e', h: '#453640', O: '#e07a2a', S: '#f6d9c0', s: '#e6b8a0', R: '#f08a9a', P: '#f2a0b8', p: '#d8708c', W: '#f4f2ea', E: '#e8558a', e: '#b8306a', G: '#7aa64a', g: '#4f7a2e', T: '#e2506e', t: '#a02a48', B: '#f6b8cc', Y: '#e8b84a', C: '#efe6d0', V: '#2f5a3a' },
-            demon: { name: 'AWAKEN', duration: 30, cooldown: 25, morph: 1.3, revert: 0.6, scale: 2.0, hearts: 8, armor: 0.5, speed: 1.3, regen: 8,
-                     blood: { damage: 11, interval: 0.05, speed: 300, spread: 0.18, range: 210, pellets: 3, pierce: 1, kick: 0.3, flame: true, pink: true },   // Exploding Blood: pink fire that keeps burning
+            demon: { name: 'AWAKEN', duration: 20, cooldown: 35, morph: 1.3, revert: 0.6, scale: 2.0, hearts: 8, armor: 0.5, speed: 1.3, regen: 8, track: 'assets/audio/bezuko_song.m4a',
+                     song: { radius: 150 },                                                                       // the pink circle of music: zombies inside it are charmed and walk to her
+                     sword: { name: 'DEMON KATANA', damage: 320, range: 74, arc: 1.35, cd: 0.28, burn: 2 },       // LMB: a wide slash, incredible damage, the cut burns pink
                      kick: { name: 'DEMON KICK', damage: 160, dash: 120, dur: 0.16, cd: 1.0, width: 30 } } },
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko'];

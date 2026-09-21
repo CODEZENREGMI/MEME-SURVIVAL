@@ -660,7 +660,7 @@ class Game {
     const remain = this.zombies.length + this.toSpawn; ctx.fillStyle = '#c9cfdb'; ctx.fillText(this.siege ? `☠ ${this.zombies.length} · ∞` : `☠ ${remain}`, this.vw - 112, 50);
     // weapon (bottom-left)
     box(8, this.vh - 34, 130, 26);
-    if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('EXPLODING BLOOD', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB PINK FIRE · RMB KICK', 116), 14, this.vh - 16); }
+    if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('DEMON KATANA', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SLASH · RMB KICK · ♪ CHARM', 116), 14, this.vh - 16); }
     else if (p.frog) { ctx.fillStyle = '#9ccf72'; ctx.fillText('TONGUE', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LASH · SPACE HOP · R ARMY', 116), 14, this.vh - 16); }
     else if (p.venom) { ctx.fillStyle = '#5fd35a'; ctx.fillText('VENOM SPIT', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SPIT · RMB CLAW · R CAPTURE', 116), 14, this.vh - 16); }
     else if (p.driving && !p.car.civil) { ctx.drawImage(Sprites.get('gun_m249'), 10, this.vh - 29, 36, 15); ctx.fillStyle = '#5a8ad8'; ctx.fillText(fit('TWIN M249', 86), 48, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD DRIVE · LMB TURRETS', 86), 48, this.vh - 16); }

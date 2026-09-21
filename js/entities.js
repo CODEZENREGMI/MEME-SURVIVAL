@@ -61,7 +61,7 @@ class Player {
     this.webZip = null; this.webCd = 0; this.pullCd = 0; this.pulling = null;
     this.sym = 'human'; this.symT = 0; this.clawCd = 0; this.captureCd = 0; this.capturing = null;
     this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0; this.armyCd = 0; this.armyTime = 0;
-    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0;
+    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -312,9 +312,9 @@ class Player {
         g.zombies.forEach(z => { const d = dist(this.x, this.y, z.x, z.y); if (d < 110) { z.takeDamage(40 * this.damageMult, Math.atan2(z.y - this.y, z.x - this.x), undefined, 5); z.burn = Math.max(z.burn, 3); } });
         for (let i = 0; i < 48; i++) { const a = i / 48 * TAU, sp = 100 + Math.random() * 110; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp, 0.5 + Math.random() * 0.3, i % 3 ? '#ff5aa8' : '#ffd0e8', 3, 'fire')); }
         g.lights.push({ x: this.x, y: this.y, r: 200, life: 0.5, max: 0.5 }); g.map.splat(this.x, this.y, 10, '#5a1030');
-        g.showAbilityBanner('DEMON AWAKENED', `${dm.duration}s · LMB exploding blood · RMB / SPACE demon kick`);
+        g.showAbilityBanner('DEMON AWAKENED', `${dm.duration}s · her song charms the zombies · LMB katana · RMB kick`);
       }
-      if (this.demonT >= dm.morph) { this.demonState = 'demon'; this.demonTime = dm.duration; this.kickCd = 0; this.r = 9; this.humanMaxHp = this.maxHp; this.maxHp = Math.max(this.maxHp, dm.hearts * 25); this.hp = this.maxHp; }
+      if (this.demonT >= dm.morph) { this.demonState = 'demon'; this.demonTime = dm.duration; this.kickCd = 0; this.slashCd = 0; this.r = 9; Audio8.playTrack(dm.track, dm.duration); this.humanMaxHp = this.maxHp; this.maxHp = Math.max(this.maxHp, dm.hearts * 25); this.hp = this.maxHp; }
       return true;
     }
     if (this.demonState === 'reverting') {
@@ -324,10 +324,10 @@ class Player {
       return true;
     }
     // ---- demon form ----
-    const wasTime = this.demonTime; this.demonTime -= dt; this.kickCd -= dt;
+    const wasTime = this.demonTime; this.demonTime -= dt; this.kickCd -= dt; this.slashCd -= dt; this.slash -= dt;
     if (this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + dm.regen * dt); // demon regeneration
     for (const w of [5, 3, 2, 1]) if (wasTime > w && this.demonTime <= w) g.floatText(this.x, this.y - 40, `${w}...`, '#ff5aa8');
-    if (this.demonTime <= 0) { this.demonState = 'reverting'; this.demonT = 0; this.kick = null; g.shake(3); Audio8.play('hurt'); return true; }
+    if (this.demonTime <= 0) { this.demonState = 'reverting'; this.demonT = 0; this.kick = null; Audio8.stopTrack(); g.shake(3); Audio8.play('hurt'); return true; }
     if (this.kick) { // the dash kick: everything along the path gets booted
       const K = this.kick, kk = dm.kick; K.t += dt; const k = Math.min(1, K.t / K.dur); this.invuln = 0.15;
       const pos = g.map.resolve(K.sx + (K.tx - K.sx) * k, K.sy + (K.ty - K.sy) * k, this.r); this.x = pos.x; this.y = pos.y;
@@ -341,13 +341,22 @@ class Player {
   }
   demonAttacks(input) {
     const dm = this.dm, g = this.game;
-    if (input.mouseDown && !input.rightDown && this.fireTimer <= 0) { // Exploding Blood: a spray of pink fire
-      const cfg = dm.blood; this.fireTimer = cfg.interval / this.fireMult; this.recoil = cfg.kick;
-      const gx = this.x + Math.cos(this.angle) * 16, gy = this.y - 8 + Math.sin(this.angle) * 16;
-      for (let i = 0; i < cfg.pellets; i++) { const b = new Bullet(g, gx, gy, this.angle + (Math.random() - 0.5) * cfg.spread * 2, cfg, this.damageMult); b.pink = true; g.bullets.push(b); }
-      if (Math.random() < 0.2) Audio8.play('flame'); g.shake(0.3);
-    }
+    if (input.mouseDown && !input.rightDown && this.slashCd <= 0 && !this.kick) this.demonSlash();
     if (input.rightDown && !this.kick && this.kickCd <= 0) this.demonKick();
+  }
+  /* LMB as the demon: one swing of the katana. Everything in the arc is cut for incredible damage and the wound burns pink. */
+  demonSlash() {
+    const sw = this.dm.sword, g = this.game; this.slashCd = sw.cd; this.slash = 0.16; this.slashAngle = this.angle; this.slashDir = (this.slashDir || 1) * -1; let hits = 0;
+    for (const z of g.zombies) {
+      if (z.dead) continue; const d = dist(this.x, this.y, z.x, z.y); if (d > sw.range + z.r) continue;
+      let da = Math.atan2(z.y - this.y, z.x - this.x) - this.angle; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) > sw.arc) continue;
+      z.takeDamage(sw.damage * this.damageMult, this.angle, undefined, z.cfg.boss ? 1.5 : 4); z.burn = Math.max(z.burn, sw.burn); hits++;
+      for (let i = 0; i < 4; i++) g.particles.push(new Particle(z.x, z.y - 6, (Math.random() - 0.5) * 80, -30 - Math.random() * 50, 0.45, i % 2 ? '#ff5aa8' : '#b3221a', 2, 'blood'));
+    }
+    for (const t of g.turrets || []) { if (t.dead) continue; const d = dist(this.x, this.y, t.x, t.y); if (d < sw.range + t.r) { let da = Math.atan2(t.y - this.y, t.x - this.x) - this.angle; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) <= sw.arc) { g.damageTurret(t, sw.damage * this.damageMult, t.x, t.y); hits++; } } }
+    if (g.house && !g.house.dead) { const h = g.map.house, px = this.x + Math.cos(this.angle) * 50, py = this.y + Math.sin(this.angle) * 50; if (Math.abs(px - h.x) < h.w / 2 + 10 && Math.abs(py - h.y) < h.h / 2 + 10) { g.damageHouse(sw.damage * this.damageMult, px, py); hits++; } }
+    Audio8.play('swap'); if (hits) { Audio8.play('thud'); g.shake(hits > 2 ? 6 : 3); g.blood(this.x + Math.cos(this.angle) * 40, this.y + Math.sin(this.angle) * 40, 4, '#b3221a'); }
+    g.lights.push({ x: this.x + Math.cos(this.angle) * 30, y: this.y + Math.sin(this.angle) * 30, r: 90, life: 0.12, max: 0.12 });
   }
   /* R as the frog: ten froglings. They hop onto zombies, rip the head off and rush the next one. */
   useFrogArmy() {
@@ -994,6 +1003,17 @@ Player.prototype.drawDemon = function (ctx) {
   if (this.demonState === 'reverting') { const k = this.demonT / dm.revert, sc = S - k * (S - 1); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 7, 6 + (1 - k) * 14, 3 + (1 - k) * 5, 0, 0, TAU); ctx.fill(); aura(40, 0.3 * (1 - k)); demonAt(this.x, this.y, sc, 1 - k * 0.6); Sprites.draw(ctx, this.sprite, this.x, this.y, { flip: this.flip, alpha: k, ox: -8, oy: -9 }); return; }
   // ---- demon form ----
   const bob = this.moving && !this.kick ? Math.sin(this.walk * 0.8) * 2 : 0;
+  { // the circle of music: a soft pink disc, a rotating dashed ring, a pulsing inner ring and notes drifting around the edge
+    const R = dm.song.radius + Math.sin(t * 3) * 3, fade = Math.min(1, this.demonTime / 1.2, (dm.duration - this.demonTime + 0.2) * 2);
+    const gr = ctx.createRadialGradient(this.x, this.y, 10, this.x, this.y, R); gr.addColorStop(0, `rgba(255,90,170,${0.06 * fade})`); gr.addColorStop(0.75, `rgba(255,90,170,${0.16 * fade})`); gr.addColorStop(1, 'rgba(255,90,170,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.fill();
+    ctx.strokeStyle = `rgba(255,150,210,${0.85 * fade})`; ctx.lineWidth = 2; ctx.setLineDash([8, 7]); ctx.lineDashOffset = -t * 30; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = `rgba(255,255,255,${0.35 * fade})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(this.x, this.y, R * (0.55 + 0.1 * Math.abs(Math.sin(t * 4))), 0, TAU); ctx.stroke();
+    ctx.strokeStyle = `rgba(255,120,190,${0.25 * fade})`; ctx.beginPath(); for (let i = 0; i < 12; i++) { const a = i / 12 * TAU - t * 0.4, w = Math.sin(t * 6 + i) * 6; ctx.moveTo(this.x + Math.cos(a) * (R * 0.35), this.y + Math.sin(a) * (R * 0.35)); ctx.lineTo(this.x + Math.cos(a) * (R - 6 + w), this.y + Math.sin(a) * (R - 6 + w)); } ctx.stroke();
+    ctx.font = '8px "Press Start 2P", monospace'; ctx.textAlign = 'center';
+    for (let i = 0; i < 10; i++) { const a = i / 10 * TAU + t * 0.6, rr = R - 10 + Math.sin(t * 3 + i * 1.7) * 6; ctx.fillStyle = `rgba(255,${170 + (i % 2) * 60},${220},${(0.7 + Math.sin(t * 5 + i) * 0.3) * fade})`; ctx.fillText(i % 3 ? '♪' : '♫', this.x + Math.cos(a) * rr, this.y + Math.sin(a) * rr + Math.sin(t * 7 + i) * 3); }
+    ctx.textAlign = 'left';
+    if (Math.random() < 0.5) { const a = Math.random() * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * R, this.y + Math.sin(a) * R, -Math.cos(a) * 25, -Math.sin(a) * 25 - 12, 0.8, Math.random() < 0.5 ? '#ffb0dc' : '#ff5aa8', 2, 'smoke')); }
+  }
   ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 9, 18, 6, 0, 0, TAU); ctx.fill();
   aura(44 + Math.sin(t * 6) * 3, 0.16);
   if (this.kick) { // afterimages along the dash
@@ -1002,6 +1022,16 @@ Player.prototype.drawDemon = function (ctx) {
   if (Math.random() < 0.35) g.particles.push(new Particle(this.x + (Math.random() - 0.5) * 20, this.y - 10 + (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 12, -25 - Math.random() * 20, 0.5, Math.random() < 0.5 ? '#ff5aa8' : '#c0206a', 2, 'fire'));
   demonAt(this.x, this.y + bob, S);
   if (this.hurtFlash > 0) { ctx.globalAlpha = 0.6; ctx.save(); ctx.translate(Math.round(this.x), Math.round(this.y + bob)); if (this.flip) ctx.scale(-1, 1); ctx.drawImage(Sprites.tintOf('demon', '#ff8a7a'), -12 * S, 8 - 24 * S, 24 * S, 24 * S); ctx.restore(); ctx.globalAlpha = 1; }
+  { // the demon katana in her hand; during a slash it sweeps through the arc and leaves a pink-white trail
+    const sw = dm.sword, k = this.slash > 0 ? 1 - this.slash / 0.16 : -1, dir = this.slashDir || 1;
+    const ang = k >= 0 ? this.slashAngle + dir * (-sw.arc + k * sw.arc * 2) : this.angle + (this.flip ? 0.35 : -0.35);
+    if (k >= 0) { const r0 = 28, r1 = sw.range + 2, a0 = this.slashAngle - dir * sw.arc, a1 = this.slashAngle + dir * (-sw.arc + k * sw.arc * 2);
+      ctx.save(); ctx.beginPath(); ctx.arc(this.x, this.y - 6, r1, Math.min(a0, a1), Math.max(a0, a1)); ctx.arc(this.x, this.y - 6, r0, Math.max(a0, a1), Math.min(a0, a1), true); ctx.closePath();
+      const gr = ctx.createRadialGradient(this.x, this.y - 6, r0, this.x, this.y - 6, r1); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.7, `rgba(255,120,190,${0.35 * (1 - k)})`); gr.addColorStop(1, `rgba(255,255,255,${0.7 * (1 - k)})`); ctx.fillStyle = gr; ctx.fill(); ctx.restore();
+      ctx.strokeStyle = `rgba(255,255,255,${0.9 * (1 - k)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(this.x, this.y - 6, r1, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke(); }
+    const hx = this.x + Math.cos(ang) * 10, hy = this.y - 6 + bob + Math.sin(ang) * 10;
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(ang); if (Math.cos(ang) < 0) ctx.scale(1, -1); ctx.drawImage(Sprites.get('katana'), -6, -4, 44, 8); ctx.restore();
+  }
   // glowing eyes on top of the sprite (they flicker)
   if (Math.sin(t * 9) > -0.6) { ctx.fillStyle = `rgba(255,80,160,${0.5 + Math.sin(t * 9) * 0.3})`; const ex = this.x + (this.flip ? -1 : 1) * 0, ey = this.y + bob + 8 - 24 * S + 7 * S; ctx.fillRect(Math.round(ex - 5 * S + 1), Math.round(ey), Math.round(3 * S), Math.round(2 * S)); ctx.fillRect(Math.round(ex + 2 * S + 1), Math.round(ey), Math.round(3 * S), Math.round(2 * S)); }
 };
@@ -1171,9 +1201,12 @@ class Zombie {
       return;
     }
     const dx = player.x - this.x, dy = player.y - this.y, d = Math.hypot(dx, dy) || 1;
+    const P = this.game.player, song = P.demon && player === P ? P.dm.song : null; // Bezuko's circle of music: charmed zombies walk to her and forget to bite
+    if (song && d < song.radius + this.r) { if (!(this.charm > 0)) this.charmT = 0; this.charm = 0.5; }
+    const charmed = this.charm > 0; if (charmed) { this.charm -= dt; this.charmT = (this.charmT || 0) + dt; }
     let sp = this.speed;
     let steer = null;
-    if (this.bk) { const r = this.bossAI(dt, player, d, dx, dy); sp *= r.speedMult; steer = r.steer; }
+    if (this.bk && !charmed) { const r = this.bossAI(dt, player, d, dx, dy); sp *= r.speedMult; steer = r.steer; }
     if (this.cfg.guard && this.post) {
       const hs = this.game.map.house, nearHouse = Math.hypot(player.x - hs.x, player.y - hs.y) < HOUSE.alertRadius + 120;
       if (nearHouse || d < 200 || this.hit > -1) { this.alert = true; this.alertT = 6; } else { this.alertT -= dt; if (this.alertT <= 0) this.alert = false; }
@@ -1183,7 +1216,8 @@ class Zombie {
         sp *= 0.8;
       }
     }
-    if (this.type === 'exploder' && d < 22 && this.fuse < 0) { this.fuse = 0.45; }
+    if (charmed) { steer = { x: dx / d, y: dy / d }; sp = Math.max(sp, this.cfg.speed) * 1.15; this.leap = null; this.charge = 0; this.aiming = 0; this.burstLeft = 0; if (!this.cfg.boss) this.attackCd = Math.max(this.attackCd, 0.6); this.gunCd = Math.max(this.gunCd || 0, 0.5); }
+    if (this.type === 'exploder' && d < 22 && this.fuse < 0 && !charmed) { this.fuse = 0.45; }
     if (this.fuse >= 0) { this.fuse -= dt; sp *= 0.3; if (this.fuse <= 0) { this.die(); return; } }
     if (this.burn > 0) {
       this.burn -= dt; this.burnTick += dt;
@@ -1333,6 +1367,7 @@ class Zombie {
     }
     if (this.poison > 0 && Math.random() < 0.5) { ctx.fillStyle = '#5fd35a'; ctx.fillRect(Math.round(this.x + (Math.random() - 0.5) * 10 * s), Math.round(this.y + (Math.random() - 0.5) * 10 * s), 2, 2); }
     if (this.burn > 0) { for (let i = 0; i < 3; i++) { ctx.fillStyle = i % 2 ? '#ffd23a' : '#ff6a2a'; ctx.fillRect(Math.round(this.x + (Math.random() - 0.5) * 10 * s), Math.round(this.y + (Math.random() - 0.7) * 12 * s), 2, 2); } }
+    if (this.charm > 0) { const tt = this.charmT || 0; ctx.font = '7px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = `rgba(255,120,190,${0.6 + Math.sin(tt * 8) * 0.3})`; ctx.fillText(tt % 1 < 0.5 ? '♪' : '♫', this.x + Math.sin(tt * 5) * 3, this.y - 12 * s - 6 + Math.sin(tt * 6) * 2); ctx.textAlign = 'left'; }
     if (this.web > 0) { // spider web wrapped around it
       const wr = 9 * s, wx = this.x, wy = this.y - 2 * s; ctx.strokeStyle = 'rgba(245,242,234,0.85)'; ctx.lineWidth = 1;
       ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; ctx.moveTo(wx, wy); ctx.lineTo(wx + Math.cos(a) * wr, wy + Math.sin(a) * wr); } ctx.stroke();

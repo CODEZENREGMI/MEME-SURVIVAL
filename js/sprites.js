@@ -501,6 +501,12 @@ const SPRITE_DATA = {
     '.....KKK.KKKKPPPPKKKK.KKK.....',
     '.............KKKK.............',
   ],
+  katana: [
+    '.......KKK............',
+    'KWRWRWRKGKrrrrrrrrrrK.',
+    'KRWRWRWKGKMMMMMMMMMMMK',
+    '.......KKK............',
+  ],
   genom_portrait: [
     '........KKKKKKKK........',
     '.....KKKDDDDDDDDKKK.....',
@@ -629,6 +635,7 @@ const Sprites = {
     this.cache.beast = this.make(SPRITE_DATA.beast, BEAST_PAL);
     this.cache.venom = this.make(SPRITE_DATA.genom_venom, { D: '#101014', d: '#2a2a34', W: '#f4f2ea', K: '#000000' });
     this.cache.frog = this.make(SPRITE_DATA.frogepepe_frog, CHARACTERS.frogepepe.pal);
+    this.cache.katana = this.make(SPRITE_DATA.katana, { K: '#141018', W: '#f4f2ea', R: '#c0202a', G: '#3aa03a', r: '#b8202a', M: '#d8dce8' });
     this.cache.demon = this.make(SPRITE_DATA.bezuko_demon, Object.assign({}, CHARACTERS.bezuko.pal, { S: '#e9dccf', s: '#d0b8a8', E: '#ff3d8a' }));
     this.cache.gun_flesh = this.make(SPRITE_DATA.gun_flesh, FLESH_PAL);
     this.cache.gun_m249 = this.make(SPRITE_DATA.gun_m249, { m: '#2a2d33', M: '#4a4f58', N: '#4a6b3a', K: '#0f1014' });
