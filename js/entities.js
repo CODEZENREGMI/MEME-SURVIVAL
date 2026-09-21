@@ -76,7 +76,7 @@ class Player {
   /* is the current weapon firing for free right now? */
   get overdrive() { return this.ability.active > 0 && this.ability.weapon === this.current; }
   useAbility() {
-    const ab = this.wcfg.ability; if (!ab) return false;
+    const ab = this.wcfg.ability; if (!ab || this.venom || this.driving || this.form !== 'human') return false;
     if (this.ability.active > 0) return false;
     if (this.ability.cd > 0) { Audio8.play('empty'); this.game.floatText(this.x, this.y - 16, `${ab.name} IN ${Math.ceil(this.ability.cd)}s`, '#9aa3b5'); return false; }
     this.ability.active = ab.duration; this.ability.weapon = this.current; this.reloading = false; this.wstate.mag = this.wcfg.mag;

@@ -705,7 +705,7 @@ class Game {
     }
     // weapon ability button (only when the current weapon has one)
     const ab = p.wcfg.ability; this.abilityRect = null;
-    if (ab && p.form === 'human') {
+    if (ab && p.form === 'human' && !p.venom && !p.driving) { // hidden whenever the gun itself is put away
       const ax = 8, ay = slotY, aw = 130, ah = 26; this.abilityRect = { x: ax, y: ay, w: aw, h: ah };
       const active = p.overdrive, cd = p.ability.cd, ready = !active && cd <= 0;
       const hov = this.input.mouseX >= ax && this.input.mouseX <= ax + aw && this.input.mouseY >= ay && this.input.mouseY <= ay + ah;
