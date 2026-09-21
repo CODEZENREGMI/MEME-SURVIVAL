@@ -196,7 +196,8 @@ const CHARACTERS = {
             pal: { G: '#4f9a3e', g: '#3a7430', l: '#9ccf72', W: '#f4f2ea', K: '#111111', L: '#8b4a2a', B: '#1f3fd0', b: '#162c94' },
             frog: { name: 'FROG OUT', duration: 30, cooldown: 45, morph: 1.2, revert: 0.6, scale: 2.2, hearts: 7, armor: 0.6, speed: 1.35,
                     tongue: { damage: 75, range: 240, cd: 0.4, eatHeal: 6, yank: 5 },   // hitscan lash: first zombie on the line, yanked toward the frog; a kill is a meal
-                    hop: { range: 220, cd: 1.3, dur: 0.45, smash: 130, radius: 80 } } },
+                    hop: { range: 220, cd: 1.3, dur: 0.45, smash: 130, radius: 80 },
+                    army: { name: 'FROG ARMY', count: 10, duration: 15, cd: 40, hp: 60, damage: 260, bossDamage: 180, hop: 95, hopDur: 0.26, scale: 0.9, seek: 520 } } },  // R: ten little froglings that hop on zombies and rip their heads off
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe'];
 

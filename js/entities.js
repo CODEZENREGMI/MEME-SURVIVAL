@@ -60,7 +60,7 @@ class Player {
     this.tapriTime = 0; this.tapriCd = 0;
     this.webZip = null; this.webCd = 0; this.pullCd = 0; this.pulling = null;
     this.sym = 'human'; this.symT = 0; this.clawCd = 0; this.captureCd = 0; this.capturing = null;
-    this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0;
+    this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0; this.armyCd = 0; this.armyTime = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -236,6 +236,7 @@ class Player {
   /* returns true while locked in an animation (morphing / reverting / mid-hop) */
   updateFrog(dt, input) {
     const fr = this.fr, g = this.game;
+    this.armyCd -= dt; if (this.armyTime > 0) { this.armyTime -= dt; if (this.armyTime <= 0 || !this.frog) { this.armyTime = 0; g.clones.forEach(c => c.frogling && c.vanish(false)); } }
     if (this.frogState === 'human') { if (this.frogCd > 0) { this.frogCd -= dt; if (this.frogCd <= 0) { this.frogCd = 0; g.floatText(this.x, this.y - 18, 'FROG OUT READY', '#8bd35a'); Audio8.play('xp'); } } return false; }
     if (this.frogState === 'morphing') {
       const prev = this.frogT; this.frogT += dt; const k = this.frogT / fr.morph; g.shakeAmt = Math.max(g.shakeAmt, 1 + k * 4); this.invuln = 0.5;
@@ -277,6 +278,18 @@ class Player {
       return true;
     }
     return false;
+  }
+  /* R as the frog: ten froglings. They hop onto zombies, rip the head off and rush the next one. */
+  useFrogArmy() {
+    const fr = this.fr, g = this.game; if (!fr || !this.frog) return false; const ar = fr.army;
+    if (this.armyTime > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 44, 'ARMY ALREADY OUT', '#9aa3b5'); return false; }
+    if (this.armyCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 44, `FROG ARMY IN ${Math.ceil(this.armyCd)}s`, '#9aa3b5'); return false; }
+    this.armyTime = ar.duration; this.armyCd = ar.cd;
+    for (let i = 0; i < ar.count; i++) { const a = i / ar.count * TAU, pos = g.map.resolve(this.x + Math.cos(a) * 26, this.y + Math.sin(a) * 26, 5); const f = new FrogClone(g, this, pos.x, pos.y, i); f.hop = { t: 0, dur: 0.3, sx: this.x, sy: this.y, tx: pos.x + Math.cos(a) * 40, ty: pos.y + Math.sin(a) * 40, target: null }; g.clones.push(f); }
+    for (let k = 0; k < 24; k++) { const a = Math.random() * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 10, this.y + 4, Math.cos(a) * 60, -40 - Math.random() * 50, 0.5, k % 2 ? '#9ccf72' : '#4f9a3e', 2, 'dot')); }
+    Audio8.play('levelup'); Audio8.play('moan'); g.shake(3); g.whiteFlash = 0.1; g.lights.push({ x: this.x, y: this.y, r: 120, life: 0.3, max: 0.3 });
+    g.showAbilityBanner('FROG ARMY', `${ar.count} froglings · ${ar.duration}s · they hop on zombies and take the head`);
+    return true;
   }
   /* LMB as the frog: a hitscan tongue lash. The first zombie on the aim line takes the hit and is yanked in; if it dies, it's lunch. */
   frogAttacks(input) {
@@ -450,6 +463,8 @@ class Player {
     return true;
   }
   charAbility2() {
+    const fr = this.char.frog;
+    if (fr) { const ar = fr.army; if (!this.frog) return { name: ar.name, state: 'cd', frac: 0, sub: 'NEEDS FROG FORM' }; if (this.armyTime > 0) return { name: ar.name, state: 'active', frac: this.armyTime / ar.duration, sub: `${Math.ceil(this.armyTime)}s · ${this.game.clones.filter(c => c.frogling).length} FROGS` }; if (this.armyCd > 0) return { name: ar.name, state: 'cd', frac: 1 - this.armyCd / ar.cd, sub: `RECHARGING ${Math.ceil(this.armyCd)}s` }; return { name: ar.name, state: 'ready', frac: 1, sub: '[R] RELEASE THE FROGS' }; }
     const sb = this.char.symbiote;
     if (sb) { const cp = sb.capture; if (!this.venom) return { name: cp.name, state: 'cd', frac: 0, sub: 'NEEDS THE SYMBIOTE' }; if (this.capturing) return { name: cp.name, state: 'busy', frac: this.capturing.captured / cp.duration, sub: `${Math.ceil(this.capturing.captured)}s · ${this.capturing.bk.name}` }; if (this.captureCd > 0) return { name: cp.name, state: 'cd', frac: 1 - this.captureCd / cp.cd, sub: `RECHARGING ${Math.ceil(this.captureCd)}s` }; return { name: cp.name, state: 'ready', frac: 1, sub: '[R] AIM AT A BOSS' }; }
     const pl = this.char.pull; if (!pl) return null;
@@ -663,7 +678,8 @@ class Player {
     if (input.keys[' ']) { input.keys[' '] = false; this.useCharAbility(); }
     if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else this.useAbility(); }
     if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); }
-    if (input.keys.r && this.venom) { input.keys.r = false; this.useCapture(); } // R = CAPTURE in venom form (no guns to reload)
+    if (input.keys.r && this.venom) { input.keys.r = false; this.useCapture(); }
+    if (input.keys.r && this.frog) { input.keys.r = false; this.useFrogArmy(); } // R = FROG ARMY as the frog (no guns to reload) // R = CAPTURE in venom form (no guns to reload)
     if (input.keys.t) { input.keys.t = false; if (this.char.symbiote) this.toggleSymbiote(); }
     if (input.keys.g) { input.keys.g = false; this.toggleCar(); }
     if (this.tf && this.updateForm(dt, input)) { this.invuln = Math.max(this.invuln, 0.1); this.walk += dt * 10; return; }
@@ -1388,6 +1404,76 @@ class Clone {
     ctx.save(); ctx.translate(this.x + Math.cos(this.angle) * 6, this.y + 2 + Math.sin(this.angle) * 6 + bob); ctx.rotate(this.angle); if (this.flip) ctx.scale(1, -1); ctx.drawImage(Sprites.get('gun_smg'), -3, -4, 16, 8); ctx.restore();
     ctx.globalAlpha = 1;
     if (this.hp < this.maxHp) { ctx.fillStyle = '#111'; ctx.fillRect(this.x - 7, this.y - 14, 14, 3); ctx.fillStyle = '#8bd35a'; ctx.fillRect(this.x - 6, this.y - 13, 12 * clamp(this.hp / this.maxHp, 0, 1), 1); }
+  }
+}
+
+/* ----------------------------------------------------------- FROG CLONE */
+/* Frogepepe's froglings: small frogs that hop straight onto the nearest zombie, rip its head off on landing and bounce to the next */
+class FrogClone {
+  constructor(game, owner, x, y, idx) {
+    this.game = game; this.owner = owner; this.x = x; this.y = y; this.r = 5; this.idx = idx; this.dead = false; this.frogling = true;
+    const ar = owner.fr.army; this.maxHp = ar.hp; this.hp = this.maxHp; this.angle = 0; this.flip = false; this.walk = Math.random() * 10; this.moving = false;
+    this.invuln = 0; this.hurtFlash = 0; this.spawnT = 0; this.hop = null; this.hopCd = 0.1 + idx * 0.03; this.height = 0; this.kills = 0;
+  }
+  hurt(dmg, fromX, fromY, invuln = 0.3) {
+    if (this.invuln > 0 || this.dead || this.hop) return;
+    this.hp -= dmg; this.invuln = invuln; this.hurtFlash = 0.2; this.game.blood(this.x, this.y, 3, '#7fd35a');
+    if (this.hp <= 0) this.vanish(true);
+  }
+  vanish(killed) {
+    if (this.dead) return; this.dead = true;
+    for (let k = 0; k < 8; k++) this.game.particles.push(new Particle(this.x, this.y - this.height, (Math.random() - 0.5) * 50, -10 - Math.random() * 40, 0.5, killed ? '#4a5d3a' : '#9ccf72', 2, 'smoke'));
+    if (killed) Audio8.play('hurt');
+  }
+  pickTarget() {
+    const g = this.game, ar = this.owner.fr.army; let best = null, bd = 1e9;
+    for (const z of g.zombies) { if (z.dead || z.captured > 0) continue; let d = dist(this.x, this.y, z.x, z.y); if (z.claimed && z.claimed !== this && g.time - z.claimedAt < 0.4) d += 60; if (d < bd && d < ar.seek) { bd = d; best = z; } } // spread out: a zombie another frogling just jumped at costs extra
+    return best;
+  }
+  update(dt) {
+    if (this.dead) return;
+    const g = this.game, o = this.owner, ar = o.fr.army; this.spawnT += dt; this.invuln -= dt; this.hurtFlash -= dt; this.hopCd -= dt; this.walk += dt * 8;
+    if (this.hop) { // airborne
+      const H = this.hop; H.t += dt; const k = Math.min(1, H.t / H.dur); this.height = Math.sin(k * Math.PI) * 26;
+      if (H.target && !H.target.dead) { H.tx = H.target.x; H.ty = H.target.y; } // home in mid-air
+      const pos = g.map.resolve(H.sx + (H.tx - H.sx) * k, H.sy + (H.ty - H.sy) * k, this.r); this.x = pos.x; this.y = pos.y; this.moving = true;
+      if (k >= 1) {
+        this.hop = null; this.height = 0; this.hopCd = 0.12; const z = H.target;
+        if (z && !z.dead && dist(this.x, this.y, z.x, z.y) < z.r + 14) this.bite(z);
+      }
+      return;
+    }
+    this.moving = false;
+    if (this.hopCd > 0) return;
+    const z = this.pickTarget();
+    if (z) { // hop straight at it, in bounds of one hop; several hops for far ones
+      const d = dist(this.x, this.y, z.x, z.y), L = Math.min(ar.hop, d), a = Math.atan2(z.y - this.y, z.x - this.x);
+      this.angle = a; this.flip = Math.cos(a) < 0; z.claimed = this; z.claimedAt = g.time;
+      this.hop = { t: 0, dur: ar.hopDur * (0.6 + 0.4 * L / ar.hop), sx: this.x, sy: this.y, tx: this.x + Math.cos(a) * L, ty: this.y + Math.sin(a) * L, target: d <= ar.hop + 10 ? z : null };
+    } else { // nothing to hunt: bounce around the big frog
+      const fa = this.idx / ar.count * TAU + g.time * 0.5, tx = o.x + Math.cos(fa) * 44, ty = o.y + Math.sin(fa) * 44, d = dist(this.x, this.y, tx, ty);
+      if (d > 14) { const L = Math.min(ar.hop, d), a = Math.atan2(ty - this.y, tx - this.x); this.angle = a; this.flip = Math.cos(a) < 0; this.hop = { t: 0, dur: ar.hopDur, sx: this.x, sy: this.y, tx: this.x + Math.cos(a) * L, ty: this.y + Math.sin(a) * L, target: null }; }
+      else this.hopCd = 0.3;
+    }
+  }
+  bite(z) { // the head comes off: non-bosses die outright, bosses take a chunk
+    const g = this.game, o = this.owner, ar = o.fr.army, boss = z.cfg.boss, dmg = (boss ? ar.bossDamage : Math.max(ar.damage, z.hp + 1)) * o.damageMult;
+    z.takeDamage(dmg, Math.atan2(z.y - this.y, z.x - this.x), undefined, boss ? 1 : 0.5);
+    const hx = z.x, hy = z.y - 8 * (z.scale || 1); // the head flying off
+    g.particles.push(new Particle(hx, hy, (Math.random() - 0.5) * 120, -120 - Math.random() * 60, 0.7, boss ? '#c9cfdb' : '#7fa35a', 4, 'blood'));
+    for (let k = 0; k < 8; k++) g.particles.push(new Particle(hx, hy, (Math.random() - 0.5) * 90, -30 - Math.random() * 70, 0.5, '#b3221a', 2, 'blood'));
+    g.blood(z.x, z.y, 8, '#b3221a'); g.map.splat(z.x, z.y, 6, '#4a0e0a'); Audio8.play('thud'); if (z.dead) { this.kills++; Audio8.play('zdie'); }
+    g.floatText(z.x, hy - 10, z.dead ? 'HEAD OFF' : 'CHOMP', '#9ccf72');
+  }
+  draw(ctx) {
+    const ar = this.owner.fr.army, S = ar.scale, h = this.height, fade = Math.min(1, this.spawnT * 4), sq = this.hop ? 1 + Math.sin(Math.min(1, this.hop.t / this.hop.dur) * Math.PI) * 0.2 : 1;
+    ctx.fillStyle = `rgba(0,0,0,${0.3 - h / 150})`; ctx.beginPath(); ctx.ellipse(this.x, this.y + 4, 8 - h * 0.1, 3 - h * 0.04, 0, 0, TAU); ctx.fill();
+    ctx.globalAlpha = fade;
+    ctx.save(); ctx.translate(Math.round(this.x), Math.round(this.y - h + 4)); ctx.scale(2 - sq, sq); if (this.flip) ctx.scale(-1, 1);
+    ctx.drawImage(Sprites.get('frog'), -12 * S, -20 * S, 24 * S, 24 * S);
+    if (this.hurtFlash > 0) { ctx.globalAlpha = 0.6 * fade; ctx.drawImage(Sprites.tintOf('frog', '#ff8a7a'), -12 * S, -20 * S, 24 * S, 24 * S); }
+    ctx.restore(); ctx.globalAlpha = 1;
+    if (this.hp < this.maxHp) { ctx.fillStyle = '#111'; ctx.fillRect(this.x - 6, this.y - 18, 12, 3); ctx.fillStyle = '#8bd35a'; ctx.fillRect(this.x - 5, this.y - 17, 10 * clamp(this.hp / this.maxHp, 0, 1), 1); }
   }
 }
 
