@@ -61,7 +61,7 @@ class Player {
     this.webZip = null; this.webCd = 0; this.pullCd = 0; this.pulling = null;
     this.sym = 'human'; this.symT = 0; this.clawCd = 0; this.captureCd = 0; this.capturing = null;
     this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0; this.armyCd = 0; this.armyTime = 0;
-    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0;
+    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -280,6 +280,17 @@ class Player {
     }
     return false;
   }
+  /* ---- Eggreck: VANISH — 20 s of invisibility. Nothing hostile can see him; he can still shoot. ---- */
+  get invisible() { return this.invis > 0; }
+  useVanish() {
+    const st = this.char.stealth, g = this.game; if (!st) return false;
+    if (this.invis > 0) return false;
+    if (this.invisCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `VANISH IN ${Math.ceil(this.invisCd)}s`, '#9aa3b5'); return false; }
+    this.invis = st.duration; Audio8.play('flicker'); Audio8.play('swap'); g.shake(1.5);
+    for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 8, this.y + Math.sin(a) * 8, Math.cos(a) * 50, Math.sin(a) * 50 - 20, 0.5, i % 2 ? '#c8dc60' : '#f4f2ea', 2, 'smoke')); }
+    g.showAbilityBanner('VANISH', `${st.duration}s · nobody can see you · keep shooting`);
+    return true;
+  }
   /* ---- Bezuko: AWAKEN (girl -> demon for 30 s), Exploding Blood and DEMON KICK while awakened ---- */
   get dm() { return this.char.demon; }
   get demon() { return this.demonState === 'demon'; }
@@ -432,7 +443,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -560,6 +571,8 @@ class Player {
       if (this.formCd > 0) return { name: tf.name, state: 'cd', frac: 1 - this.formCd / tf.cooldown, sub: `RECHARGING ${Math.ceil(this.formCd)}s` };
       return { name: tf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' };
     }
+    const st = this.char.stealth;
+    if (st) { if (this.invis > 0) return { name: 'INVISIBLE', state: 'active', frac: this.invis / st.duration, sub: `${Math.ceil(this.invis)}s · NOBODY SEES YOU` }; if (this.invisCd > 0) return { name: st.name, state: 'cd', frac: 1 - this.invisCd / st.cooldown, sub: `RECHARGING ${Math.ceil(this.invisCd)}s` }; return { name: st.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const dm = this.char.demon;
     if (dm) {
       if (this.demonState === 'demon') return { name: 'DEMON FORM', state: 'active', frac: this.demonTime / dm.duration, sub: this.kickCd > 0 ? `${Math.ceil(this.demonTime)}s · KICK IN ${this.kickCd.toFixed(1)}s` : `${Math.ceil(this.demonTime)}s · [SPACE] KICK` };
@@ -773,6 +786,9 @@ class Player {
     if (this.char.symbiote && this.updateSymbiote(dt, input)) { this.walk += dt * 10; return; }
     if (this.char.frog && this.updateFrog(dt, input)) { this.walk += dt * 10; return; }
     if (this.char.demon && this.updateDemon(dt, input)) { this.walk += dt * 10; return; }
+    if (this.char.stealth) { const st = this.char.stealth;
+      if (this.invis > 0) { this.invis -= dt; if (this.invis <= 0) { this.invis = 0; this.invisCd = st.cooldown; this.game.floatText(this.x, this.y - 18, 'VISIBLE AGAIN', '#c9cfdb'); Audio8.play('flicker'); } }
+      else if (this.invisCd > 0) { this.invisCd -= dt; if (this.invisCd <= 0) { this.invisCd = 0; this.game.floatText(this.x, this.y - 18, 'VANISH READY', '#8bd35a'); Audio8.play('xp'); } } }
     if (this.carCd > 0 && !this.car) { this.carCd -= dt; if (this.carCd <= 0) { this.carCd = 0; this.game.floatText(this.x, this.y - 18, 'ROLL OUT READY', '#5a8ad8'); Audio8.play('xp'); } }
     if (this.car) { this.updateVehicle(dt, input); return; }
     const zipping = this.char.web ? this.updateWeb(dt) : false;
@@ -885,13 +901,14 @@ class Player {
     }
     // shadow
     ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 7, 6, 3, 0, 0, TAU); ctx.fill();
+    if (this.invisible) { const tt = performance.now() / 1000; ctx.strokeStyle = `rgba(200,220,96,${0.35 + Math.sin(tt * 6) * 0.15})`; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.lineDashOffset = -tt * 20; ctx.beginPath(); ctx.arc(this.x, this.y, 13, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 0.28 + Math.sin(tt * 9) * 0.08; }
     const blink = this.invuln > 0 && Math.floor(this.invuln * 20) % 2 === 0;
     if (!blink || this.dead) Sprites.draw(ctx, this.hurtFlash > 0 ? 'player_hurt' : this.sprite, this.x, this.y + bob, { flip: this.flip, ox: -8, oy: -9 });
     // gun
     const rec = this.recoil;
     const gx = this.x + Math.cos(this.angle) * (6 - rec), gy = this.y + 2 + Math.sin(this.angle) * (6 - rec) + bob;
     ctx.save(); ctx.translate(gx, gy); ctx.rotate(this.angle); if (this.flip) ctx.scale(1, -1);
-    const img = Sprites.get(this.wcfg.sprite); ctx.drawImage(img, -3, -4, 16, 8); ctx.restore();
+    const img = Sprites.get(this.wcfg.sprite); ctx.drawImage(img, -3, -4, 16, 8); ctx.restore(); ctx.globalAlpha = 1;
     if (this.overdrive) { const t = performance.now() / 1000; ctx.fillStyle = `rgba(255,170,40,${0.18 + Math.sin(t * 20) * 0.08})`; ctx.beginPath(); ctx.arc(this.x, this.y + 2, 14 + Math.sin(t * 20) * 2, 0, TAU); ctx.fill(); ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffb02a'; ctx.fillText('OVERDRIVE', this.x, this.y - 20); ctx.textAlign = 'left'; }
     if (this.pulling && this.pulling.pullT > 0) { const z = this.pulling, hx = this.x + Math.cos(this.angle) * 6, hy = this.y - 2; ctx.strokeStyle = 'rgba(244,242,234,0.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.x, z.y); ctx.stroke(); ctx.strokeStyle = 'rgba(244,242,234,0.3)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.x, z.y); ctx.stroke(); }
     if (this.webZip) { const z = this.webZip, hx = this.x + Math.cos(this.angle) * 6, hy = this.y - 2; ctx.strokeStyle = 'rgba(244,242,234,0.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.ax, z.ay); ctx.stroke(); ctx.strokeStyle = 'rgba(244,242,234,0.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.ax, z.ay); ctx.stroke(); ctx.fillStyle = '#f4f2ea'; ctx.beginPath(); ctx.arc(z.ax, z.ay, 3, 0, TAU); ctx.fill(); }
@@ -1188,6 +1205,16 @@ class Zombie {
       else { const p = this.game.map.resolve(this.x + ddx / dd * step, this.y + ddy / dd * step, Math.min(this.r, 7)); this.x = p.x; this.y = p.y; if (Math.random() < 0.5) this.game.particles.push(new Particle(this.x, this.y, (Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30, 0.25, '#f4f2ea', 1.5, 'dot')); }
       if (this.pullT <= 0) { this.pullT = 0; this.web = pl.freeze; this.webImmune = 0; this.attackCd = 1; this.game.floatText(this.x, this.y - 12 * this.scale, 'FROZEN', '#8af0ff'); Audio8.play('thud'); this.game.shake(2); }
       this.flip = ddx < 0; this.walk += dt * 20; return;
+    }
+    if (player === this.game.player && player.invisible && !(this.captured > 0)) { // Eggreck vanished: it shuffles around blindly
+      this.wander = (this.wander || 0) - dt; if (this.wander <= 0) { this.wander = 0.8 + Math.random() * 2; this.wanderA = Math.random() * TAU; this.wanderStop = Math.random() < 0.35; }
+      this.hit -= dt; this.attackCd = Math.max(this.attackCd, 0.5); this.gunCd = Math.max(this.gunCd || 0, 0.5); this.aiming = 0; this.burstLeft = 0; this.charge = 0; this.leap = null; this.rush = null; this.slam = 0; this.drum = null; this.height = 0;
+      if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); if (this.dead) return; } }
+      if (this.poison > 0) { this.poison -= dt; this.poisonTick = (this.poisonTick || 0) + dt; if (this.poisonTick > 0.25) { this.poisonTick = 0; this.takeDamage(1.5 + this.maxHp * 0.012, 0, undefined, 0, true); if (this.dead) return; } }
+      if (this.web > 0) { this.web -= dt; return; }
+      if (!this.wanderStop) { const sp = this.speed * 0.45, mr = Math.min(this.r, 7); this.x += Math.cos(this.wanderA) * sp * dt + this.kx * dt; let p = this.game.map.resolve(this.x, this.y, mr); this.x = p.x; this.y += Math.sin(this.wanderA) * sp * dt + this.ky * dt; p = this.game.map.resolve(this.x, this.y, mr); this.x = p.x; this.y = p.y; this.flip = Math.cos(this.wanderA) < 0; this.walk += dt * (sp / 12); }
+      this.kx *= Math.pow(0.0005, dt); this.ky *= Math.pow(0.0005, dt);
+      return;
     }
     if (this.poison > 0) { this.poison -= dt; this.poisonTick = (this.poisonTick || 0) + dt; if (this.poisonTick > 0.25) { this.poisonTick = 0; this.takeDamage(1.5 + this.maxHp * 0.012, 0, undefined, 0, true); if (this.dead) return; if (Math.random() < 0.6) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 8 * this.scale, this.y, (Math.random() - 0.5) * 6, 12, 0.5, '#5fd35a', 2, 'blood')); } }
     if (this.captured > 0) { // drowning in liquid symbiote: frozen, then it's ours

@@ -176,7 +176,7 @@ class Game {
       if (t.dead) continue; t.smoke -= dt; t.webImmune = (t.webImmune || 0) - dt;
       if (t.web > 0) { t.web -= dt; if (t.web <= 0) { t.web = 0; t.webImmune = 1.5; } continue; } // jammed by the web: can't turn or fire
       t.cd -= dt;
-      const tg = this.nearestTarget(t.x, t.y), d = dist(t.x, t.y, tg.x, tg.y);
+      const tg = this.nearestTarget(t.x, t.y); if (tg === this.player && this.player.invisible) continue; const d = dist(t.x, t.y, tg.x, tg.y);
       if (d < HOUSE.cannon.range) { t.angle += Math.atan2(Math.sin(Math.atan2(tg.y - t.y, tg.x - t.x) - t.angle), Math.cos(Math.atan2(tg.y - t.y, tg.x - t.x) - t.angle)) * Math.min(1, dt * 3); }
       if (t.cd <= 0 && d < HOUSE.cannon.range && this.map.los(t.x, t.y, tg.x, tg.y)) { t.cd = HOUSE.cannon.cd; const gx = t.x + Math.cos(t.angle) * 16, gy = t.y + Math.sin(t.angle) * 16; this.ebullets.push(new EnemyBullet(this, gx, gy, t.angle + (Math.random() - 0.5) * 0.06, HOUSE.cannon, t)); this.lights.push({ x: gx, y: gy, r: 100, life: 0.1, max: 0.1 }); Audio8.play('cannon'); this.shake(1.5); t.smoke = 0.3; }
       if (t.hp < t.maxHp * 0.4 && Math.random() < 0.2) this.particles.push(new Particle(t.x, t.y - 6, (Math.random() - 0.5) * 10, -20, 1, '#333', 3, 'smoke'));
@@ -414,7 +414,7 @@ class Game {
     this.ui.tick(dt);
   }
   /* everything zombies can attack: the player plus any live clones */
-  targets() { return this.clones.length ? [this.player].concat(this.clones) : [this.player]; }
+  targets() { if (this.player.invisible && this.clones.length) return this.clones.slice(); return this.clones.length ? [this.player].concat(this.clones) : [this.player]; }
   nearestTarget(x, y) { let best = this.player, bd = Infinity; for (const t of this.targets()) { if (t.dead) continue; const d = Math.hypot(t.x - x, t.y - y); if (d < bd) { bd = d; best = t; } } return best; }
   near(x, y) {
     const cx = (x / 32) | 0, cy = (y / 32) | 0; const out = [];
