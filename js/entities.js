@@ -564,7 +564,7 @@ class Player {
   }
   charAbility2() {
     const wf = this.char.wife;
-    if (wf) { if (this.wifeT > 0) return { name: 'SHIELDED', state: 'active', frac: this.wifeT / wf.duration, sub: `${Math.ceil(this.wifeT)}s · SHE'S GOT YOU` }; if (this.wifeCd > 0) return { name: wf.name, state: 'cd', frac: 1 - this.wifeCd / wf.cooldown, sub: `RECHARGING ${Math.ceil(this.wifeCd)}s` }; return { name: wf.name, state: 'ready', frac: 1, sub: '[F] CALL HER' }; }
+    if (wf) { if (this.wifeT > 0) return { name: 'SHIELDED', state: 'active', frac: this.wifeT / wf.duration, sub: `${Math.ceil(this.wifeT)}s · SHE'S GOT YOU` }; if (this.wifeCd > 0) return { name: wf.name, state: 'cd', frac: 1 - this.wifeCd / wf.cooldown, sub: `RECHARGING ${Math.ceil(this.wifeCd)}s` }; return { name: wf.name, state: 'ready', frac: 1, sub: '[E] CALL HER' }; }
     const fr = this.char.frog;
     if (fr) { const ar = fr.army; if (!this.frog) return { name: ar.name, state: 'cd', frac: 0, sub: 'NEEDS FROG FORM' }; if (this.armyTime > 0) return { name: ar.name, state: 'active', frac: this.armyTime / ar.duration, sub: `${Math.ceil(this.armyTime)}s · ${this.game.clones.filter(c => c.frogling).length} FROGS` }; if (this.armyCd > 0) return { name: ar.name, state: 'cd', frac: 1 - this.armyCd / ar.cd, sub: `RECHARGING ${Math.ceil(this.armyCd)}s` }; return { name: ar.name, state: 'ready', frac: 1, sub: '[R] RELEASE THE FROGS' }; }
     const sb = this.char.symbiote;
@@ -790,8 +790,8 @@ class Player {
     // aim first so animations face the cursor
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x); this.flip = Math.cos(this.angle) < 0;
     if (input.keys[' ']) { input.keys[' '] = false; this.useCharAbility(); }
-    if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else this.useAbility(); }
-    if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); else if (this.char.wife) this.useWife(); }
+    if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else if (this.char.wife) this.useWife(); else this.useAbility(); } // Eggreck: E = MY WIFE (his weapon ability moves to F)
+    if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); else if (this.char.wife) this.useAbility(); }
     if (input.keys.r && this.venom) { input.keys.r = false; this.useCapture(); }
     if (input.keys.r && this.frog) { input.keys.r = false; this.useFrogArmy(); } // R = FROG ARMY as the frog (no guns to reload) // R = CAPTURE in venom form (no guns to reload)
     if (input.keys.t) { input.keys.t = false; if (this.char.symbiote) this.toggleSymbiote(); }

@@ -735,7 +735,7 @@ class Game {
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? '#ffb02a' : '#ffe08a') : active ? '#ff8a2a' : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
       ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = ready ? '#ffb02a' : active ? '#fff' : '#9aa3b5';
       ctx.fillText(ab.name, ax + 6, ay + 5);
-      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
+      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife ? 'F' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
       ctx.font = F;
     }
     // xp bar (bottom-centre)
