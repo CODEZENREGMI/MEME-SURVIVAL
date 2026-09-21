@@ -926,7 +926,6 @@ class Player {
       const gr = ctx.createRadialGradient(this.x, this.y, R * 0.5, this.x, this.y, R); gr.addColorStop(0, `rgba(120,230,255,${0.04 * fade})`); gr.addColorStop(0.85, `rgba(120,230,255,${(0.16 + hitK * 0.3) * fade})`); gr.addColorStop(1, `rgba(120,230,255,${0.3 * fade})`); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.fill();
       ctx.strokeStyle = `rgba(180,245,255,${(0.6 + hitK * 0.4) * fade})`; ctx.lineWidth = 1.5 + hitK * 2; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.stroke();
       ctx.strokeStyle = `rgba(255,255,255,${0.35 * fade})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(this.x, this.y, R - 4, -0.6 + tt * 1.5, 0.4 + tt * 1.5); ctx.stroke(); // a gleam travelling around the bubble
-      ctx.strokeStyle = `rgba(160,240,255,${0.5 * fade})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(W.x + (this.flip ? -6 : 6), W.y - 4); ctx.lineTo(this.x + Math.cos(tt * 2) * R * 0.5, this.y + Math.sin(tt * 2) * R * 0.5); ctx.stroke(); // the thread of magic from her hand
     }
     if (this.invisible) { const tt = performance.now() / 1000; ctx.strokeStyle = `rgba(200,220,96,${0.35 + Math.sin(tt * 6) * 0.15})`; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.lineDashOffset = -tt * 20; ctx.beginPath(); ctx.arc(this.x, this.y, 13, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 0.28 + Math.sin(tt * 9) * 0.08; }
     const blink = this.invuln > 0 && Math.floor(this.invuln * 20) % 2 === 0;
