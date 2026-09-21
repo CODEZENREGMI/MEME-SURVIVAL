@@ -525,6 +525,24 @@ const SPRITE_DATA = {
     '....KggK.KggK...',
     '....KKKK.KKKK...',
   ],
+  fiona: [
+    '.....KYKYK......',
+    '...KRRRRRRRK....',
+    '..KRRRRRRRRRK...',
+    '.KRRKSSSSSKRRK..',
+    '.KRRKSEGSEKRRK..',
+    '.KRRKSSSPSKRRK..',
+    '..KRKSSKKSKRK...',
+    '..KRRKSSSSKRRK..',
+    '...KDDGGGGDDK...',
+    '...KDDYYYYDDK...',
+    '...KDDDDDDDDK...',
+    '..KDDDDDDDDDDK..',
+    '..KDDDDDDDDDDK..',
+    '.KDDDDDDDDDDDDK.',
+    '.KKKKKKKKKKKKKK.',
+    '...KKK....KKK...',
+  ],
   eggreck_portrait: [
     '..........KKKKKKKKKK..........',
     '........KKGGGGGGGGGGKK........',
@@ -685,6 +703,7 @@ const Sprites = {
     this.cache.beast = this.make(SPRITE_DATA.beast, BEAST_PAL);
     this.cache.venom = this.make(SPRITE_DATA.genom_venom, { D: '#101014', d: '#2a2a34', W: '#f4f2ea', K: '#000000' });
     this.cache.frog = this.make(SPRITE_DATA.frogepepe_frog, CHARACTERS.frogepepe.pal);
+    this.cache.fiona = this.make(SPRITE_DATA.fiona, { K: '#1e2a10', R: '#b0402a', S: '#9cc23a', E: '#5a3a1a', G: '#7a9a2a', P: '#6e9424', D: '#1f7a3a', Y: '#e8b84a', W: '#f4f2ea' });
     this.cache.katana = this.make(SPRITE_DATA.katana, { K: '#141018', W: '#f4f2ea', R: '#c0202a', G: '#3aa03a', r: '#b8202a', M: '#d8dce8' });
     this.cache.demon = this.make(SPRITE_DATA.bezuko_demon, Object.assign({}, CHARACTERS.bezuko.pal, { S: '#e9dccf', s: '#d0b8a8', E: '#ff3d8a' }));
     this.cache.gun_flesh = this.make(SPRITE_DATA.gun_flesh, FLESH_PAL);

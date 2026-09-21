@@ -61,7 +61,7 @@ class Player {
     this.webZip = null; this.webCd = 0; this.pullCd = 0; this.pulling = null;
     this.sym = 'human'; this.symT = 0; this.clawCd = 0; this.captureCd = 0; this.capturing = null;
     this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0; this.armyCd = 0; this.armyTime = 0;
-    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0;
+    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -552,7 +552,19 @@ class Player {
     c.muzzle[0] -= dt; c.muzzle[1] -= dt;
     return true;
   }
+  useWife() {
+    const wf = this.char.wife, g = this.game; if (!wf) return false;
+    if (this.wifeT > 0) return false;
+    if (this.wifeCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `WIFE IN ${Math.ceil(this.wifeCd)}s`, '#9aa3b5'); return false; }
+    this.wifeT = wf.duration; this.wifePos = { x: this.x - (this.flip ? -1 : 1) * 16, y: this.y + 2 };
+    for (let i = 0; i < 14; i++) g.particles.push(new Particle(this.wifePos.x, this.wifePos.y, (Math.random() - 0.5) * 50, -20 - Math.random() * 40, 0.5, i % 2 ? '#7fd35a' : '#e8b84a', 2, 'smoke'));
+    Audio8.play('levelup'); Audio8.play('health'); g.shake(1.5); g.lights.push({ x: this.x, y: this.y, r: 100, life: 0.3, max: 0.3 });
+    g.showAbilityBanner('MY WIFE', `${wf.duration}s · she holds the shield · nothing gets through`);
+    return true;
+  }
   charAbility2() {
+    const wf = this.char.wife;
+    if (wf) { if (this.wifeT > 0) return { name: 'SHIELDED', state: 'active', frac: this.wifeT / wf.duration, sub: `${Math.ceil(this.wifeT)}s · SHE'S GOT YOU` }; if (this.wifeCd > 0) return { name: wf.name, state: 'cd', frac: 1 - this.wifeCd / wf.cooldown, sub: `RECHARGING ${Math.ceil(this.wifeCd)}s` }; return { name: wf.name, state: 'ready', frac: 1, sub: '[F] CALL HER' }; }
     const fr = this.char.frog;
     if (fr) { const ar = fr.army; if (!this.frog) return { name: ar.name, state: 'cd', frac: 0, sub: 'NEEDS FROG FORM' }; if (this.armyTime > 0) return { name: ar.name, state: 'active', frac: this.armyTime / ar.duration, sub: `${Math.ceil(this.armyTime)}s · ${this.game.clones.filter(c => c.frogling).length} FROGS` }; if (this.armyCd > 0) return { name: ar.name, state: 'cd', frac: 1 - this.armyCd / ar.cd, sub: `RECHARGING ${Math.ceil(this.armyCd)}s` }; return { name: ar.name, state: 'ready', frac: 1, sub: '[R] RELEASE THE FROGS' }; }
     const sb = this.char.symbiote;
@@ -754,8 +766,10 @@ class Player {
     this.upgrades[id]++;
     if (id === 'maxhp') { this.maxHp += 25; this.hp = this.maxHp; if ((this.form !== 'human' || this.sym !== 'human') && this.humanMaxHp) this.humanMaxHp += 25; }
   }
+  get shielded() { return this.wifeT > 0; }
   hurt(dmg, fromX, fromY, invuln = 0.5) {
     if (this.invuln > 0 || this.dead || this.game.god) return;
+    if (this.shielded) { this.shieldHit = 0.25; this.invuln = 0.15; Audio8.play('click'); this.game.floatText(this.x, this.y - 22, 'BLOCKED', '#8af0ff'); const a = fromX != null ? Math.atan2(fromY - this.y, fromX - this.x) : this.angle; for (let i = 0; i < 4; i++) this.game.particles.push(new Particle(this.x + Math.cos(a) * 30, this.y + Math.sin(a) * 30, Math.cos(a) * 40 + (Math.random() - 0.5) * 40, Math.sin(a) * 40 + (Math.random() - 0.5) * 40, 0.3, '#8af0ff', 2, 'dot')); return; }
     if (this.beast) dmg = Math.round(dmg * this.tf.armor);
     if (this.venom) dmg = Math.round(dmg * this.sb.armor);
     if (this.frog) dmg = Math.round(dmg * this.fr.armor);
@@ -777,7 +791,7 @@ class Player {
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x); this.flip = Math.cos(this.angle) < 0;
     if (input.keys[' ']) { input.keys[' '] = false; this.useCharAbility(); }
     if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else this.useAbility(); }
-    if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); }
+    if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); else if (this.char.wife) this.useWife(); }
     if (input.keys.r && this.venom) { input.keys.r = false; this.useCapture(); }
     if (input.keys.r && this.frog) { input.keys.r = false; this.useFrogArmy(); } // R = FROG ARMY as the frog (no guns to reload) // R = CAPTURE in venom form (no guns to reload)
     if (input.keys.t) { input.keys.t = false; if (this.char.symbiote) this.toggleSymbiote(); }
@@ -789,6 +803,10 @@ class Player {
     if (this.char.stealth) { const st = this.char.stealth;
       if (this.invis > 0) { this.invis -= dt; if (this.invis <= 0) { this.invis = 0; this.invisCd = st.cooldown; this.game.floatText(this.x, this.y - 18, 'VISIBLE AGAIN', '#c9cfdb'); Audio8.play('flicker'); } }
       else if (this.invisCd > 0) { this.invisCd -= dt; if (this.invisCd <= 0) { this.invisCd = 0; this.game.floatText(this.x, this.y - 18, 'VANISH READY', '#8bd35a'); Audio8.play('xp'); } } }
+    if (this.char.wife) { const wf = this.char.wife; this.shieldHit -= dt;
+      if (this.wifeT > 0) { this.wifeT -= dt; const W = this.wifePos, tx = this.x - (this.flip ? -1 : 1) * 16, ty = this.y + 2; W.x += (tx - W.x) * Math.min(1, dt * 6); W.y += (ty - W.y) * Math.min(1, dt * 6);
+        if (this.wifeT <= 0) { this.wifeT = 0; this.wifeCd = wf.cooldown; this.game.floatText(W.x, W.y - 18, 'bye honey', '#c9cfdb'); Audio8.play('swap'); for (let i = 0; i < 10; i++) this.game.particles.push(new Particle(W.x, W.y, (Math.random() - 0.5) * 40, -20 - Math.random() * 30, 0.5, '#7fd35a', 2, 'smoke')); this.wifePos = null; } }
+      else if (this.wifeCd > 0) { this.wifeCd -= dt; if (this.wifeCd <= 0) { this.wifeCd = 0; this.game.floatText(this.x, this.y - 18, 'WIFE READY', '#8bd35a'); Audio8.play('xp'); } } }
     if (this.carCd > 0 && !this.car) { this.carCd -= dt; if (this.carCd <= 0) { this.carCd = 0; this.game.floatText(this.x, this.y - 18, 'ROLL OUT READY', '#5a8ad8'); Audio8.play('xp'); } }
     if (this.car) { this.updateVehicle(dt, input); return; }
     const zipping = this.char.web ? this.updateWeb(dt) : false;
@@ -901,6 +919,15 @@ class Player {
     }
     // shadow
     ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 7, 6, 3, 0, 0, TAU); ctx.fill();
+    if (this.wifeT > 0 && this.wifePos) { // she stands at his side; the shield bubble is hers
+      const W = this.wifePos, wf = this.char.wife, tt = performance.now() / 1000, fade = Math.min(1, this.wifeT / 1, (wf.duration - this.wifeT) * 3 + 0.2), R = wf.radius + Math.sin(tt * 4) * 1.5, hitK = Math.max(0, this.shieldHit) * 4;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(W.x, W.y + 7, 6, 3, 0, 0, TAU); ctx.fill();
+      Sprites.draw(ctx, 'fiona', W.x, W.y + (Math.sin(tt * 3) * 0.8), { flip: this.flip, ox: -8, oy: -9, alpha: fade });
+      const gr = ctx.createRadialGradient(this.x, this.y, R * 0.5, this.x, this.y, R); gr.addColorStop(0, `rgba(120,230,255,${0.04 * fade})`); gr.addColorStop(0.85, `rgba(120,230,255,${(0.16 + hitK * 0.3) * fade})`); gr.addColorStop(1, `rgba(120,230,255,${0.3 * fade})`); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.fill();
+      ctx.strokeStyle = `rgba(180,245,255,${(0.6 + hitK * 0.4) * fade})`; ctx.lineWidth = 1.5 + hitK * 2; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,255,255,${0.35 * fade})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(this.x, this.y, R - 4, -0.6 + tt * 1.5, 0.4 + tt * 1.5); ctx.stroke(); // a gleam travelling around the bubble
+      ctx.strokeStyle = `rgba(160,240,255,${0.5 * fade})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(W.x + (this.flip ? -6 : 6), W.y - 4); ctx.lineTo(this.x + Math.cos(tt * 2) * R * 0.5, this.y + Math.sin(tt * 2) * R * 0.5); ctx.stroke(); // the thread of magic from her hand
+    }
     if (this.invisible) { const tt = performance.now() / 1000; ctx.strokeStyle = `rgba(200,220,96,${0.35 + Math.sin(tt * 6) * 0.15})`; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.lineDashOffset = -tt * 20; ctx.beginPath(); ctx.arc(this.x, this.y, 13, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 0.28 + Math.sin(tt * 9) * 0.08; }
     const blink = this.invuln > 0 && Math.floor(this.invuln * 20) % 2 === 0;
     if (!blink || this.dead) Sprites.draw(ctx, this.hurtFlash > 0 ? 'player_hurt' : this.sprite, this.x, this.y + bob, { flip: this.flip, ox: -8, oy: -9 });
@@ -1899,6 +1926,7 @@ class EnemyBullet {
     if (map.solidAt(nx, ny) || nx < 0 || ny < 0 || nx > map.pw || ny > map.ph) { this.impact(); return; }
     this.x = nx; this.y = ny;
     if (this.rocket) { this.smoke -= dt; if (this.smoke <= 0) { this.smoke = 0.03; this.game.particles.push(new Particle(this.x, this.y, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, 0.5, '#9a9a9a', 2, 'smoke')); } }
+    { const P = this.game.player; if (P.shielded && !P.dead && dist(this.x, this.y, P.x, P.y) < P.char.wife.radius) { P.shieldHit = 0.25; this.dead = true; this.game.spark(this.x, this.y, 3); Audio8.play('click'); this.game.floatText(this.x, this.y - 8, 'BLOCKED', '#8af0ff'); return; } }
     for (const p of this.game.targets()) {
       if (p.dead || dist(this.x, this.y, p.x, p.y) >= p.r + 3) continue;
       if (this.explosive) { this.impact(); return; }

@@ -215,7 +215,8 @@ const CHARACTERS = {
   eggreck: { name: 'Eggreck', tag: 'Stealth · meme', hp: 100, speed: 1.05, damage: 1.05, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'eggreck', portrait: 'eggreck_portrait',
             desc: 'Shrek in an egg. VANISH (Space) makes him invisible for 20 s — no zombie, boss or cannon can see him, and he keeps shooting the whole time. Resets 20 s after it ends.',
             pal: { K: '#1e2a10', G: '#9cc23a', g: '#6e9424', L: '#c8dc60', W: '#f4f2ea', E: '#5a3a1a', B: '#3a4a18', T: '#e8e0c8', P: '#c88a70', M: '#3a1a10' },
-            stealth: { name: 'VANISH', duration: 20, cooldown: 20 } },
+            stealth: { name: 'VANISH', duration: 20, cooldown: 20 },
+            wife: { name: 'MY WIFE', duration: 20, cooldown: 20, radius: 34 } },   // F: she shows up and holds a shield over him — bites and shells bounce off
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck'];
 

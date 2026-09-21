@@ -317,7 +317,7 @@ class Game {
       if (key === 'Escape') { if (this.ui.closeModals()) return; if (this.state === 'shop') { this.closeShop(); return; } if (this.state === 'playing' || this.state === 'wavebreak') this.pause(); else if (this.state === 'paused') this.resume(); }
       if (key === 't') k.t = true;
       if (key === 'b' || key === 'Tab') { if (this.state === 'shop' || this.state === 'playing' || this.state === 'wavebreak') { e.preventDefault(); this.toggleShop(); } }
-      if (key === 'f') { if (e.shiftKey || !(this.player.char.pull && (this.state === 'playing' || this.state === 'wavebreak'))) this.ui.toggleFullscreen(); else k.f = true; } // F = WEB PULL for Spider Mad; Shift+F always = fullscreen
+      if (key === 'f') { if (e.shiftKey || !((this.player.char.pull || this.player.char.wife) && (this.state === 'playing' || this.state === 'wavebreak'))) this.ui.toggleFullscreen(); else k.f = true; } // F = WEB PULL for Spider Mad; Shift+F always = fullscreen
       if (this.state === 'playing' || this.state === 'wavebreak') {
         if (key >= '1' && key <= '9') { const id = this.player.weaponOrder[key - 1]; if (id) this.player.switchTo(id); }
         if (key === 'q') this.player.cycle(1);
@@ -334,7 +334,7 @@ class Game {
       const r = this.cartRect; if (r && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= r.x && this.input.mouseX <= r.x + r.w && this.input.mouseY >= r.y && this.input.mouseY <= r.y + r.h) { this.openShop(); return; }
       const ar = this.abilityRect; if (ar && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= ar.x && this.input.mouseX <= ar.x + ar.w && this.input.mouseY >= ar.y && this.input.mouseY <= ar.y + ar.h) { this.player.useAbility(); return; }
       const cr = this.carRect; if (cr && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= cr.x && this.input.mouseX <= cr.x + cr.w && this.input.mouseY >= cr.y && this.input.mouseY <= cr.y + cr.h) { this.player.toggleCar(); return; }
-      const tr2 = this.transformRect2; if (tr2 && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr2.x && this.input.mouseX <= tr2.x + tr2.w && this.input.mouseY >= tr2.y && this.input.mouseY <= tr2.y + tr2.h) { if (this.player.char.frog) this.player.useFrogArmy(); else if (this.player.char.symbiote) this.player.useCapture(); else this.player.usePull(); return; }
+      const tr2 = this.transformRect2; if (tr2 && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr2.x && this.input.mouseX <= tr2.x + tr2.w && this.input.mouseY >= tr2.y && this.input.mouseY <= tr2.y + tr2.h) { if (this.player.char.wife) this.player.useWife(); else if (this.player.char.frog) this.player.useFrogArmy(); else if (this.player.char.symbiote) this.player.useCapture(); else this.player.usePull(); return; }
       const tr = this.transformRect; if (tr && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr.x && this.input.mouseX <= tr.x + tr.w && this.input.mouseY >= tr.y && this.input.mouseY <= tr.y + tr.h) { this.player.useCharAbility(); return; }
       this.input.mouseDown = true; });
     window.addEventListener('mouseup', e => { if (e.button === 2) this.input.rightDown = false; else this.input.mouseDown = false; });
