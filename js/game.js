@@ -28,7 +28,7 @@ class Game {
     if (this.state === 'menu' || this.state === 'gameover') { this.ui.closeModals(); this.start(); }
     if (this.state === 'paused') this.resume();
     if (this.state === 'levelup') { this.ui.hideLevelUp(); this.pendingLevelUps = 0; }
-    if (this.event) this.endEvent(true);
+    if (this.event) this.endEvent(true); this.bonaGone();
     this.zombies = []; this.ebullets = []; this.bullets = []; this.boss = null; this.state = 'playing'; this.ui.setState('playing');
     this.startWave(wave); this.admin = true; this.ui.toast(`Admin: wave ${wave}`);
   }
@@ -54,7 +54,7 @@ class Game {
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0;
-    if (this.event) this.endEvent(true); this.event = null; this.eventFlicker = 0;
+    if (this.event) this.endEvent(true); this.bonaGone(); this.event = null; this.eventFlicker = 0;
     this.siege = !!this.map.cfg.house; this.house = null; this.turrets = []; this.siegeTimer = 0;
     if (this.siege) this.setupHouse(1);
     this.map.dctx.clearRect(0, 0, this.map.pw, this.map.ph);
@@ -237,6 +237,7 @@ class Game {
   /* ------------------------------------------------------------ events */
   onZombieDeath(z) {
     this.kills[z.type]++; this.score += z.cfg.score; Audio8.play('zdie'); this.player.onBeastKill();
+    if (z.bk && z.bk.bona) { this.bonaGone(); this.shake(14); this.whiteFlash = 0.4; Audio8.play('roar'); Audio8.play('explode'); this.floatText(z.x, z.y - 60, 'BONA FALLS', '#ffb060'); }
     if (this.settings.blood) this.map.splat(z.x, z.y, z.cfg.boss ? 22 : 7 * z.scale, z.type === 'exploder' ? '#6b2a08' : '#6b1410');
     this.blood(z.x, z.y, z.cfg.boss ? 30 : 8, z.type === 'exploder' ? '#ff8a20' : '#b3221a');
     if (z.type === 'exploder') this.explode(z.x, z.y, z.cfg.explodes, z.cfg.damage, false);
@@ -291,6 +292,15 @@ class Game {
     this.flash = 0.05; this.lights.push({ x, y, r: 130, life: 0.08, max: 0.08 });
   }
   showAbilityBanner(name, sub) { this.ui.showBanner(name, sub); }
+  /* Bona rises: the lights go out until it's dead */
+  bonaArrive(z) {
+    this.shake(16); this.darkFlash = 0.9; Audio8.play('roar'); Audio8.play('scream'); Audio8.play('explode');
+    if (!this.map.cfg.dark) { this.bonaDark = true; this.map.cfg.dark = true; this.map.lamps.forEach((l, i) => l.broken = i % 2 === 0); Audio8.stopMusic(); Audio8.startMusic(true); }
+    this.ui.showBanner('BONA', 'The ground splits. Something is climbing out.'); this.floatText(z.x, z.y - 80, 'BONA', '#ff7a1a');
+    for (let i = 0; i < 40; i++) { const a = i / 40 * TAU, sp = 120 + Math.random() * 120; this.particles.push(new Particle(z.x, z.y, Math.cos(a) * sp, Math.sin(a) * sp * 0.5 - 60, 0.8, i % 3 ? '#3a3a40' : '#ff7a1a', 4, 'blood')); }
+    this.map.splat(z.x, z.y, 30, '#0e0e10'); this.lights.push({ x: z.x, y: z.y, r: 260, life: 0.8, max: 0.8 });
+  }
+  bonaGone() { if (!this.bonaDark) return; this.bonaDark = false; if (!this.event) { this.map.cfg.dark = false; this.map.lamps.forEach(l => l.broken = false); Audio8.stopMusic(); Audio8.startMusic(false); } }
   floatText(x, y, text, color) { this.particles.push(new Particle(x, y, 0, -28, 0.9, color, 0, 'text', String(text))); }
 
   /* ------------------------------------------------------------ input */
@@ -606,6 +616,7 @@ class Game {
     });
     // exploders glow, crates beacon, transient lights (muzzle / explosions)
     this.zombies.forEach(z => { if (z.type === 'exploder') radial(z.x, z.y + 2, 26 + (z.fuse >= 0 ? Math.sin(t * 40) * 8 : 0), 0.9, 0.1); if (z.burn > 0) radial(z.x, z.y, 34 + Math.sin(t * 30 + z.walk) * 4, 0.9, 0.1); if (z.kind === 'kraken') radial(z.x, z.y, 48, 0.75, 0.2); if (z.kind === 'ravager') radial(z.x, z.y - z.height, 40, 0.7, 0.15); });
+    this.zombies.forEach(z => { if (z.bk && z.bk.bona) radial(z.x, z.y - 10, 110 + Math.sin(t * 9) * 8 + (z.enraged ? 30 : 0), 1, 0.15); });
     this.ebullets.forEach(b => { if (b.cannon) radial(b.x, b.y, 30, 0.8); });
     this.bullets.forEach(b => { if (b.flame) radial(b.x, b.y, 16, 0.5); });
     this.ebullets.forEach(b => radial(b.x, b.y, b.flame ? 16 : 10, 0.6));

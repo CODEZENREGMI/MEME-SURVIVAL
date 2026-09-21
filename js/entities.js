@@ -1143,6 +1143,7 @@ class Zombie {
       this.cdMult = sc.cd; this.dmgMult = sc.dmg; this.sprite = 'boss_' + kind; this.r = Math.round(7 * bk.scale);
       this.gunCd = 2.5; this.burstLeft = 0; this.burstTimer = 0; this.aiming = 0; this.strafeDir = Math.random() < 0.5 ? -1 : 1; this.strafeT = 2; this.los = false;
       if (bk.ravager) { this.r = 24; this.gunSide = 0; this.shots = 0; this.leap = null; this.leapCd = 5; this.enraged = false; this.height = 0; this.muzzle = [0, 0]; }
+      if (bk.bona) { this.r = 28; this.slam = 0; this.slamCd = 4; this.chargeCd = 3.5; this.rush = null; this.spitCd = 2; this.enraged = false; this.height = 0; this.ember = 0; this.cracks = Array.from({ length: 9 }, (_, i) => ({ x: -20 + (i * 37) % 44, y: -18 + (i * 23) % 26, l: 4 + (i * 7) % 6, v: (i % 3) - 1, ph: i * 1.3 })); game.bonaArrive(this); }
       if (bk.kraken) { this.r = 26; this.gunSide = 0; this.spiral = false; this.spiralAngle = 0; this.slam = 0; this.slamCd = 3; this.enraged = false; this.summonCd = 5; }
     }
     this.flip = false; this.walk = Math.random() * 10; this.hit = 0; this.attackCd = Math.random() * 0.5; this.dead = false;
@@ -1285,6 +1286,42 @@ class Zombie {
         return { speedMult, steer };
       } else if (this.leapCd <= 0 && d > 120 && d < 420 && this.los) { this.leap = { phase: 'crouch', t: 0 }; g.floatText(this.x, this.y - 50, 'LEAP!', '#ff6a5a'); }
     }
+    if (bk.bona) { // a brawler: no ranged kiting — it walks you down, charges, slams the ground and spits magma
+      this.slamCd -= dt; this.chargeCd -= dt; this.spitCd -= dt; this.los = g.map.los(this.x, this.y, player.x, player.y);
+      if (!this.enraged && this.hp < this.maxHp * 0.4) { this.enraged = true; this.cdMult *= 0.6; this.speed *= 1.3; g.shake(12); g.darkFlash = 0.5; g.floatText(this.x, this.y - 70, 'THE ROCK CRACKS OPEN', '#ff7a1a'); Audio8.play('roar'); Audio8.play('explode'); for (let i = 0; i < 4; i++) g.spawnZombie('fast', this.x + (Math.random() - 0.5) * 80, this.y + (Math.random() - 0.5) * 80); }
+      if (this.rush) { // charge: a roar wind-up, then a straight sprint through everything
+        const R = this.rush; R.t += dt;
+        if (R.phase === 'roar') { speedMult = 0; steer = { x: 0, y: 0 }; g.shakeAmt = Math.max(g.shakeAmt, 1.5); if (R.t >= 0.7) { R.phase = 'go'; R.t = 0; const a = Math.atan2(player.y - this.y, player.x - this.x); R.ax = Math.cos(a); R.ay = Math.sin(a); Audio8.play('roar'); g.shake(6); } }
+        else {
+          speedMult = 4.4; steer = { x: R.ax, y: R.ay }; g.shakeAmt = Math.max(g.shakeAmt, 2.5);
+          for (let i = 0; i < 2; i++) g.particles.push(new Particle(this.x - R.ax * 20 + (Math.random() - 0.5) * 24, this.y + 14, -R.ax * 40 + (Math.random() - 0.5) * 30, -20 - Math.random() * 30, 0.6, '#3a3a40', 3, 'smoke'));
+          if (!R.hit && d < this.r + player.r + 8) { R.hit = true; player.hurt(Math.round(this.damage * 1.4), this.x, this.y); g.shake(12); Audio8.play('thud'); }
+          for (const pr of g.map.cars) { if (pr.taken || pr.type === 'car_wreck') continue; if (Math.abs(this.x - pr.x) < 30 && Math.abs(this.y - pr.y) < 18) g.damageCar(pr, 600, pr.x, pr.y); }
+          for (const z of g.zombies) { if (z === this || z.dead || z.cfg.boss) continue; if (dist(this.x, this.y, z.x, z.y) < this.r + z.r) z.takeDamage(60, Math.atan2(z.y - this.y, z.x - this.x), undefined, 6); } // it doesn't care what's in the way
+          if (R.t >= 1.0 || R.hit) { this.rush = null; this.chargeCd = 6.5 * this.cdMult; }
+        }
+        return { speedMult, steer };
+      }
+      if (this.slam > 0) { // ground slam: rears up, then the ground itself hits you
+        this.slam -= dt; speedMult = 0; steer = { x: 0, y: 0 }; this.height = Math.sin(Math.min(1, (0.6 - this.slam) / 0.6) * Math.PI) * 26;
+        if (this.slam <= 0) {
+          this.height = 0; this.slamCd = 4.5 * this.cdMult; const dl = Math.hypot(player.x - this.x, player.y - this.y); if (dl < 125) player.hurt(this.damage, this.x, this.y);
+          g.shake(16); Audio8.play('thud'); Audio8.play('explode'); g.map.splat(this.x, this.y, 16, '#0e0e10'); g.lights.push({ x: this.x, y: this.y, r: 180, life: 0.35, max: 0.35 });
+          for (let i = 0; i < 28; i++) { const a = i / 28 * TAU, sp = 140 + Math.random() * 60; g.particles.push(new Particle(this.x + Math.cos(a) * 24, this.y + 10 + Math.sin(a) * 10, Math.cos(a) * sp, Math.sin(a) * sp * 0.5 - 40, 0.55, i % 3 ? '#3a3a40' : '#ff7a1a', 3, 'blood')); }
+          for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 60, this.y + 6 + Math.sin(a) * 30, Math.cos(a) * 120, Math.sin(a) * 60, 0.3, '#ffb060', 3, 'fire')); }
+        }
+        return { speedMult, steer };
+      }
+      if (this.slamCd <= 0 && d < 105) { this.slam = 0.6; Audio8.play('growl'); g.floatText(this.x, this.y - 70, 'SLAM!', '#ff7a1a'); }
+      else if (this.chargeCd <= 0 && d > 140 && d < 460 && this.los) { this.rush = { phase: 'roar', t: 0, hit: false }; g.floatText(this.x, this.y - 70, 'ROAR!', '#ff2a2a'); Audio8.play('roar'); g.shake(4); }
+      else if (this.spitCd <= 0 && d > 90 && d < 330 && this.los) { // a fan of burning rock from the mouth
+        this.spitCd = bk.gun.cd * this.cdMult; const base = Math.atan2(player.y - this.y, player.x - this.x), mx = this.x + Math.cos(base) * 34, my = this.y - 12 + Math.sin(base) * 34;
+        for (let i = 0; i < bk.gun.pellets; i++) g.ebullets.push(new EnemyBullet(g, mx, my, base + (i - (bk.gun.pellets - 1) / 2) * 0.14 + (Math.random() - 0.5) * bk.gun.spread, bk.gun, this));
+        g.lights.push({ x: mx, y: my, r: 110, life: 0.25, max: 0.25 }); Audio8.play('flame'); Audio8.play('growl'); g.shake(3);
+      }
+      if (d > 30) speedMult *= this.enraged ? 1.15 : 1; else { speedMult = 0.2; }
+      return { speedMult, steer };
+    }
     if (bk.kraken) {
       if (!this.enraged && this.hp < this.maxHp * 0.5) { this.enraged = true; this.cdMult *= 0.65; this.speed *= 1.35; g.shake(8); g.floatText(this.x, this.y - 40, 'ENRAGED!', '#ff2a2a'); Audio8.play('scream'); }
       this.slamCd -= dt;
@@ -1349,6 +1386,7 @@ class Zombie {
     ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 7 * s, 6 * s, 3 * s, 0, 0, TAU); ctx.fill();
     if (this.bk && this.bk.kraken) { this.drawKraken(ctx); return; }
     if (this.bk && this.bk.ravager) { this.drawRavager(ctx); return; }
+    if (this.bk && this.bk.bona) { this.drawBona(ctx); return; }
     const spriteName = this.sprite || (this.game.map.id === 'lab' && !this.cfg.boss && Sprites.get(this.cfg.sprite + '_lab') ? this.cfg.sprite + '_lab' : this.cfg.sprite);
     const name = this.hit > 0 ? null : spriteName;
     if (name) Sprites.draw(ctx, name, this.x, this.y + bob, { flip: this.flip, scale: s, ox: -8 * s, oy: -9 * s });
@@ -1425,6 +1463,55 @@ class Zombie {
     if (vs) return; // the ally draws its own label and bar
     ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText('RAVAGER', this.x + 1, this.y - 61 - h); ctx.fillStyle = en ? '#ff4a3a' : '#e8e6dc'; ctx.fillText(en ? 'RAVAGER ★' : 'RAVAGER', this.x, this.y - 62 - h); ctx.textAlign = 'left';
     if (this.hp < this.maxHp) { const w = 70, hh = 4, yy = this.y - 54 - h; ctx.fillStyle = '#111'; ctx.fillRect(this.x - w / 2 - 1, yy - 1, w + 2, hh + 2); ctx.fillStyle = en ? '#ff3a2a' : '#c05aff'; ctx.fillRect(this.x - w / 2, yy, w * clamp(this.hp / this.maxHp, 0, 1), hh); }
+  }
+  /* ---- Bona: a mountain of black rock on four limbs, fire glowing through the cracks, a jaw full of teeth ---- */
+  drawBona(ctx) {
+    const g = this.game, t = g.time, p = this.target || g.player, white = this.hit > 0, en = this.enraged, h = this.height;
+    const flip = p.x < this.x, rushing = this.rush && this.rush.phase === 'go', roaring = this.rush && this.rush.phase === 'roar';
+    const rock = white ? '#fff' : '#26262a', dark = white ? '#e8e8e8' : '#0e0e10', light = white ? '#fff' : '#3d3d44', edge = white ? '#fff' : '#55555e';
+    const glowC = en ? '#ff3a1a' : '#ff7a1a', glowB = en ? '#ffb060' : '#ffd080', tooth = '#f4f2ea', mouth = en ? '#ff4a1a' : '#e85a10';
+    const R = (x, y, w, hh, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(hh)); };
+    const S = 1.7, flick = 0.65 + Math.sin(t * 9) * 0.15 + Math.sin(t * 23) * 0.1 + (en ? 0.2 : 0);
+    // heat glow on the ground and embers rising off the body
+    const gr = ctx.createRadialGradient(this.x, this.y, 6, this.x, this.y, 70 + (en ? 20 : 0)); gr.addColorStop(0, `rgba(255,110,30,${0.22 * flick})`); gr.addColorStop(1, 'rgba(255,110,30,0)'); ctx.fillStyle = gr; ctx.fillRect(this.x - 100, this.y - 100, 200, 200);
+    this.ember -= 1 / 60; if (this.ember <= 0) { this.ember = en ? 0.05 : 0.12; g.particles.push(new Particle(this.x + (Math.random() - 0.5) * 50, this.y - 10 - h + (Math.random() - 0.5) * 30, (Math.random() - 0.5) * 20, -30 - Math.random() * 40, 0.8 + Math.random() * 0.6, Math.random() < 0.6 ? glowC : glowB, 2, 'fire')); }
+    ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 22, 42 - h * 0.3, 12 - h * 0.1, 0, 0, TAU); ctx.fill();
+    ctx.save(); ctx.translate(this.x, this.y + 6 - h); ctx.scale(flip ? -S : S, S * (roaring ? 1 + Math.sin(t * 40) * 0.02 : 1)); if (rushing) ctx.transform(1, 0, 0.25, 1, 0, 0);
+    const step = Math.sin(this.walk * 1.4), bob = this.moving !== false && !this.slam ? Math.abs(Math.sin(this.walk * 1.4)) * 1.5 : 0;
+    // rear leg (far side) and rear leg (near side)
+    R(-24 + step * 2, -2, 9, 12, dark); R(-26 + step * 2, 8, 12, 5, dark);
+    R(-18 - step * 2, 0, 10, 12, rock); R(-21 - step * 2, 9, 14, 5, dark); [0, 4, 8].forEach(c => R(-21 - step * 2 + c, 13, 2, 2, edge));
+    // body: a boulder, hunched high at the shoulders
+    R(-26, -20 + bob, 46, 26, rock); R(-24, -24 + bob, 34, 8, rock); R(-22, -18 + bob, 30, 8, light); R(-26, 2 + bob, 46, 4, dark);
+    // plates / scales
+    for (let i = 0; i < 6; i++) R(-22 + i * 7, -8 + bob + (i % 2) * 3, 5, 2, dark);
+    // spikes on the back and shoulders
+    for (let i = 0; i < 7; i++) { const sx = -24 + i * 6, sh = 6 + ((i * 5) % 7) + (i === 3 ? 5 : 0); R(sx, -24 + bob - sh, 3, sh, i % 2 ? dark : edge); R(sx + 1, -24 + bob - sh, 1, 2, edge); }
+    [[-4, -30], [4, -34], [12, -30]].forEach(([sx, sy]) => { R(sx, sy + bob, 3, 8, edge); R(sx, sy + bob, 1, 8, dark); });
+    // glowing cracks in the rock (they pulse; brighter when enraged)
+    ctx.globalAlpha = Math.min(1, flick); this.cracks.forEach((c, i) => { const cy = c.y + bob; R(c.x, cy, c.l, 1, glowC); R(c.x + c.l - 1, cy + c.v, 1, 3, glowC); if (i % 2) R(c.x + 1, cy - 1, 2, 1, glowB); }); ctx.globalAlpha = 1;
+    R(-10, -12 + bob, 12, 3, glowB); R(-8, -11 + bob, 8, 1, '#fff'); // the bright chest fissure
+    // near-side forearm: enormous, knuckles on the ground
+    R(4, -10 + bob, 14, 22, rock); R(2, -12 + bob, 18, 6, light); R(2, 10, 22, 9, dark); R(4, 12, 18, 5, rock); [2, 7, 12, 17].forEach(c => R(2 + c, 17, 3, 3, edge));
+    R(6, -2 + bob, 4, 1, glowC); R(9, 4 + bob, 5, 1, glowC);
+    // far-side forearm
+    R(-8, -6 + bob, 10, 20, dark); R(-10, 12, 14, 6, dark);
+    // head: low, jutting forward; the jaw hangs open
+    const jaw = roaring ? 7 + Math.sin(t * 30) * 1.5 : this.slam > 0 ? 6 : 4 + Math.sin(t * 2) * 1;
+    R(12, -30 + bob, 24, 16, rock); R(14, -32 + bob, 18, 4, light); R(30, -26 + bob, 8, 10, rock);
+    R(14, -36 + bob, 3, 7, edge); R(22, -38 + bob, 3, 9, edge); // brow horns
+    R(26, -26 + bob, 5, 3, glowC); R(27, -26 + bob, 2, 1, '#fff'); R(19, -25 + bob, 3, 2, glowC); // eyes: one glaring, one half hidden
+    ctx.fillStyle = `rgba(255,120,40,${0.35 * flick})`; ctx.fillRect(24, -28 + bob, 10, 7);
+    // mouth: upper teeth, glowing throat, lower jaw with teeth
+    R(16, -16 + bob, 22, 3 + jaw, mouth); R(18, -15 + bob, 18, 1 + jaw, glowC);
+    [16, 20, 24, 28, 32, 35].forEach((tx, i) => R(tx, -16 + bob, 2, i % 2 ? 4 : 3, tooth));
+    R(14, -13 + jaw + bob, 24, 5, rock); R(14, -13 + jaw + bob, 24, 1, dark); [17, 22, 27, 32].forEach(tx => R(tx, -16 + jaw + bob, 2, 3, tooth));
+    ctx.restore();
+    if (this.slam > 0) { const k = 1 - this.slam / 0.6; ctx.strokeStyle = `rgba(255,120,40,${0.5 * k})`; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(this.x, this.y + 6, 125, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+    if (roaring) { ctx.font = '7px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = `rgba(255,60,40,${0.6 + Math.sin(t * 30) * 0.4})`; ctx.fillText('RRAAAAAGH', this.x, this.y - 80 - h); ctx.textAlign = 'left'; }
+    // name + hp
+    ctx.font = '7px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText('BONA', this.x + 1, this.y - 69 - h); ctx.fillStyle = en ? '#ff4a3a' : '#ffb060'; ctx.fillText(en ? 'BONA ★' : 'BONA', this.x, this.y - 70 - h); ctx.textAlign = 'left';
+    if (this.hp < this.maxHp) { const w = 84, hh = 5, yy = this.y - 62 - h; ctx.fillStyle = '#111'; ctx.fillRect(this.x - w / 2 - 1, yy - 1, w + 2, hh + 2); ctx.fillStyle = en ? '#ff3a2a' : '#ff7a1a'; ctx.fillRect(this.x - w / 2, yy, w * clamp(this.hp / this.maxHp, 0, 1), hh); }
   }
   /* ---- the Kraken: procedural octopus with two miniguns ---- */
   drawKraken(ctx) {
@@ -1632,7 +1719,7 @@ class AllyBoss {
     this.sprite = boss.sprite || boss.cfg.sprite; this.maxHp = Math.round(boss.maxHp * 0.9); this.hp = this.maxHp; this.dead = false; this.name = 'VENOM ' + this.bk.name;
     this.angle = 0; this.flip = false; this.walk = 0; this.moving = false; this.fireTimer = 1; this.attackCd = 0.5; this.hurtFlash = 0; this.invuln = 0; this.spawnT = 0; this.speed = this.bk.speed * 1.3; this.dmgMult = 1 + game.wave * 0.05;
     // fields the procedural boss drawings (Ravager / Kraken) read
-    this.venomSkin = true; this.hit = 0; this.enraged = false; this.height = 0; this.leap = null; this.slam = 0; this.charge = 0; this.aiming = 0; this.burstLeft = 0; this.spiral = false; this.gunSide = 0; this.muzzle = [0, 0]; this.target = null; this.fuse = -1;
+    this.venomSkin = true; this.hit = 0; this.enraged = false; this.height = 0; this.leap = null; this.slam = 0; this.charge = 0; this.aiming = 0; this.burstLeft = 0; this.spiral = false; this.gunSide = 0; this.muzzle = [0, 0]; this.target = null; this.fuse = -1; this.rush = null; this.ember = 0; this.cracks = boss.cracks || [];
   }
   gunTip(side) { return Zombie.prototype.gunTip.call(this, side); }
   hurt(dmg, fromX, fromY, invuln = 0.3) {
@@ -1677,6 +1764,7 @@ class AllyBoss {
   }
   draw(ctx) {
     const s = this.scale, bob = this.moving ? Math.sin(this.walk) * 1.2 : 0;
+    if (this.bk.bona) { this.hit = this.hurtFlash > 0 ? 0.1 : 0; Zombie.prototype.drawBona.call(this, ctx); ctx.fillStyle = 'rgba(95,211,90,0.25)'; ctx.fillRect(this.x - 40, this.y - 60, 80, 90); return; } // Bona in venom green haze; the label is its own
     if (this.bk.ravager || this.bk.kraken) { // keep the boss's real body, just in symbiote black
       this.hit = this.hurtFlash > 0 ? 0.1 : 0;
       if (this.bk.ravager) Zombie.prototype.drawRavager.call(this, ctx); else Zombie.prototype.drawKraken.call(this, ctx);

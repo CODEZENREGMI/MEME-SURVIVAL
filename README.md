@@ -64,8 +64,12 @@ your beam hits them; only their glowing eyes give them away.
   new kinds unlock as you go: Brute (charges) → Gunner (SMG bursts) → Shotgunner → Rifleman (laser
   sight, then a sniper shot) → Rocketeer → Flamer → Warlord (minigun + charge + summons). Every 10th wave has its own unique milestone boss: **10 – Warlord** (minigun), **20 – Ravager**
   (a hunched red demon with a cannon in each hand: single shells, five-shell salvos, a leap with a landing
-  shockwave, and a roar at half HP that summons fast zombies), **40 – Kraken** (a giant octopus with twin
-  miniguns, spiral sprays and a tentacle slam). Unassigned milestones (30, 50 …) reuse an earlier one. Two bosses
+  shockwave, and a roar at half HP that summons fast zombies), **30 – Bona** (a mountain of black rock with
+  fire glowing through its cracks and a jaw full of teeth; the lights go out on every map while it lives — it walks you
+  down, roars and charges through cars and zombies alike, rears up for a ground slam that hits everything within
+  125 px, spits a fan of burning rock, and at 40% HP the rock cracks open: faster, meaner, and it calls fast zombies),
+  **40 – Kraken** (a giant octopus with twin
+  miniguns, spiral sprays and a tentacle slam). Unassigned milestones (50 …) reuse an earlier one. Two bosses
   from wave 25, three from wave 40. The wave doesn't end until the boss is dead.
 - Pickups: Health, Ammo, Coins, XP.
 - **Supply cart:** coins you collect during the run are spent in the cart (`B`, or click the cart
