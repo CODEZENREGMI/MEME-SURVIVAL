@@ -191,8 +191,14 @@ const CHARACTERS = {
             symbiote: { name: 'SYMBIOTE', morph: 1.3, revert: 0.6, scale: 2.2, hearts: 8, armor: 0.55, speed: 1.15,
                         spit: { damage: 12, interval: 0.04, speed: 360, spread: 0.14, range: 220, pellets: 3, pierce: 1, kick: 0.4, venom: true, poison: 3 },  // a continuous stream of black symbiote
                         claw: 110, clawCd: 0.5, capture: { range: 340, duration: 10, cd: 30, name: 'CAPTURE' } } },
+  frogepepe: { name: 'Frogepepe', tag: 'Transforms · meme', hp: 95, speed: 1.0, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'frogepepe', portrait: 'frogepepe_portrait',
+            desc: 'Feels good man. FROG OUT makes him a giant frog for 30 s: LMB lashes a sticky tongue that yanks zombies in and eats them for health, SPACE hops onto the cursor and squashes whatever is under him.',
+            pal: { G: '#4f9a3e', g: '#3a7430', l: '#9ccf72', W: '#f4f2ea', K: '#111111', L: '#8b4a2a', B: '#1f3fd0', b: '#162c94' },
+            frog: { name: 'FROG OUT', duration: 30, cooldown: 45, morph: 1.2, revert: 0.6, scale: 2.2, hearts: 7, armor: 0.6, speed: 1.35,
+                    tongue: { damage: 75, range: 240, cd: 0.4, eatHeal: 6, yank: 5 },   // hitscan lash: first zombie on the line, yanked toward the frog; a kill is a meal
+                    hop: { range: 220, cd: 1.3, dur: 0.45, smash: 130, radius: 80 } } },
 };
-const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom'];
+const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe'];
 
 /* maps */
 const MAPS = {

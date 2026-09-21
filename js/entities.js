@@ -60,6 +60,7 @@ class Player {
     this.tapriTime = 0; this.tapriCd = 0;
     this.webZip = null; this.webCd = 0; this.pullCd = 0; this.pulling = null;
     this.sym = 'human'; this.symT = 0; this.clawCd = 0; this.captureCd = 0; this.capturing = null;
+    this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -76,7 +77,7 @@ class Player {
   /* is the current weapon firing for free right now? */
   get overdrive() { return this.ability.active > 0 && this.ability.weapon === this.current; }
   useAbility() {
-    const ab = this.wcfg.ability; if (!ab || this.venom || this.driving || this.form !== 'human') return false;
+    const ab = this.wcfg.ability; if (!ab || this.venom || this.frog || this.driving || this.form !== 'human') return false;
     if (this.ability.active > 0) return false;
     if (this.ability.cd > 0) { Audio8.play('empty'); this.game.floatText(this.x, this.y - 16, `${ab.name} IN ${Math.ceil(this.ability.cd)}s`, '#9aa3b5'); return false; }
     this.ability.active = ab.duration; this.ability.weapon = this.current; this.reloading = false; this.wstate.mag = this.wcfg.mag;
@@ -86,7 +87,7 @@ class Player {
   get wstate() { return this.weapons[this.current]; }
   get damageMult() { return (1 + 0.15 * this.upgrades.damage) * this.char.damage; }
   get fireMult() { return (1 + 0.12 * this.upgrades.firerate) * this.char.firerate; }
-  get speed() { return this.baseSpeed * (1 + 0.08 * this.upgrades.speed) * (this.beast ? this.tf.speed : 1) * (this.venom ? this.sb.speed : 1) * (this.rushing ? this.char.rush.speed : 1); }
+  get speed() { return this.baseSpeed * (1 + 0.08 * this.upgrades.speed) * (this.beast ? this.tf.speed : 1) * (this.venom ? this.sb.speed : 1) * (this.frog ? this.fr.speed : 1) * (this.rushing ? this.char.rush.speed : 1); }
 
   get tf() { return this.char.transform; }
   get rushing() { return this.rush > 0; }
@@ -213,6 +214,91 @@ class Player {
       g.shake(hits ? 4 : 1.5); Audio8.play(hits ? 'thud' : 'flame'); if (hits) g.blood(this.x + Math.cos(this.angle) * 30, this.y + Math.sin(this.angle) * 30, 6, '#b3221a');
     }
   }
+  /* ---- Frogepepe: FROG OUT (human -> giant frog for 30 s), TONGUE and HOP while a frog ---- */
+  get fr() { return this.char.frog; }
+  get frog() { return this.frogState === 'frog'; }
+  useFrog() {
+    const fr = this.fr, g = this.game; if (!fr || this.car) return false;
+    if (this.frogState === 'frog') return this.frogHop();
+    if (this.frogState !== 'human') return false;
+    if (this.frogCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `FROG OUT IN ${Math.ceil(this.frogCd)}s`, '#9aa3b5'); return false; }
+    this.frogState = 'morphing'; this.frogT = 0; this.reloading = false; this.invuln = fr.morph + 0.3; this.hop = null; this.tongue = null;
+    g.showAbilityBanner('FROG OUT', 'Feels good man.'); Audio8.play('moan'); Audio8.play('growl');
+    return true;
+  }
+  frogHop() {
+    const hp = this.fr.hop; if (this.hop) return false;
+    if (this.hopCd > 0) { Audio8.play('empty'); this.game.floatText(this.x, this.y - 30, `HOP IN ${this.hopCd.toFixed(1)}s`, '#9aa3b5'); return false; }
+    const inp = this.game.input, a = Math.atan2(inp.worldY - this.y, inp.worldX - this.x), d = Math.min(hp.range, dist(this.x, this.y, inp.worldX, inp.worldY));
+    this.hop = { t: 0, dur: hp.dur, sx: this.x, sy: this.y, tx: this.x + Math.cos(a) * d, ty: this.y + Math.sin(a) * d }; this.tongue = null;
+    this.invuln = hp.dur + 0.1; Audio8.play('moan'); this.game.shake(1.5); return true;
+  }
+  /* returns true while locked in an animation (morphing / reverting / mid-hop) */
+  updateFrog(dt, input) {
+    const fr = this.fr, g = this.game;
+    if (this.frogState === 'human') { if (this.frogCd > 0) { this.frogCd -= dt; if (this.frogCd <= 0) { this.frogCd = 0; g.floatText(this.x, this.y - 18, 'FROG OUT READY', '#8bd35a'); Audio8.play('xp'); } } return false; }
+    if (this.frogState === 'morphing') {
+      const prev = this.frogT; this.frogT += dt; const k = this.frogT / fr.morph; g.shakeAmt = Math.max(g.shakeAmt, 1 + k * 4); this.invuln = 0.5;
+      if (Math.random() < 0.6) { const a = Math.random() * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 12, this.y + 6, Math.cos(a) * 30, -30 - Math.random() * 40, 0.5, Math.random() < 0.5 ? '#4f9a3e' : '#9ccf72', 2 + Math.random() * 2, 'dot')); }
+      if (Math.floor(this.frogT * 5) !== Math.floor(prev * 5)) Audio8.play('moan');
+      const burstAt = fr.morph * 0.65;
+      if (prev < burstAt && this.frogT >= burstAt) { // POP: he balloons into the frog and everything nearby gets shoved
+        g.whiteFlash = 0.3; g.shakeAmt = 9; Audio8.play('roar'); Audio8.play('explode');
+        g.zombies.forEach(z => { const d = dist(this.x, this.y, z.x, z.y); if (d < 100) z.takeDamage(35 * this.damageMult, Math.atan2(z.y - this.y, z.x - this.x), undefined, 6); });
+        for (let i = 0; i < 36; i++) { const a = i / 36 * TAU, sp = 100 + Math.random() * 90; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp, 0.45, i % 3 ? '#4f9a3e' : '#c8f08a', 3, 'dot')); }
+        g.lights.push({ x: this.x, y: this.y, r: 160, life: 0.4, max: 0.4 });
+        g.showAbilityBanner('FEELS GOOD MAN', `${fr.duration}s as the frog · LMB tongue · SPACE hop`);
+      }
+      if (this.frogT >= fr.morph) { this.frogState = 'frog'; this.frogTime = fr.duration; this.hopCd = 0; this.tongueCd = 0; this.r = 9; this.humanMaxHp = this.maxHp; this.maxHp = Math.max(this.maxHp, fr.hearts * 25); this.hp = this.maxHp; }
+      return true;
+    }
+    if (this.frogState === 'reverting') {
+      this.frogT += dt; this.invuln = 0.3;
+      if (Math.random() < 0.5) g.particles.push(new Particle(this.x + (Math.random() - 0.5) * 24, this.y - 6 + Math.random() * 14, (Math.random() - 0.5) * 10, -20, 0.6, '#9ccf72', 2 + Math.random() * 2, 'smoke'));
+      if (this.frogT >= fr.revert) { this.frogState = 'human'; this.frogCd = fr.cooldown; this.r = 6; this.height = 0; const ratio = this.hp / this.maxHp; this.maxHp = this.humanMaxHp || this.char.hp; this.hp = Math.max(Math.round(this.maxHp * 0.25), Math.round(ratio * this.maxHp)); g.floatText(this.x, this.y - 18, 'feels bad man', '#c9cfdb'); Audio8.play('reloaded'); }
+      return true;
+    }
+    // ---- frog form ----
+    const wasTime = this.frogTime; this.frogTime -= dt; this.hopCd -= dt; this.tongueCd -= dt;
+    for (const w of [5, 3, 2, 1]) if (wasTime > w && this.frogTime <= w) g.floatText(this.x, this.y - 40, `${w}...`, '#9ccf72');
+    if (this.frogTime <= 0) { this.frogState = 'reverting'; this.frogT = 0; this.hop = null; this.tongue = null; this.height = 0; g.shake(3); Audio8.play('hurt'); return true; }
+    if (this.tongue) { const T = this.tongue; T.t += dt; if (T.t >= T.dur) this.tongue = null; }
+    if (this.hop) { // airborne: arc to the target, squash whatever is under the landing
+      const H = this.hop, hp = fr.hop; H.t += dt; const k = Math.min(1, H.t / H.dur); this.height = Math.sin(k * Math.PI) * 60; this.invuln = 0.2;
+      const pos = g.map.resolve(H.sx + (H.tx - H.sx) * k, H.sy + (H.ty - H.sy) * k, this.r); this.x = pos.x; this.y = pos.y;
+      if (k >= 1) {
+        this.hop = null; this.height = 0; this.hopCd = hp.cd; let hits = 0;
+        g.zombies.forEach(z => { const d = dist(this.x, this.y, z.x, z.y); if (d < hp.radius + z.r) { z.takeDamage(hp.smash * this.damageMult * (1 - d / (hp.radius * 2.6)), Math.atan2(z.y - this.y, z.x - this.x), undefined, 4); hits++; } });
+        if (g.house && !g.house.dead) { const h = g.map.house; if (Math.abs(this.x - h.x) < h.w / 2 + hp.radius && Math.abs(this.y - h.y) < h.h / 2 + hp.radius) g.damageHouse(hp.smash * this.damageMult, this.x, this.y); }
+        g.shake(8); Audio8.play('thud'); if (hits) Audio8.play('explode'); g.map.splat(this.x, this.y, 6, '#2f5a26');
+        for (let i = 0; i < 20; i++) { const a = i / 20 * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 14, this.y + 8 + Math.sin(a) * 5, Math.cos(a) * 100, Math.sin(a) * 45, 0.4, i % 2 ? '#9ccf72' : '#4f9a3e', 3, 'dot')); }
+        g.lights.push({ x: this.x, y: this.y, r: 100, life: 0.2, max: 0.2 });
+      }
+      return true;
+    }
+    return false;
+  }
+  /* LMB as the frog: a hitscan tongue lash. The first zombie on the aim line takes the hit and is yanked in; if it dies, it's lunch. */
+  frogAttacks(input) {
+    const tg = this.fr.tongue, g = this.game;
+    if (!(input.mouseDown && this.tongueCd <= 0 && !this.hop)) return;
+    this.tongueCd = tg.cd; const a = this.angle, ca = Math.cos(a), sa = Math.sin(a);
+    let best = null, bd = 1e9;
+    for (const z of g.zombies) {
+      if (z.dead) continue; const dx = z.x - this.x, dy = z.y - this.y, along = dx * ca + dy * sa, perp = Math.abs(-dx * sa + dy * ca);
+      if (along < 0 || along > tg.range || perp > z.r + 10 || along >= bd || !g.map.los(this.x, this.y, z.x, z.y)) continue; bd = along; best = z;
+    }
+    let len = best ? bd : tg.range, hit = !!best;
+    if (!best && g.house && !g.house.dead) { const h = g.map.house; for (let d = 20; d < tg.range; d += 8) { const px = this.x + ca * d, py = this.y + sa * d; if (Math.abs(px - h.x) < h.w / 2 && Math.abs(py - h.y) < h.h / 2) { len = d; hit = true; g.damageHouse(tg.damage * this.damageMult, px, py); break; } } }
+    if (!best) { for (let d = 16; d < len; d += 8) if (g.map.solidAt && g.map.solidAt(this.x + ca * d, this.y + sa * d)) { len = d; break; } }
+    this.tongue = { t: 0, dur: 0.22, ang: a, len, hit };
+    if (best) {
+      best.takeDamage(tg.damage * this.damageMult, Math.atan2(this.y - best.y, this.x - best.x), undefined, best.cfg.boss ? 2 : tg.yank); // knocked toward the frog, not away
+      if (best.dead) { this.hp = Math.min(this.maxHp, this.hp + tg.eatHeal); g.floatText(this.x, this.y - 44, 'NOM', '#9ccf72'); Audio8.play('health'); for (let i = 0; i < 6; i++) g.particles.push(new Particle(best.x, best.y, (Math.random() - 0.5) * 60, -40 - Math.random() * 40, 0.5, '#9ccf72', 2, 'dot')); }
+      else Audio8.play('thud');
+      g.shake(2);
+    } else Audio8.play(hit ? 'thud' : 'flame');
+  }
   /* F in venom form: pick a boss, drown it in liquid symbiote for 10 s — then it's ours */
   useCapture() {
     const sb = this.sb, g = this.game; if (!sb) return false; const cp = sb.capture;
@@ -254,7 +340,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -379,6 +465,13 @@ class Player {
       if (this.form !== 'human') return { name: tf.name, state: 'busy', frac: 0, sub: '...' };
       if (this.formCd > 0) return { name: tf.name, state: 'cd', frac: 1 - this.formCd / tf.cooldown, sub: `RECHARGING ${Math.ceil(this.formCd)}s` };
       return { name: tf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' };
+    }
+    const fr = this.char.frog;
+    if (fr) {
+      if (this.frogState === 'frog') return { name: 'FROG FORM', state: 'active', frac: this.frogTime / fr.duration, sub: this.hopCd > 0 ? `${Math.ceil(this.frogTime)}s · HOP IN ${this.hopCd.toFixed(1)}s` : `${Math.ceil(this.frogTime)}s · [SPACE] HOP` };
+      if (this.frogState !== 'human') return { name: fr.name, state: 'busy', frac: 0, sub: '...' };
+      if (this.frogCd > 0) return { name: fr.name, state: 'cd', frac: 1 - this.frogCd / fr.cooldown, sub: `RECHARGING ${Math.ceil(this.frogCd)}s` };
+      return { name: fr.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' };
     }
     const sb = this.char.symbiote;
     if (sb) { if (this.sym === 'venom') return { name: 'SYMBIOTE', state: 'active', frac: 1, sub: '[T] SHED · LMB SPIT · RMB CLAW' }; if (this.sym !== 'human') return { name: 'SYMBIOTE', state: 'busy', frac: 0, sub: '...' }; return { name: 'SYMBIOTE', state: 'ready', frac: 1, sub: '[T] BOND · NO TIME LIMIT' }; }
@@ -551,6 +644,7 @@ class Player {
     if (this.invuln > 0 || this.dead || this.game.god) return;
     if (this.beast) dmg = Math.round(dmg * this.tf.armor);
     if (this.venom) dmg = Math.round(dmg * this.sb.armor);
+    if (this.frog) dmg = Math.round(dmg * this.fr.armor);
     if (this.driving && this.car.civil) { // the car takes the hit — and a swarm can all chew on it at once
       this.car.hp -= dmg; this.hurtFlash = 0.2; this.invuln = 0.06; this.game.spark(this.x + (Math.random() - 0.5) * 30, this.y + (Math.random() - 0.5) * 16, 2);
       if (this.car.hp <= 0) this.wreckCar(); return;
@@ -574,6 +668,7 @@ class Player {
     if (input.keys.g) { input.keys.g = false; this.toggleCar(); }
     if (this.tf && this.updateForm(dt, input)) { this.invuln = Math.max(this.invuln, 0.1); this.walk += dt * 10; return; }
     if (this.char.symbiote && this.updateSymbiote(dt, input)) { this.walk += dt * 10; return; }
+    if (this.char.frog && this.updateFrog(dt, input)) { this.walk += dt * 10; return; }
     if (this.carCd > 0 && !this.car) { this.carCd -= dt; if (this.carCd <= 0) { this.carCd = 0; this.game.floatText(this.x, this.y - 18, 'ROLL OUT READY', '#5a8ad8'); Audio8.play('xp'); } }
     if (this.car) { this.updateVehicle(dt, input); return; }
     const zipping = this.char.web ? this.updateWeb(dt) : false;
@@ -626,6 +721,7 @@ class Player {
     if (this.char.regen > 0 && this.sinceHurt > 3 && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + this.char.regen * dt);
     this.tickReload(dt);
     if (this.venom) { this.venomAttacks(input); return; }
+    if (this.frog) { this.frogAttacks(input); return; }
     if (this.beast) return; // no guns in beast form — the Flesh Cannon / smash are handled in updateForm
     if (input.keys.r) this.startReload();
     if (input.mouseDown && this.fireTimer <= 0 && !this.reloading) this.shoot();
@@ -659,6 +755,7 @@ class Player {
     if (this.tf && this.form !== 'human') { this.drawForm(ctx); return; }
     if (this.car) { this.drawVehicle(ctx); return; }
     if (this.sym !== 'human') { this.drawSymbiote(ctx); return; }
+    if (this.frogState !== 'human') { this.drawFrog(ctx); return; }
     if (this.giant) { this.drawGiant(ctx); return; }
     const bob = this.moving ? Math.sin(this.walk) * 1.2 : 0;
     if (this.tapriTime > 0) { // Chai Tapri: a red stage-light circle with web strands at the edge
@@ -745,6 +842,40 @@ Player.prototype.drawSymbiote = function (ctx) {
     ctx.lineCap = 'butt';
     if (Math.random() < 0.8) { const pt = at(Math.random()); g.particles.push(new Particle(pt.x, pt.y + 2, (Math.random() - 0.5) * 8, 10 + Math.random() * 25, 0.5 + Math.random() * 0.4, Math.random() < 0.7 ? '#000' : '#1a1a22', 2 + (Math.random() < 0.3 ? 1 : 0), 'blood')); }
   }
+};
+
+/* Frogepepe: the boy swelling into the frog, and the frog itself with its tongue */
+Player.prototype.drawFrog = function (ctx) {
+  const fr = this.fr, g = this.game, t = g.time, S = fr.scale;
+  const frogAt = (x, y, sc, alpha = 1) => { ctx.globalAlpha = alpha; Sprites.draw(ctx, 'frog', x, y, { flip: this.flip, scale: sc, ox: -12 * sc, oy: 8 - 24 * sc }); ctx.globalAlpha = 1; };
+  if (this.frogState === 'morphing') {
+    const k = this.frogT / fr.morph, jx = (Math.random() - 0.5) * 4 * k, jy = (Math.random() - 0.5) * 4 * k;
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 7, 6 + k * 16, 3 + k * 6, 0, 0, TAU); ctx.fill();
+    const glow = ctx.createRadialGradient(this.x, this.y, 2, this.x, this.y, 30 + k * 40); glow.addColorStop(0, `rgba(80,200,80,${0.15 + k * 0.3})`); glow.addColorStop(1, 'rgba(80,200,80,0)'); ctx.fillStyle = glow; ctx.fillRect(this.x - 80, this.y - 80, 160, 160);
+    if (k < 0.65) { // the boy puffs up, flashing greener and greener
+      const kk = k / 0.65, sc = 1 + kk * 0.8; ctx.save(); ctx.translate(Math.round(this.x + jx), Math.round(this.y + jy + 7)); if (this.flip) ctx.scale(-1, 1);
+      ctx.drawImage(Sprites.get(this.sprite), -8 * sc, -16 * sc, 16 * sc, 16 * sc);
+      if (Math.sin(t * (10 + kk * 30)) > 0.2) { ctx.globalAlpha = 0.5 * kk; ctx.drawImage(Sprites.tintOf(this.sprite, '#9ccf72'), -8 * sc, -16 * sc, 16 * sc, 16 * sc); ctx.globalAlpha = 1; }
+      ctx.restore();
+    } else { const kk = (k - 0.65) / 0.35, sc = 1.3 + kk * (S - 1.3); frogAt(this.x + jx, this.y + jy, sc); ctx.globalAlpha = (1 - kk) * 0.9; ctx.save(); ctx.translate(Math.round(this.x + jx), Math.round(this.y + jy)); if (this.flip) ctx.scale(-1, 1); ctx.drawImage(Sprites.tintOf('frog', '#f4f2ea'), -12 * sc, 8 - 24 * sc, 24 * sc, 24 * sc); ctx.restore(); ctx.globalAlpha = 1; }
+    return;
+  }
+  if (this.frogState === 'reverting') { const k = this.frogT / fr.revert, sc = S - k * (S - 1); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 7, 6 + (1 - k) * 16, 3 + (1 - k) * 6, 0, 0, TAU); ctx.fill(); frogAt(this.x, this.y, sc, 1 - k * 0.6); Sprites.draw(ctx, this.sprite, this.x, this.y, { flip: this.flip, alpha: k, ox: -8, oy: -9 }); return; }
+  // ---- frog form ----
+  const h = this.height, bob = this.moving && !this.hop ? Math.abs(Math.sin(this.walk * 0.6)) * 4 : 0, squash = this.hop ? 1 + Math.sin(Math.min(1, this.hop.t / this.hop.dur) * Math.PI) * 0.15 : 1;
+  ctx.fillStyle = `rgba(0,0,0,${0.45 - h / 200})`; ctx.beginPath(); ctx.ellipse(this.x, this.y + 9, 20 - h * 0.12, 7 - h * 0.04, 0, 0, TAU); ctx.fill();
+  if (this.tongue) { // pink tongue shooting out of the mouth and snapping back
+    const T = this.tongue, k = T.t / T.dur, len = T.len * (k < 0.5 ? Math.min(1, k * 2.6) : Math.max(0, 1 - (k - 0.5) * 2)), mx = this.x + Math.cos(T.ang) * 10, my = this.y - h - 10 + Math.sin(T.ang) * 10, ex = mx + Math.cos(T.ang) * len, ey = my + Math.sin(T.ang) * len;
+    ctx.lineCap = 'round'; ctx.strokeStyle = '#7a1f3a'; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(ex, ey); ctx.stroke();
+    ctx.strokeStyle = '#e2506e'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(ex, ey); ctx.stroke(); ctx.lineCap = 'butt';
+    ctx.fillStyle = '#e2506e'; ctx.beginPath(); ctx.arc(ex, ey, 5, 0, TAU); ctx.fill(); ctx.fillStyle = '#7a1f3a'; ctx.beginPath(); ctx.arc(ex, ey, 5, 0, TAU); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillRect(Math.round(ex - 2), Math.round(ey - 3), 2, 2);
+  }
+  ctx.save(); ctx.translate(Math.round(this.x), Math.round(this.y - h + 8)); ctx.scale(2 - squash, squash); ctx.translate(-Math.round(this.x), -Math.round(this.y - h + 8));
+  frogAt(this.x, this.y - h - bob, S);
+  if (this.hurtFlash > 0) { ctx.globalAlpha = 0.6; ctx.save(); ctx.translate(Math.round(this.x), Math.round(this.y - h - bob)); if (this.flip) ctx.scale(-1, 1); ctx.drawImage(Sprites.tintOf('frog', '#ff8a7a'), -12 * S, 8 - 24 * S, 24 * S, 24 * S); ctx.restore(); ctx.globalAlpha = 1; }
+  ctx.restore();
+  if (this.moving && !this.hop && Math.random() < 0.15) g.particles.push(new Particle(this.x + (Math.random() - 0.5) * 20, this.y + 8, (Math.random() - 0.5) * 20, -15, 0.35, '#2f5a26', 2, 'dot'));
 };
 
 /* BLACKOUT giant form: the normal character sprite and gun, just huge, with a leap arc */
