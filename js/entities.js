@@ -285,7 +285,7 @@ class Player {
     const vr = this.char.viral, g = this.game; if (!vr) return false;
     if (this.viralT > 0) return false;
     if (this.viralCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `VIRAL IN ${Math.ceil(this.viralCd)}s`, '#9aa3b5'); return false; }
-    this.viralT = vr.duration; Audio8.play('levelup'); Audio8.play('click'); g.shake(2); g.whiteFlash = 0.18; g.lights.push({ x: this.x, y: this.y, r: 150, life: 0.35, max: 0.35 });
+    this.viralT = vr.duration; if (vr.sound) Audio8.playTrack(vr.sound, vr.soundLen, { once: true, loud: true }); Audio8.play('click'); g.shake(2); g.whiteFlash = 0.18; g.lights.push({ x: this.x, y: this.y, r: 150, life: 0.35, max: 0.35 });
     for (let i = 0; i < 20; i++) { const a = i / 20 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 90, Math.sin(a) * 90, 0.4, i % 2 ? '#8af0ff' : '#f4f2ea', 2, 'dot')); }
     g.showAbilityBanner('GOING VIRAL', `${vr.duration}s · everyone stops to record · they take double damage`);
     return true;
