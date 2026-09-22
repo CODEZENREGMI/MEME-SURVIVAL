@@ -164,3 +164,15 @@ img.coin{width:14px;height:14px;vertical-align:-2px;margin-right:2px;image-rende
   .go-grid{grid-template-columns:repeat(2,auto)}
   .btn{min-width:130px;padding:8px 16px}
 }
+
+
+/* ---- wave 5 jumpscare: the face fills the screen, shaking, then it's gone ---- */
+#jumpscare{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:#000;pointer-events:none;overflow:hidden}
+#jumpscare.on{display:flex;animation:jsflash .12s steps(2) 3}
+#jumpscare img{width:min(100vh,100vw);height:min(100vh,100vw);max-width:none;image-rendering:auto;filter:contrast(1.5) brightness(1.18) saturate(0);transform-origin:center;animation:jsin .13s cubic-bezier(.2,1.7,.4,1) both,jscreep 2.1s ease-out .13s both,jsshake .055s steps(2) infinite .13s}
+#jumpscare::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 28vh 12vh #000;pointer-events:none}
+@keyframes jsin{from{transform:scale(.22) rotate(-7deg);opacity:.15}to{transform:scale(1) rotate(0);opacity:1}}
+@keyframes jscreep{from{transform:scale(1)}to{transform:scale(1.22)}}
+@keyframes jsshake{0%{margin:0 0}25%{margin:-1.2vh 1.6vh}50%{margin:1.4vh -1.2vh}75%{margin:-1vh -1.6vh}100%{margin:1.2vh 1vh}}
+@keyframes jsflash{0%,100%{background:#000}50%{background:#3a0000}}
+@media (prefers-reduced-motion: reduce){#jumpscare img{animation:jsin .2s both}}

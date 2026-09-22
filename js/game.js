@@ -28,7 +28,7 @@ class Game {
     if (this.state === 'menu' || this.state === 'gameover') { this.ui.closeModals(); this.start(); }
     if (this.state === 'paused') this.resume();
     if (this.state === 'levelup') { this.ui.hideLevelUp(); this.pendingLevelUps = 0; }
-    if (this.event) this.endEvent(true); this.bonaGone();
+    if (this.event) this.endEvent(true); this.bonaGone(); this.endDread(); this.hideJumpscare();
     this.zombies = []; this.ebullets = []; this.bullets = []; this.boss = null; this.state = 'playing'; this.ui.setState('playing');
     this.startWave(wave); this.admin = true; this.ui.toast(`Admin: wave ${wave}`);
   }
@@ -54,7 +54,7 @@ class Game {
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0;
-    if (this.event) this.endEvent(true); this.bonaGone(); this.event = null; this.eventFlicker = 0;
+    if (this.event) this.endEvent(true); this.bonaGone(); this.endDread(); this.hideJumpscare(); this.event = null; this.eventFlicker = 0;
     this.siege = !!this.map.cfg.house; this.house = null; this.turrets = []; this.siegeTimer = 0;
     if (this.siege) this.setupHouse(1);
     this.map.dctx.clearRect(0, 0, this.map.pw, this.map.ph);
@@ -96,6 +96,7 @@ class Game {
       : ['Normal zombies approach', 'Fast zombies join the horde', 'Tank zombies incoming', 'Explosive zombies — keep your distance', 'The horde grows stronger'];
     this.ui.showBanner('WAVE ' + n, tierNames[waveTier(n)] + ' · boss incoming: ' + BOSSES[this.bossKind].name + (this.bossPending > 1 ? ' ×' + this.bossPending : ''));
     if (isBlackoutWave(this.map.id, n)) this.startEvent();
+    if (n === DREAD.wave) this.startDread(); else this.endDread();
     if (this.siege) { this.setupHouse(n); this.ui.showBanner('WAVE ' + n, `Destroy the house · ${this.house.maxHp} HP · guards: ${HOUSE.guards(n)} · boss: ${BOSSES[this.bossKind].name}`); }
     Audio8.play('wave');
     // weapon crate drops on early waves for weapons not yet owned this run
@@ -226,7 +227,7 @@ class Game {
     this.ui.hideLevelUp(); this.state = 'wavebreak'; this.breakTimer = 3; this.ui.setState('playing');
   }
   gameOver() {
-    this.state = 'gameover'; Audio8.play('gameover'); Audio8.stopMusic(); Audio8.stopTrack(); this.shake(10);
+    this.state = 'gameover'; this.hideJumpscare(); Audio8.play('gameover'); Audio8.stopMusic(); Audio8.stopTrack(); this.shake(10);
     this.blood(this.player.x, this.player.y, 30, '#b3221a'); this.map.splat(this.player.x, this.player.y, 14, '#7a1810');
     const isNew = !this.admin && this.score > (this.save.highScore || 0);
     if (!this.admin) { this.save.highScore = Math.max(this.save.highScore || 0, this.score); this.save.bestWave = Math.max(this.save.bestWave || 0, this.wave); this.save.runs = (this.save.runs || 0) + 1; this.ui.saveGame(); }
@@ -246,6 +247,7 @@ class Game {
       this.boss = this.zombies.find(o => o !== z && o.cfg.boss && !o.dead) || null;
       for (let i = 0; i < 6 + Math.min(14, this.wave); i++) this.dropAt('coin', z.x, z.y); for (let i = 0; i < 3 + Math.floor(this.wave / 4); i++) this.dropAt('xp', z.x, z.y); this.dropAt('health', z.x, z.y); if (Math.random() < 0.5) this.dropAt('ammo', z.x, z.y);
       this.shake(12); this.ui.showBanner((z.bk ? z.bk.name : 'BOSS') + ' DOWN', `+${z.cfg.score + bonus} score`);
+      if (this.dread && this.dread.armed && !this.boss) { this.dread.armed = false; setTimeout(() => { if (this.state === 'playing' || this.state === 'wavebreak' || this.state === 'levelup') this.jumpscare(); }, 700); }
     }
     else this.dropLoot(z);
     this.player.addXp(Math.round(z.cfg.xp * 0.5));
@@ -292,6 +294,32 @@ class Game {
     this.flash = 0.05; this.lights.push({ x, y, r: 130, life: 0.08, max: 0.08 });
   }
   showAbilityBanner(name, sub) { this.ui.showBanner(name, sub); }
+  /* wave 5: the power dies everywhere, and killing the boss lets something through */
+  startDread() {
+    if (this.dread) return;
+    this.dread = { armed: true }; this.dreadDark = !this.map.cfg.dark;
+    if (this.dreadDark) { this.map.cfg.dark = true; this.map.lamps.forEach((l, i) => l.broken = i % 2 === 0); Audio8.stopMusic(); Audio8.startMusic(true); }
+    this.eventFlicker = Math.max(this.eventFlicker, 1.2); this.shake(6); Audio8.play('flicker'); Audio8.play('thud');
+    setTimeout(() => { if (this.dread && this.state !== 'menu') this.ui.showBanner('THE LIGHTS DIE', 'Something came in with the dark. Kill the boss.'); }, 900);
+  }
+  endDread() {
+    if (!this.dread) return;
+    const wasDark = this.dreadDark; this.dread = null; this.dreadDark = false;
+    if (wasDark && !this.event && !this.bonaDark) { this.map.cfg.dark = false; this.map.lamps.forEach(l => l.broken = false); Audio8.stopMusic(); Audio8.startMusic(false); }
+  }
+  /* the face. full screen, loud, then it's over. */
+  jumpscare() {
+    const el = document.getElementById('jumpscare'), img = document.getElementById('jumpscareImg');
+    if (!el || !img) return;
+    if (!img.src) img.src = DREAD.img;
+    this.shake(20); this.whiteFlash = 0; this.darkFlash = 0.6;
+    Audio8.stopMusic(); Audio8.playTrack(DREAD.sound, DREAD.hold, { once: true, loud: true });
+    if (this.track) this.track = null;
+    el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    clearTimeout(this._jsTimer);
+    this._jsTimer = setTimeout(() => { el.classList.remove('on'); if (this.state !== 'menu' && this.state !== 'gameover') { Audio8.startMusic(this.map.cfg.dark); } }, DREAD.hold * 1000);
+  }
+  hideJumpscare() { const el = document.getElementById('jumpscare'); if (el) el.classList.remove('on'); clearTimeout(this._jsTimer); }
   /* Bona rises: the lights go out until it's dead */
   bonaArrive(z) {
     this.shake(16); this.darkFlash = 0.9; Audio8.play('roar'); Audio8.play('scream'); Audio8.play('explode');

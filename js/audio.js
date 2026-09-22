@@ -77,10 +77,10 @@ const Audio8 = {
   },
 
   /* play an mp3 track (character theme); ducks the ambient drone while it runs */
-  playTrack(url, seconds) {
+  playTrack(url, seconds, opts) {
     this.stopTrack();
     try {
-      const a = new window.Audio(url); a.volume = Math.min(1, this.musicVol * 1.6 + 0.1); a.loop = true; this.track = a;
+      const a = new window.Audio(url); a.volume = opts && opts.loud ? 1 : Math.min(1, this.musicVol * 1.6 + 0.1); a.loop = !(opts && opts.once); this.track = a;
       if (this.musicGain) this.musicGain.gain.value = this.musicVol * 0.2;
       a.play().catch(() => {});
       if (seconds) this._trackTimer = setTimeout(() => this.stopTrack(), seconds * 1000);

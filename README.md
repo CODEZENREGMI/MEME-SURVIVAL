@@ -76,6 +76,11 @@ your beam hits them; only their glowing eyes give them away.
   flies out to you and back, a sahur call that summons the horde every 12 s, and at half HP "SAHUR!!!" — 1.4× speed
   and five fast zombies). Unassigned milestones (60 …) reuse an earlier one. Two bosses
   from wave 25, three from wave 40. The wave doesn't end until the boss is dead.
+
+  **Wave 5 — THE LIGHTS DIE.** On every map the power fails for the whole wave (flashlight only, lamps flickering,
+  the dark ambient track). When you kill the wave's last boss, the screen is taken over by a full-screen shaking
+  face with a scream (`assets/img/jumpscare.png` + `assets/audio/jumpscare.mp3`, ~2 s), then the lights come back
+  on wave 6. Respects `prefers-reduced-motion` (no shake).
 - Pickups: Health, Ammo, Coins, XP.
 - **Supply cart:** coins you collect during the run are spent in the cart (`B`, or click the cart
   icon in the HUD) — refill a weapon's reserve ammo, buy a health pack / full heal, buy extra max hearts (20 coins each, no limit), or buy a weapon
