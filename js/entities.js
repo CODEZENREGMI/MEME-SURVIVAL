@@ -61,7 +61,7 @@ class Player {
     this.webZip = null; this.webCd = 0; this.pullCd = 0; this.pulling = null;
     this.sym = 'human'; this.symT = 0; this.clawCd = 0; this.captureCd = 0; this.capturing = null;
     this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0; this.armyCd = 0; this.armyTime = 0;
-    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0;
+    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -280,6 +280,25 @@ class Player {
     }
     return false;
   }
+  /* ---- Videoman: LAVA STONES — while his clip plays, LMB hurls exploding lava rocks at the cursor ---- */
+  useLava() {
+    const lv = this.char.lava, g = this.game; if (!lv) return false;
+    if (this.lavaT > 0) return false;
+    if (this.lavaCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `LAVA IN ${Math.ceil(this.lavaCd)}s`, '#9aa3b5'); return false; }
+    this.lavaT = lv.duration; this.reloading = false; Audio8.playTrack(lv.track, lv.duration); Audio8.play('levelup'); g.shake(3); g.lights.push({ x: this.x, y: this.y, r: 140, life: 0.4, max: 0.4 });
+    for (let i = 0; i < 20; i++) { const a = i / 20 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 70, Math.sin(a) * 70 - 30, 0.5, i % 2 ? '#ff7a1a' : '#ffd080', 3, 'fire')); }
+    g.showAbilityBanner('LAVA STONES', `Tu video kahe bana raha hai bhai? · ${Math.round(lv.duration)}s · LMB throws lava at the cursor`);
+    return true;
+  }
+  lavaAttacks(input) {
+    const cfg = this.char.lava.stone, g = this.game;
+    if (!(input.mouseDown && this.fireTimer <= 0)) return;
+    this.fireTimer = cfg.interval / this.fireMult; this.recoil = cfg.kick;
+    const gx = this.x + Math.cos(this.angle) * 8, gy = this.y - 4 + Math.sin(this.angle) * 8, b = new Bullet(g, gx, gy, this.angle + (Math.random() - 0.5) * cfg.spread, cfg, this.damageMult);
+    b.lava = true; b.range = Math.max(40, Math.min(cfg.range, dist(gx, gy, input.worldX, input.worldY))); g.bullets.push(b); // lands where you aim
+    for (let i = 0; i < 4; i++) g.particles.push(new Particle(gx, gy, Math.cos(this.angle) * 30 + (Math.random() - 0.5) * 40, -20 - Math.random() * 30, 0.35, '#ff7a1a', 2, 'fire'));
+    Audio8.play('rocket'); g.shake(1);
+  }
   /* ---- Eggreck: VANISH — 20 s of invisibility. Nothing hostile can see him; he can still shoot. ---- */
   get invisible() { return this.invis > 0; }
   useVanish() {
@@ -443,7 +462,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -583,6 +602,8 @@ class Player {
       if (this.formCd > 0) return { name: tf.name, state: 'cd', frac: 1 - this.formCd / tf.cooldown, sub: `RECHARGING ${Math.ceil(this.formCd)}s` };
       return { name: tf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' };
     }
+    const lv = this.char.lava;
+    if (lv) { if (this.lavaT > 0) return { name: lv.name, state: 'active', frac: this.lavaT / lv.duration, sub: `${Math.ceil(this.lavaT)}s · LMB THROW · VIDEO ON` }; if (this.lavaCd > 0) return { name: lv.name, state: 'cd', frac: 1 - this.lavaCd / lv.cooldown, sub: `RECHARGING ${Math.ceil(this.lavaCd)}s` }; return { name: lv.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const st = this.char.stealth;
     if (st) { if (this.invis > 0) return { name: 'INVISIBLE', state: 'active', frac: this.invis / st.duration, sub: `${Math.ceil(this.invis)}s · NOBODY SEES YOU` }; if (this.invisCd > 0) return { name: st.name, state: 'cd', frac: 1 - this.invisCd / st.cooldown, sub: `RECHARGING ${Math.ceil(this.invisCd)}s` }; return { name: st.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const dm = this.char.demon;
@@ -803,6 +824,9 @@ class Player {
     if (this.char.stealth) { const st = this.char.stealth;
       if (this.invis > 0) { this.invis -= dt; if (this.invis <= 0) { this.invis = 0; this.invisCd = st.cooldown; this.game.floatText(this.x, this.y - 18, 'VISIBLE AGAIN', '#c9cfdb'); Audio8.play('flicker'); } }
       else if (this.invisCd > 0) { this.invisCd -= dt; if (this.invisCd <= 0) { this.invisCd = 0; this.game.floatText(this.x, this.y - 18, 'VANISH READY', '#8bd35a'); Audio8.play('xp'); } } }
+    if (this.char.lava) { const lv = this.char.lava;
+      if (this.lavaT > 0) { this.lavaT -= dt; if (this.lavaT <= 0) { this.lavaT = 0; this.lavaCd = lv.cooldown; Audio8.stopTrack(); this.game.floatText(this.x, this.y - 18, 'VIDEO KHATAM', '#c9cfdb'); Audio8.play('reloaded'); } }
+      else if (this.lavaCd > 0) { this.lavaCd -= dt; if (this.lavaCd <= 0) { this.lavaCd = 0; this.game.floatText(this.x, this.y - 18, 'LAVA READY', '#8bd35a'); Audio8.play('xp'); } } }
     if (this.char.wife) { const wf = this.char.wife; this.shieldHit -= dt;
       if (this.wifeT > 0) { this.wifeT -= dt; const W = this.wifePos, tx = this.x - (this.flip ? -1 : 1) * 16, ty = this.y + 2; W.x += (tx - W.x) * Math.min(1, dt * 6); W.y += (ty - W.y) * Math.min(1, dt * 6);
         if (this.wifeT <= 0) { this.wifeT = 0; this.wifeCd = wf.cooldown; this.game.floatText(W.x, W.y - 18, 'bye honey', '#c9cfdb'); Audio8.play('swap'); for (let i = 0; i < 10; i++) this.game.particles.push(new Particle(W.x, W.y, (Math.random() - 0.5) * 40, -20 - Math.random() * 30, 0.5, '#7fd35a', 2, 'smoke')); this.wifePos = null; } }
@@ -859,6 +883,7 @@ class Player {
     if (this.char.regen > 0 && this.sinceHurt > 3 && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + this.char.regen * dt);
     this.tickReload(dt);
     if (this.venom) { this.venomAttacks(input); return; }
+    if (this.lavaT > 0) { this.lavaAttacks(input); return; }
     if (this.frog) { this.frogAttacks(input); return; }
     if (this.demon) { this.demonAttacks(input); return; }
     if (this.beast) return; // no guns in beast form — the Flesh Cannon / smash are handled in updateForm
@@ -1708,8 +1733,18 @@ class Bullet {
     if (this.rocket) { this.smoke -= dt; if (this.smoke <= 0) { this.smoke = 0.02; this.game.particles.push(new Particle(this.x, this.y, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, 0.5, '#9a9a9a', 2, 'smoke')); } }
     if (dist(this.sx, this.sy, this.x, this.y) > this.range) { if (this.rocket) this.impact(); else this.dead = true; }
   }
-  impact() { this.dead = true; if (this.explosive) this.game.explode(this.x, this.y, this.explosive, this.damage, true); else if (this.venom) this.game.map.splat(this.x, this.y, 5, '#0a0a0e'); else if (!this.flame) this.game.spark(this.x, this.y, 3); }
+  impact() { this.dead = true; if (this.lava) { const g = this.game; g.explode(this.x, this.y, this.explosive, this.damage, true); for (const z of g.zombies) { if (!z.dead && dist(this.x, this.y, z.x, z.y) < this.explosive + 14 + z.r) z.burn = Math.max(z.burn, 3); } g.map.splat(this.x, this.y, 9, '#7a2408'); g.lights.push({ x: this.x, y: this.y, r: 120, life: 0.5, max: 0.5 }); for (let i = 0; i < 14; i++) { const a = Math.random() * TAU, sp = 40 + Math.random() * 80; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp - 40, 0.6 + Math.random() * 0.5, i % 3 ? '#ff7a1a' : '#3a1a10', 3, 'blood')); } return; } if (this.explosive) this.game.explode(this.x, this.y, this.explosive, this.damage, true); else if (this.venom) this.game.map.splat(this.x, this.y, 5, '#0a0a0e'); else if (!this.flame) this.game.spark(this.x, this.y, 3); }
   draw(ctx) {
+    if (this.lava) { // a glowing rock lobbed in an arc: shadow on the ground, the stone above it, embers trailing
+      const t = Math.min(1, dist(this.sx, this.sy, this.x, this.y) / this.range), h = Math.sin(t * Math.PI) * 36, tt = this.game.time;
+      ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 2, 5 - h * 0.05, 2.5, 0, 0, TAU); ctx.fill();
+      const y = this.y - h, gr = ctx.createRadialGradient(this.x, y, 1, this.x, y, 14); gr.addColorStop(0, 'rgba(255,140,40,0.5)'); gr.addColorStop(1, 'rgba(255,140,40,0)'); ctx.fillStyle = gr; ctx.fillRect(this.x - 14, y - 14, 28, 28);
+      ctx.save(); ctx.translate(Math.round(this.x), Math.round(y)); ctx.rotate(tt * 9 + this.sx);
+      ctx.fillStyle = '#3a1a10'; ctx.fillRect(-4, -4, 8, 8); ctx.fillStyle = '#ff7a1a'; ctx.fillRect(-4, -1, 8, 2); ctx.fillRect(-1, -4, 2, 8); ctx.fillStyle = '#ffd080'; ctx.fillRect(-1, -1, 2, 2); ctx.fillStyle = '#5a2a14'; ctx.fillRect(-4, -4, 2, 2); ctx.fillRect(2, 2, 2, 2);
+      ctx.restore();
+      if (Math.random() < 0.6) this.game.particles.push(new Particle(this.x, y, (Math.random() - 0.5) * 20, -10 - Math.random() * 20, 0.35, Math.random() < 0.5 ? '#ff7a1a' : '#ffd080', 2, 'fire'));
+      return;
+    }
     if (this.venom) { const sz = this.size || 3, t = dist(this.sx, this.sy, this.x, this.y) / this.range; ctx.fillStyle = 'rgba(80,20,110,0.35)'; ctx.beginPath(); ctx.arc(this.x, this.y, sz + 2.5, 0, TAU); ctx.fill(); ctx.fillStyle = '#0a0a0e'; ctx.beginPath(); ctx.arc(this.x, this.y, sz, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(this.x - this.vx * 0.012, this.y - this.vy * 0.012, sz * 0.7, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(95,211,90,0.55)'; ctx.fillRect(Math.round(this.x - 1), Math.round(this.y - 1), 1, 1); if (t > 0.85 && Math.random() < 0.1) this.game.map.splat(this.x, this.y, 4, '#0a0a0e'); return; }
     if (this.flame) { const t = dist(this.sx, this.sy, this.x, this.y) / this.range; const sz = 3 + t * 6; ctx.globalAlpha = 0.85 - t * 0.55; ctx.fillStyle = this.pink ? (t < 0.3 ? '#ffd0e8' : t < 0.6 ? '#ff5aa8' : '#c0206a') : t < 0.3 ? '#fff2a0' : t < 0.6 ? '#ffb02a' : '#e0451a'; ctx.fillRect(Math.round(this.x - sz / 2), Math.round(this.y - sz / 2), Math.ceil(sz), Math.ceil(sz)); ctx.globalAlpha = 1; return; }
     if (this.rocket) { Sprites.draw(ctx, 'gun_rocket', this.x, this.y, { angle: this.angle, scale: 0.5, ox: -4, oy: -2 }); ctx.fillStyle = '#ff6a2a'; ctx.beginPath(); ctx.arc(this.x - Math.cos(this.angle) * 5, this.y - Math.sin(this.angle) * 5, 2.5, 0, TAU); ctx.fill(); return; }

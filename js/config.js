@@ -216,9 +216,14 @@ const CHARACTERS = {
             desc: 'Shrek in an egg. VANISH (Space) makes him invisible for 20 s — no zombie, boss or cannon can see him, and he keeps shooting the whole time. Resets 20 s after it ends.',
             pal: { K: '#1e2a10', G: '#9cc23a', g: '#6e9424', L: '#c8dc60', W: '#f4f2ea', E: '#5a3a1a', B: '#3a4a18', T: '#e8e0c8', P: '#c88a70', M: '#3a1a10' },
             stealth: { name: 'VANISH', duration: 20, cooldown: 20 },
-            wife: { name: 'MY WIFE', duration: 20, cooldown: 20, radius: 34 } },   // F: she shows up and holds a shield over him — bites and shells bounce off
+            wife: { name: 'MY WIFE', duration: 20, cooldown: 20, radius: 34 } },   // E: she shows up and holds a shield over him — bites and shells bounce off
+  videoman: { name: 'Videoman', tag: 'Lava · meme', hp: 100, speed: 1.0, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'videoman', portrait: 'videoman_portrait',
+            desc: 'Tu video kahe bana raha hai bhai? LAVA STONES (Space): his clip plays and for as long as it runs, LMB hurls burning lava rocks that explode where you aim and set everything ablaze. Resets 50 s later.',
+            pal: { K: '#14100c', H: '#2a1c12', S: '#b5733f', s: '#8f5730', M: '#1a1008', W: '#f4f2ea', B: '#3a7ad8', b: '#2a5aa8', E: '#2a1a10', L: '#d9906a' },
+            lava: { name: 'LAVA STONES', duration: 11.2, cooldown: 50, track: 'assets/audio/videoman.m4a',
+                    stone: { damage: 70, interval: 0.32, speed: 280, spread: 0.03, range: 340, pellets: 1, pierce: 0, kick: 1.2, explosive: 46, burn: 3, lava: true } } },
 };
-const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck'];
+const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman'];
 
 /* maps */
 const MAPS = {

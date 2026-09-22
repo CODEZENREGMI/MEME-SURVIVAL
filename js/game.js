@@ -387,6 +387,7 @@ class Game {
         if (this.house && !this.house.dead && Math.abs(b.x - h.x) < h.w / 2 + 3 && Math.abs(b.y - h.y) < h.h / 2 + 3 && b.y > h.y - h.h / 2 + 30) { if (b.explosive) b.impact(); else { this.damageHouse(b.damage, b.x, b.y); b.dead = true; } continue; }
         let hitT = false; for (const t of this.turrets) { if (!t.dead && dist(b.x, b.y, t.x, t.y) < t.r + 3) { if (b.explosive) b.impact(); else { this.damageTurret(t, b.damage, b.x, b.y); b.dead = true; } hitT = true; break; } } if (hitT) continue;
       }
+      if (b.lava) continue; // lava stones sail over the horde and land where they were aimed
       for (const z of this.near(b.x, b.y)) {
         if (z.dead || b.hitSet.has(z)) continue;
         if (dist(b.x, b.y, z.x, z.y) < z.r + (b.giant ? 9 : 2.5)) {
@@ -623,7 +624,7 @@ class Game {
     this.zombies.forEach(z => { if (z.type === 'exploder') radial(z.x, z.y + 2, 26 + (z.fuse >= 0 ? Math.sin(t * 40) * 8 : 0), 0.9, 0.1); if (z.burn > 0) radial(z.x, z.y, 34 + Math.sin(t * 30 + z.walk) * 4, 0.9, 0.1); if (z.kind === 'kraken') radial(z.x, z.y, 48, 0.75, 0.2); if (z.kind === 'ravager') radial(z.x, z.y - z.height, 40, 0.7, 0.15); });
     this.zombies.forEach(z => { if (z.bk && z.bk.bona) radial(z.x, z.y - 10, 110 + Math.sin(t * 9) * 8 + (z.enraged ? 30 : 0), 1, 0.15); });
     this.ebullets.forEach(b => { if (b.cannon) radial(b.x, b.y, 30, 0.8); });
-    this.bullets.forEach(b => { if (b.flame) radial(b.x, b.y, 16, 0.5); });
+    this.bullets.forEach(b => { if (b.flame) radial(b.x, b.y, 16, 0.5); if (b.lava) radial(b.x, b.y, 40, 0.9, 0.1); });
     this.ebullets.forEach(b => radial(b.x, b.y, b.flame ? 16 : 10, 0.6));
     this.pickups.forEach(k => { if (k.type === 'crate' && Math.sin(t * 6) > 0) radial(k.x, k.y, 22, 0.8); });
     this.lights.forEach(l => radial(l.x, l.y, l.r, l.life / l.max));
@@ -657,7 +658,7 @@ class Game {
     const ay0 = 17 + hh, off = hh - 13; // everything below the hearts shifts down with extra rows
     Sprites.draw(ctx, 'pickup_ammo', 14, ay0, { ox: 0, oy: 0, scale: 1 });
     ctx.font = F; ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';
-    const w = p.wstate; ctx.fillText(p.venom ? 'VENOM' : p.frog ? 'FROG' : p.demon ? 'DEMON' : p.beast ? `${p.beastAmmo}/${BEAST_GUN.mag}` : (p.overdrive || p.rushing || (p.driving && !p.car.civil)) ? '∞/∞' : `${w.mag}/${w.reserve === Infinity ? '∞' : w.reserve}`, 30, ay0 + 3);
+    const w = p.wstate; ctx.fillText(p.venom ? 'VENOM' : p.frog ? 'FROG' : p.demon ? 'DEMON' : p.lavaT > 0 ? '∞ LAVA' : p.beast ? `${p.beastAmmo}/${BEAST_GUN.mag}` : (p.overdrive || p.rushing || (p.driving && !p.car.civil)) ? '∞/∞' : `${w.mag}/${w.reserve === Infinity ? '∞' : w.reserve}`, 30, ay0 + 3);
     if (p.beast) { ctx.fillStyle = p.beastAmmo > 0 ? '#c9cfdb' : '#ff6a5a'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(`REFILL ${p.beastKills}/${BEAST_GUN.refillKills} KILLS`, 8, 56 + off); ctx.font = F; }
     if (p.reloading) { ctx.fillStyle = '#f5c518'; ctx.fillText('RELOADING', 8, 56 + off); } else if (w.mag === 0 && w.reserve === 0) { ctx.fillStyle = '#ff6a5a'; ctx.fillText('NO AMMO - [B] BUY', 8, 56 + off); }
     // coins + supply cart button
@@ -676,7 +677,8 @@ class Game {
     const remain = this.zombies.length + this.toSpawn; ctx.fillStyle = '#c9cfdb'; ctx.fillText(this.siege ? `☠ ${this.zombies.length} · ∞` : `☠ ${remain}`, this.vw - 112, 50);
     // weapon (bottom-left)
     box(8, this.vh - 34, 130, 26);
-    if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('DEMON KATANA', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SLASH · RMB KICK · ♪ CHARM', 116), 14, this.vh - 16); }
+    if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, this.vh - 16); }
+    else if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('DEMON KATANA', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SLASH · RMB KICK · ♪ CHARM', 116), 14, this.vh - 16); }
     else if (p.frog) { ctx.fillStyle = '#9ccf72'; ctx.fillText('TONGUE', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LASH · SPACE HOP · R ARMY', 116), 14, this.vh - 16); }
     else if (p.venom) { ctx.fillStyle = '#5fd35a'; ctx.fillText('VENOM SPIT', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SPIT · RMB CLAW · R CAPTURE', 116), 14, this.vh - 16); }
     else if (p.driving && !p.car.civil) { ctx.drawImage(Sprites.get('gun_m249'), 10, this.vh - 29, 36, 15); ctx.fillStyle = '#5a8ad8'; ctx.fillText(fit('TWIN M249', 86), 48, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD DRIVE · LMB TURRETS', 86), 48, this.vh - 16); }
