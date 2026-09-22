@@ -222,8 +222,12 @@ const CHARACTERS = {
             pal: { K: '#14100c', H: '#2a1c12', S: '#b5733f', s: '#8f5730', M: '#1a1008', W: '#f4f2ea', B: '#3a7ad8', b: '#2a5aa8', E: '#2a1a10', L: '#d9906a' },
             lava: { name: 'LAVA STONES', duration: 11.2, cooldown: 50, track: 'assets/audio/videoman.m4a',
                     stone: { damage: 70, interval: 0.32, speed: 280, spread: 0.03, range: 340, pellets: 1, pierce: 0, kick: 1.2, explosive: 46, burn: 3, lava: true } } },
+  kiya:    { name: 'Kiya Mhalifa', tag: 'Crowd control · meme', hp: 105, speed: 1.05, damage: 1.0, firerate: 1.1, reload: 0.9, regen: 0, sprite: 'kiya', portrait: 'kiya_portrait',
+            desc: 'Glasses, braids, and far too much attention. GOING VIRAL (Space) freezes every zombie around her — they stop dead to record it, and take double damage while they gawk. 14 s, 32 s recharge.',
+            pal: { K: '#14100c', H: '#2b1a12', h: '#432a1c', S: '#e0a982', s: '#c08a62', W: '#f4f2ea', E: '#2a1a10', G: '#1e1e26', N: '#27407a', n: '#1b2c56', L: '#f0c39c', R: '#b04a58' },
+            viral: { name: 'GOING VIRAL', duration: 14, cooldown: 32, radius: 165, freeze: 2.5, bossFreeze: 1.2, vuln: 2 } },
 };
-const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman'];
+const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya'];
 
 /* maps */
 const MAPS = {

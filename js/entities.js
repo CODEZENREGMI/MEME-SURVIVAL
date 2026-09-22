@@ -61,7 +61,7 @@ class Player {
     this.webZip = null; this.webCd = 0; this.pullCd = 0; this.pulling = null;
     this.sym = 'human'; this.symT = 0; this.clawCd = 0; this.captureCd = 0; this.capturing = null;
     this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0; this.armyCd = 0; this.armyTime = 0;
-    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0;
+    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0; this.viralT = 0; this.viralCd = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -280,6 +280,16 @@ class Player {
     }
     return false;
   }
+  /* ---- Kiya Mhalifa: GOING VIRAL — everything around her stops to record, and gets hit twice as hard ---- */
+  useViral() {
+    const vr = this.char.viral, g = this.game; if (!vr) return false;
+    if (this.viralT > 0) return false;
+    if (this.viralCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `VIRAL IN ${Math.ceil(this.viralCd)}s`, '#9aa3b5'); return false; }
+    this.viralT = vr.duration; Audio8.play('levelup'); Audio8.play('click'); g.shake(2); g.whiteFlash = 0.18; g.lights.push({ x: this.x, y: this.y, r: 150, life: 0.35, max: 0.35 });
+    for (let i = 0; i < 20; i++) { const a = i / 20 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 90, Math.sin(a) * 90, 0.4, i % 2 ? '#8af0ff' : '#f4f2ea', 2, 'dot')); }
+    g.showAbilityBanner('GOING VIRAL', `${vr.duration}s · everyone stops to record · they take double damage`);
+    return true;
+  }
   /* ---- Videoman: LAVA STONES — while his clip plays, LMB hurls exploding lava rocks at the cursor ---- */
   useLava() {
     const lv = this.char.lava, g = this.game; if (!lv) return false;
@@ -462,7 +472,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -602,6 +612,8 @@ class Player {
       if (this.formCd > 0) return { name: tf.name, state: 'cd', frac: 1 - this.formCd / tf.cooldown, sub: `RECHARGING ${Math.ceil(this.formCd)}s` };
       return { name: tf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' };
     }
+    const vr = this.char.viral;
+    if (vr) { if (this.viralT > 0) return { name: vr.name, state: 'active', frac: this.viralT / vr.duration, sub: `${Math.ceil(this.viralT)}s · THEY CAN'T LOOK AWAY` }; if (this.viralCd > 0) return { name: vr.name, state: 'cd', frac: 1 - this.viralCd / vr.cooldown, sub: `RECHARGING ${Math.ceil(this.viralCd)}s` }; return { name: vr.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const lv = this.char.lava;
     if (lv) { if (this.lavaT > 0) return { name: lv.name, state: 'active', frac: this.lavaT / lv.duration, sub: `${Math.ceil(this.lavaT)}s · LMB THROW · VIDEO ON` }; if (this.lavaCd > 0) return { name: lv.name, state: 'cd', frac: 1 - this.lavaCd / lv.cooldown, sub: `RECHARGING ${Math.ceil(this.lavaCd)}s` }; return { name: lv.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const st = this.char.stealth;
@@ -862,6 +874,12 @@ class Player {
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x);
     this.flip = Math.cos(this.angle) < 0;
     this.fireTimer -= dt; this.invuln -= dt; this.hurtFlash -= dt; this.recoil *= Math.pow(0.001, dt); this.sinceHurt += dt;
+    if (this.viralT > 0) { const vr = this.char.viral, g = this.game; this.viralT -= dt;
+      for (const z of g.zombies) { if (z.dead || z.web > 0 || z.webImmune > 0) continue; if (dist(z.x, z.y, this.x, this.y) < vr.radius + z.r) { z.web = z.cfg.boss ? vr.bossFreeze : vr.freeze; z.kx = z.ky = 0; g.floatText(z.x, z.y - 12 * z.scale, 'RECORDING', '#8af0ff'); if (Math.random() < 0.3) Audio8.play('click'); } }
+      for (const t of g.turrets) { if (t.dead || t.web > 0 || (t.webImmune || 0) > 0) continue; if (dist(t.x, t.y, this.x, this.y) < vr.radius + t.r) { t.web = vr.freeze; g.floatText(t.x, t.y - 20, 'RECORDING', '#8af0ff'); } }
+      if (Math.random() < 0.3) g.particles.push(new Particle(this.x + (Math.random() - 0.5) * vr.radius * 1.5, this.y + (Math.random() - 0.5) * vr.radius * 1.5, (Math.random() - 0.5) * 8, -26, 1, Math.random() < 0.5 ? '#8af0ff' : '#f4f2ea', 2, 'text', '!'));
+      if (this.viralT <= 0) { this.viralT = 0; this.viralCd = vr.cooldown; g.floatText(this.x, this.y - 18, 'SHOW OVER', '#9aa3b5'); Audio8.play('reloaded'); } }
+    else if (this.viralCd > 0) { this.viralCd -= dt; if (this.viralCd <= 0) { this.viralCd = 0; this.game.floatText(this.x, this.y - 18, 'VIRAL READY', '#8af0ff'); Audio8.play('xp'); } }
     if (this.tapriTime > 0) { const tp = this.char.tapri, g = this.game; this.tapriTime -= dt;
       for (const z of g.zombies) { if (z.dead || z.web > 0 || z.webImmune > 0) continue; if (dist(z.x, z.y, this.x, this.y) < tp.radius + z.r) { z.web = z.cfg.boss ? tp.bossWeb : tp.web; z.kx = z.ky = 0; g.floatText(z.x, z.y - 12 * z.scale, 'WEBBED', '#f4f2ea'); if (Math.random() < 0.5) Audio8.play('flame'); } }
       for (const t of g.turrets) { if (t.dead || t.web > 0 || (t.webImmune || 0) > 0) continue; if (dist(t.x, t.y, this.x, this.y) < tp.radius + t.r) { t.web = tp.web; g.floatText(t.x, t.y - 20, 'WEBBED', '#f4f2ea'); } }
@@ -923,6 +941,13 @@ class Player {
     if (this.demonState !== 'human') { this.drawDemon(ctx); return; }
     if (this.giant) { this.drawGiant(ctx); return; }
     const bob = this.moving ? Math.sin(this.walk) * 1.2 : 0;
+    if (this.viralT > 0) { // GOING VIRAL: a cyan ring of attention, with camera flashes popping around the edge
+      const vr = this.char.viral, tt = performance.now() / 1000, R = vr.radius + Math.sin(tt * 3) * 3, fade = Math.min(1, this.viralT / 1.5);
+      const gd = ctx.createRadialGradient(this.x, this.y, 6, this.x, this.y, R); gd.addColorStop(0, `rgba(120,230,255,${0.05 * fade})`); gd.addColorStop(0.8, `rgba(120,230,255,${0.12 * fade})`); gd.addColorStop(1, 'rgba(120,230,255,0)'); ctx.fillStyle = gd; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.fill();
+      ctx.strokeStyle = `rgba(160,240,255,${0.75 * fade})`; ctx.lineWidth = 1.5; ctx.setLineDash([4, 7]); ctx.lineDashOffset = -tt * 26; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = `rgba(255,255,255,${0.3 * fade})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(this.x, this.y, R * 0.55 + Math.sin(tt * 5) * 3, 0, TAU); ctx.stroke();
+      for (let i = 0; i < 9; i++) { const a = i / 9 * TAU + tt * 0.35, fl = Math.sin(tt * 7 + i * 2.3); if (fl < 0.75) continue; const fx = this.x + Math.cos(a) * (R - 8), fy = this.y + Math.sin(a) * (R - 8); ctx.fillStyle = `rgba(255,255,255,${(fl - 0.75) * 4 * fade})`; ctx.fillRect(Math.round(fx - 2), Math.round(fy - 2), 4, 4); ctx.fillRect(Math.round(fx - 4), Math.round(fy - 1), 8, 2); ctx.fillRect(Math.round(fx - 1), Math.round(fy - 4), 2, 8); }
+    }
     if (this.tapriTime > 0) { // Chai Tapri: a red stage-light circle with web strands at the edge
       const tp = this.char.tapri, t = performance.now() / 1000, R = tp.radius + Math.sin(t * 4) * 3, fade = Math.min(1, this.tapriTime / 1.5);
       const g = ctx.createRadialGradient(this.x, this.y, 4, this.x, this.y, R); g.addColorStop(0, `rgba(255,70,50,${0.22 * fade})`); g.addColorStop(0.8, `rgba(220,40,40,${0.12 * fade})`); g.addColorStop(1, 'rgba(220,40,40,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.fill();
@@ -1515,7 +1540,15 @@ class Zombie {
     if (this.poison > 0 && Math.random() < 0.5) { ctx.fillStyle = '#5fd35a'; ctx.fillRect(Math.round(this.x + (Math.random() - 0.5) * 10 * s), Math.round(this.y + (Math.random() - 0.5) * 10 * s), 2, 2); }
     if (this.burn > 0) { for (let i = 0; i < 3; i++) { ctx.fillStyle = i % 2 ? '#ffd23a' : '#ff6a2a'; ctx.fillRect(Math.round(this.x + (Math.random() - 0.5) * 10 * s), Math.round(this.y + (Math.random() - 0.7) * 12 * s), 2, 2); } }
     if (this.charm > 0) { const tt = this.charmT || 0; ctx.font = '7px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = `rgba(255,120,190,${0.6 + Math.sin(tt * 8) * 0.3})`; ctx.fillText(tt % 1 < 0.5 ? '♪' : '♫', this.x + Math.sin(tt * 5) * 3, this.y - 12 * s - 6 + Math.sin(tt * 6) * 2); ctx.textAlign = 'left'; }
-    if (this.web > 0) { // spider web wrapped around it
+    if (this.web > 0 && this.game.player.char.viral) { // held by Kiya's crowd: it stopped to film her
+      const tt = this.game.time, px = this.x, py = this.y - 12 * s, glow = 0.5 + Math.sin(tt * 8 + this.walk) * 0.3;
+      ctx.fillStyle = '#1a1a22'; ctx.fillRect(Math.round(px - 3), Math.round(py - 5), 6, 9);
+      ctx.fillStyle = `rgba(150,235,255,${glow})`; ctx.fillRect(Math.round(px - 2), Math.round(py - 4), 4, 7);
+      ctx.fillStyle = '#f4f2ea'; ctx.fillRect(Math.round(px - 1), Math.round(py - 3), 2, 2);
+      if (Math.sin(tt * 11 + this.x) > 0.8) { ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(Math.round(px - 5), Math.round(py - 1), 10, 1); ctx.fillRect(Math.round(px), Math.round(py - 6), 1, 10); }
+      ctx.fillStyle = '#c02020'; ctx.fillRect(Math.round(px + 4), Math.round(py - 5), 2, 2);
+    }
+    else if (this.web > 0) { // spider web wrapped around it
       const wr = 9 * s, wx = this.x, wy = this.y - 2 * s; ctx.strokeStyle = 'rgba(245,242,234,0.85)'; ctx.lineWidth = 1;
       ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; ctx.moveTo(wx, wy); ctx.lineTo(wx + Math.cos(a) * wr, wy + Math.sin(a) * wr); } ctx.stroke();
       ctx.beginPath(); [0.35, 0.65, 0.95].forEach(k => { for (let i = 0; i <= 8; i++) { const a = i / 8 * TAU, px = wx + Math.cos(a) * wr * k, py = wy + Math.sin(a) * wr * k; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } }); ctx.stroke();
