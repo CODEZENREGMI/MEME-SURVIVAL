@@ -62,7 +62,7 @@ class Game {
     this.ui.refreshAll();
   }
   start() {
-    Audio8.init(); Audio8.resume(); Audio8.stopMusic(); Audio8.startMusic(this.map.cfg.dark);
+    Audio8.init(); Audio8.resume(); Audio8.stopMusic(); Audio8.startMusic(this.map.cfg.dark); Audio8.preloadClip(DREAD.sound);
     this.reset(); this.state = 'playing'; this.ui.setState('playing');
     this.startWave(1);
   }
@@ -297,7 +297,7 @@ class Game {
   /* wave 5: the power dies everywhere, and killing the boss lets something through */
   startDread() {
     if (this.dread) return;
-    this.dread = { armed: true }; this.dreadDark = !this.map.cfg.dark;
+    this.dread = { armed: true }; this.dreadDark = !this.map.cfg.dark; Audio8.preloadClip(DREAD.sound);
     if (this.dreadDark) { this.map.cfg.dark = true; this.map.lamps.forEach((l, i) => l.broken = i % 2 === 0); Audio8.stopMusic(); Audio8.startMusic(true); }
     this.eventFlicker = Math.max(this.eventFlicker, 1.2); this.shake(6); Audio8.play('flicker'); Audio8.play('thud');
     setTimeout(() => { if (this.dread && this.state !== 'menu') this.ui.showBanner('THE LIGHTS DIE', 'Something came in with the dark. Kill the boss.'); }, 900);
@@ -312,14 +312,16 @@ class Game {
     const el = document.getElementById('jumpscare'), img = document.getElementById('jumpscareImg');
     if (!el || !img) return;
     if (!img.src) img.src = DREAD.img;
-    this.shake(20); this.whiteFlash = 0; this.darkFlash = 0.6;
-    Audio8.stopMusic(); Audio8.playTrack(DREAD.sound, DREAD.hold, { once: true, loud: true });
-    if (this.track) this.track = null;
-    el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+    this.shake(26); this.whiteFlash = 0; this.darkFlash = 0;
+    Audio8.stopMusic(); Audio8.stopTrack();
+    el.classList.remove('on'); void el.offsetWidth;                      // reset the animation
+    Audio8.playClip(DREAD.sound, 1); Audio8.play('scream');              // decoded ahead of time: it hits on this frame
+    Audio8.tone(48, 1.6, 'sawtooth', 0.5, -20); Audio8.noise(0.9, 0.35, 260); // sub-bass drop under the scream
+    el.classList.add('on');
     clearTimeout(this._jsTimer);
     this._jsTimer = setTimeout(() => { el.classList.remove('on'); if (this.state !== 'menu' && this.state !== 'gameover') { Audio8.startMusic(this.map.cfg.dark); } }, DREAD.hold * 1000);
   }
-  hideJumpscare() { const el = document.getElementById('jumpscare'); if (el) el.classList.remove('on'); clearTimeout(this._jsTimer); }
+  hideJumpscare() { const el = document.getElementById('jumpscare'); if (el) el.classList.remove('on'); clearTimeout(this._jsTimer); Audio8.stopClip(); }
   /* Bona rises: the lights go out until it's dead */
   bonaArrive(z) {
     this.shake(16); this.darkFlash = 0.9; Audio8.play('roar'); Audio8.play('scream'); Audio8.play('explode');
@@ -676,8 +678,10 @@ class Game {
 
   drawHUD(ctx) {
     const p = this.player, F = '8px "Press Start 2P", monospace';
+    // on dark maps (Industrial, the Lab, the wave-5 blackout, Bona) the panels have to fight a pure-black background
+    const dk = !!this.map.cfg.dark, panel = dk ? 'rgba(16,20,30,0.97)' : 'rgba(12,14,20,0.78)', panelHov = dk ? 'rgba(70,84,112,0.97)' : 'rgba(60,70,90,0.9)', panelEdge = dk ? 'rgba(170,205,255,0.55)' : 'rgba(255,255,255,0.15)', dim = dk ? '#cdd6e6' : '#9aa3b5';
     const fit = (text, maxW) => { while (text.length > 1 && ctx.measureText(text).width > maxW) text = text.slice(0, -1); return text; }; // never let a label spill out of its box
-    const box = (x, y, w, h) => { ctx.fillStyle = 'rgba(12,14,20,0.78)'; ctx.fillRect(x, y, w, h); ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); };
+    const box = (x, y, w, h) => { if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4); } ctx.fillStyle = panel; ctx.fillRect(x, y, w, h); ctx.strokeStyle = panelEdge; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); };
     // hearts + ammo (top-left)
     // hearts wrap into rows of 10 so a big heart count never runs off across the screen
     const hearts = Math.ceil(p.maxHp / 25), perRow = 10, rows = Math.ceil(hearts / perRow), hw = Math.min(hearts, perRow) * 13 + 12, hh = rows * 13;
@@ -694,7 +698,7 @@ class Game {
     const hover = this.cartRect && this.input.mouseX >= this.cartRect.x && this.input.mouseX <= this.cartRect.x + this.cartRect.w && this.input.mouseY >= this.cartRect.y && this.input.mouseY <= this.cartRect.y + this.cartRect.h;
     const lowAmmo = Object.values(p.weapons).some(ww => ww.reserve !== Infinity && ww.mag + ww.reserve <= WEAPONS[p.current].mag * 0.5);
     const cy0 = 86 + off; this.cartRect = { x: 8, y: cy0, w: 64, h: 22 };
-    ctx.fillStyle = hover ? 'rgba(60,70,90,0.9)' : 'rgba(12,14,20,0.78)'; ctx.fillRect(8, cy0, 64, 22);
+    if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(6, cy0 - 2, 68, 26); } ctx.fillStyle = hover ? panelHov : panel; ctx.fillRect(8, cy0, 64, 22);
     ctx.strokeStyle = lowAmmo && Math.sin(this.time * 6) > 0 ? '#f5c518' : 'rgba(255,255,255,0.25)'; ctx.strokeRect(8.5, cy0 + 0.5, 63, 21);
     Sprites.draw(ctx, 'icon_cart', 12, cy0 + 5, { ox: 0, oy: 0 }); ctx.fillStyle = '#fff'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText('CART', 30, cy0 + 5); ctx.fillStyle = '#9aa3b5'; ctx.fillText('[B]', 30, cy0 + 14); ctx.font = F;
     // wave + score (top-right)
@@ -705,21 +709,21 @@ class Game {
     const remain = this.zombies.length + this.toSpawn; ctx.fillStyle = '#c9cfdb'; ctx.fillText(this.siege ? `☠ ${this.zombies.length} · ∞` : `☠ ${remain}`, this.vw - 112, 50);
     // weapon (bottom-left)
     box(8, this.vh - 34, 130, 26);
-    if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, this.vh - 16); }
-    else if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('DEMON KATANA', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SLASH · RMB KICK · ♪ CHARM', 116), 14, this.vh - 16); }
-    else if (p.frog) { ctx.fillStyle = '#9ccf72'; ctx.fillText('TONGUE', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LASH · SPACE HOP · R ARMY', 116), 14, this.vh - 16); }
-    else if (p.venom) { ctx.fillStyle = '#5fd35a'; ctx.fillText('VENOM SPIT', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SPIT · RMB CLAW · R CAPTURE', 116), 14, this.vh - 16); }
-    else if (p.driving && !p.car.civil) { ctx.drawImage(Sprites.get('gun_m249'), 10, this.vh - 29, 36, 15); ctx.fillStyle = '#5a8ad8'; ctx.fillText(fit('TWIN M249', 86), 48, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD DRIVE · LMB TURRETS', 86), 48, this.vh - 16); }
-    else if (p.beast) { ctx.drawImage(Sprites.get('gun_flesh'), 10, this.vh - 31, 36, 15); ctx.fillStyle = p.beastAmmo > 0 ? '#ff8a6a' : '#9aa3b5'; ctx.fillText(fit(p.beastAmmo > 0 ? 'FLESH CANNON' : 'CANNON DRY', 86), 48, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(p.beastAmmo > 0 ? 'LMB FIRE · RMB SMASH · SPC LEAP' : 'LMB SMASH · SPACE LEAP', 86), 48, this.vh - 16); }
+    if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, this.vh - 16); }
+    else if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('DEMON KATANA', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SLASH · RMB KICK · ♪ CHARM', 116), 14, this.vh - 16); }
+    else if (p.frog) { ctx.fillStyle = '#9ccf72'; ctx.fillText('TONGUE', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LASH · SPACE HOP · R ARMY', 116), 14, this.vh - 16); }
+    else if (p.venom) { ctx.fillStyle = '#5fd35a'; ctx.fillText('VENOM SPIT', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SPIT · RMB CLAW · R CAPTURE', 116), 14, this.vh - 16); }
+    else if (p.driving && !p.car.civil) { ctx.drawImage(Sprites.get('gun_m249'), 10, this.vh - 29, 36, 15); ctx.fillStyle = '#5a8ad8'; ctx.fillText(fit('TWIN M249', 86), 48, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD DRIVE · LMB TURRETS', 86), 48, this.vh - 16); }
+    else if (p.beast) { ctx.drawImage(Sprites.get('gun_flesh'), 10, this.vh - 31, 36, 15); ctx.fillStyle = p.beastAmmo > 0 ? '#ff8a6a' : '#9aa3b5'; ctx.fillText(fit(p.beastAmmo > 0 ? 'FLESH CANNON' : 'CANNON DRY', 86), 48, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(p.beastAmmo > 0 ? 'LMB FIRE · RMB SMASH · SPC LEAP' : 'LMB SMASH · SPACE LEAP', 86), 48, this.vh - 16); }
     else { const img = Sprites.get(p.wcfg.sprite); ctx.drawImage(img, 12, this.vh - 30, 32, 16); ctx.fillStyle = '#fff'; ctx.fillText(fit(p.wcfg.name.toUpperCase(), 130 + 8 - 48 - 4), 48, this.vh - 27);
-    ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(`[${p.weaponOrder.indexOf(p.current) + 1}/${p.weaponOrder.length}] Q/SCROLL SWAP`, 86), 48, this.vh - 16); }
+    ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(`[${p.weaponOrder.indexOf(p.current) + 1}/${p.weaponOrder.length}] Q/SCROLL SWAP`, 86), 48, this.vh - 16); }
     // GET IN / GET OUT prompt for parked cars (Urban City)
     this.carRect = null; let slotY = this.vh - 64;
     const nearCar = p.nearbyCar(), inCar = p.car && p.car.civil;
     if (nearCar || inCar) {
       const ax = 8, ay = slotY, aw = 130, ah = 26; this.carRect = { x: ax, y: ay, w: aw, h: ah }; slotY -= 30;
       const hov = this.input.mouseX >= ax && this.input.mouseX <= ax + aw && this.input.mouseY >= ay && this.input.mouseY <= ay + ah;
-      ctx.fillStyle = hov ? 'rgba(60,70,90,0.9)' : 'rgba(12,14,20,0.78)'; ctx.fillRect(ax, ay, aw, ah);
+      if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(ax - 2, ay - 2, aw + 4, ah + 4); } ctx.fillStyle = hov ? panelHov : panel; ctx.fillRect(ax, ay, aw, ah);
       if (inCar) { ctx.fillStyle = 'rgba(94,194,255,0.3)'; ctx.fillRect(ax, ay, aw * clamp(p.car.hp / p.car.maxHp, 0, 1), ah); }
       ctx.strokeStyle = inCar ? '#5ec2ff' : (Math.sin(this.time * 8) > 0 ? '#5ec2ff' : '#ffffff'); ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
       ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#5ec2ff'; ctx.fillText(inCar ? 'GET OUT' : 'GET IN', ax + 6, ay + 5);
@@ -732,7 +736,7 @@ class Game {
       const ax = 8, ay = slotY, aw = 130, ah = 26; this.transformRect = { x: ax, y: ay, w: aw, h: ah }; slotY -= 30;
       const active = ca.state === 'active', ready = ca.state === 'ready', col = p.char.rush ? '#5ec2ff' : p.char.squad ? '#ffd23a' : p.char.field ? '#7fd35a' : p.char.vehicle ? '#5a8ad8' : p.char.tapri ? '#ff5a4a' : p.char.web ? '#f4f2ea' : p.char.symbiote ? '#5fd35a' : '#8bd35a';
       const hov = this.input.mouseX >= ax && this.input.mouseX <= ax + aw && this.input.mouseY >= ay && this.input.mouseY <= ay + ah;
-      ctx.fillStyle = hov ? 'rgba(60,70,90,0.9)' : 'rgba(12,14,20,0.78)'; ctx.fillRect(ax, ay, aw, ah);
+      if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(ax - 2, ay - 2, aw + 4, ah + 4); } ctx.fillStyle = hov ? panelHov : panel; ctx.fillRect(ax, ay, aw, ah);
       if (active) { ctx.fillStyle = p.char.rush ? 'rgba(94,194,255,0.35)' : p.char.squad ? 'rgba(255,210,58,0.3)' : p.char.vehicle ? 'rgba(90,138,216,0.35)' : p.char.field ? 'rgba(127,211,90,0.3)' : 'rgba(255,60,30,0.35)'; ctx.fillRect(ax, ay, aw * ca.frac, ah); }
       else if (ca.state === 'cd') { ctx.fillStyle = 'rgba(120,130,150,0.25)'; ctx.fillRect(ax, ay, aw * ca.frac, ah); }
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? col : '#ffffff') : active ? col : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
@@ -747,7 +751,7 @@ class Game {
       const ax = 8, ay = slotY, aw = 130, ah = 26; this.transformRect2 = { x: ax, y: ay, w: aw, h: ah }; slotY -= 30;
       const active = ca2.state === 'busy', ready = ca2.state === 'ready', col = '#8af0ff';
       const hov = this.input.mouseX >= ax && this.input.mouseX <= ax + aw && this.input.mouseY >= ay && this.input.mouseY <= ay + ah;
-      ctx.fillStyle = hov ? 'rgba(60,70,90,0.9)' : 'rgba(12,14,20,0.78)'; ctx.fillRect(ax, ay, aw, ah);
+      if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(ax - 2, ay - 2, aw + 4, ah + 4); } ctx.fillStyle = hov ? panelHov : panel; ctx.fillRect(ax, ay, aw, ah);
       if (ca2.state === 'cd') { ctx.fillStyle = 'rgba(120,130,150,0.25)'; ctx.fillRect(ax, ay, aw * ca2.frac, ah); }
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? col : '#ffffff') : active ? col : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
       ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = ready ? col : active ? '#fff' : '#9aa3b5'; ctx.fillText(ca2.name, ax + 6, ay + 5);
@@ -759,7 +763,7 @@ class Game {
       const ax = 8, ay = slotY, aw = 130, ah = 26; this.abilityRect = { x: ax, y: ay, w: aw, h: ah };
       const active = p.overdrive, cd = p.ability.cd, ready = !active && cd <= 0;
       const hov = this.input.mouseX >= ax && this.input.mouseX <= ax + aw && this.input.mouseY >= ay && this.input.mouseY <= ay + ah;
-      ctx.fillStyle = hov ? 'rgba(60,70,90,0.9)' : 'rgba(12,14,20,0.78)'; ctx.fillRect(ax, ay, aw, ah);
+      if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(ax - 2, ay - 2, aw + 4, ah + 4); } ctx.fillStyle = hov ? panelHov : panel; ctx.fillRect(ax, ay, aw, ah);
       if (active) { ctx.fillStyle = 'rgba(255,140,30,0.35)'; ctx.fillRect(ax, ay, aw * (p.ability.active / ab.duration), ah); }
       else if (!ready) { ctx.fillStyle = 'rgba(120,130,150,0.25)'; ctx.fillRect(ax, ay, aw * (1 - cd / ab.cooldown), ah); }
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? '#ffb02a' : '#ffe08a') : active ? '#ff8a2a' : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);

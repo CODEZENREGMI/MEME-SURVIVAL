@@ -76,6 +76,31 @@ const Audio8 = {
     }
   },
 
+  /* decoded one-shot clips: fetched and decoded ahead of time so they fire on the exact frame, no load delay */
+  _clips: {},
+  preloadClip(url) {
+    if (this._clips[url]) return;
+    const rec = this._clips[url] = { buf: null, el: null };
+    fetch(url).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+      .then(ab => { if (!this.ctx) return Promise.reject('no ctx'); return this.ctx.decodeAudioData(ab); })
+      .then(buf => { rec.buf = buf; })
+      .catch(() => { try { const a = new window.Audio(url); a.preload = 'auto'; a.load(); rec.el = a; } catch (e) { } }); // fall back to a preloaded <audio>
+  },
+  playClip(url, vol = 1) {
+    const rec = this._clips[url];
+    if (rec && rec.buf && this.ctx) {
+      try {
+        this.resume();
+        const src = this.ctx.createBufferSource(); src.buffer = rec.buf;
+        const g = this.ctx.createGain(); g.gain.value = vol;
+        src.connect(g); g.connect(this.ctx.destination); src.start(); // straight to the output: a scare isn't an SFX you mix down
+        this._clipSrc = src; return true;
+      } catch (e) { }
+    }
+    if (rec && rec.el) { try { const a = rec.el; a.currentTime = 0; a.volume = vol; a.play().catch(() => {}); return true; } catch (e) { } }
+    this.playTrack(url, 0, { once: true, loud: true }); return false; // last resort: the streaming path
+  },
+  stopClip() { try { if (this._clipSrc) { this._clipSrc.stop(); this._clipSrc = null; } } catch (e) { this._clipSrc = null; } },
   /* play an mp3 track (character theme); ducks the ambient drone while it runs */
   playTrack(url, seconds, opts) {
     this.stopTrack();

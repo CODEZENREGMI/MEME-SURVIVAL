@@ -80,8 +80,12 @@ your beam hits them; only their glowing eyes give them away.
 
   **Wave 5 — THE LIGHTS DIE.** On every map the power fails for the whole wave (flashlight only, lamps flickering,
   the dark ambient track). When you kill the wave's last boss, the screen is taken over by a full-screen shaking
-  face with a scream (`assets/img/jumpscare.png` + `assets/audio/jumpscare.mp3`, ~2 s), then the lights come back
-  on wave 6. Respects `prefers-reduced-motion` (no shake).
+  face with a scream (`assets/img/jumpscare.png` + `assets/audio/jumpscare.mp3`, ~2 s — the clip is fetched and
+  decoded into an AudioBuffer when the wave starts, so it fires on the exact frame the face appears, with a sub-bass
+  drop under it), then the lights come back
+  on wave 6. Respects `prefers-reduced-motion` (no shake). On any dark map the HUD panels switch to an opaque
+  background with a bright border so hearts, ammo, the cart, the weapon box and the ability slots stay readable
+  against pure black.
 - Pickups: Health, Ammo, Coins, XP.
 - **Supply cart:** coins you collect during the run are spent in the cart (`B`, or click the cart
   icon in the HUD) — refill a weapon's reserve ammo, buy a health pack / full heal, buy extra max hearts (20 coins each, no limit), or buy a weapon
