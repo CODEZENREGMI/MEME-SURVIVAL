@@ -61,7 +61,7 @@ class Player {
     this.webZip = null; this.webCd = 0; this.pullCd = 0; this.pulling = null;
     this.sym = 'human'; this.symT = 0; this.clawCd = 0; this.captureCd = 0; this.capturing = null;
     this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0; this.armyCd = 0; this.armyTime = 0;
-    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0; this.viralT = 0; this.viralCd = 0;
+    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0; this.viralT = 0; this.viralCd = 0; this.moneyT = 0; this.moneyCd = 0; this.throwCd = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -280,6 +280,25 @@ class Player {
     }
     return false;
   }
+  /* ---- Jeffry: PAYDAY — 20 s of endless money bags. Every bag is a lure the horde can't walk past. ---- */
+  usePayday() {
+    const mn = this.char.money, g = this.game; if (!mn) return false;
+    if (this.moneyT > 0) return false;
+    if (this.moneyCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `PAYDAY IN ${Math.ceil(this.moneyCd)}s`, '#9aa3b5'); return false; }
+    this.moneyT = mn.duration; this.throwCd = 0; this.reloading = false;
+    Audio8.play('coin'); Audio8.play('levelup'); g.shake(2);
+    for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 70, Math.sin(a) * 70 - 20, 0.5, i % 2 ? '#6ec46a' : '#c8b06a', 2, 'blood')); }
+    g.showAbilityBanner('PAYDAY', `${mn.duration}s · LMB throws money bags · they stop to grab the cash`);
+    return true;
+  }
+  moneyAttacks(input) {
+    const mn = this.char.money, g = this.game;
+    if (!(input.mouseDown && this.throwCd <= 0)) return;
+    this.throwCd = mn.interval / this.fireMult; this.recoil = 1.2;
+    const gx = this.x + Math.cos(this.angle) * 8, gy = this.y - 4 + Math.sin(this.angle) * 8;
+    const d = Math.min(mn.range, dist(gx, gy, input.worldX, input.worldY)) || 40;
+    g.throwBag(gx, gy, this.x + Math.cos(this.angle) * d, this.y + Math.sin(this.angle) * d);
+  }
   /* ---- Kiya Mhalifa: GOING VIRAL — everything around her stops to record, and gets hit twice as hard ---- */
   useViral() {
     const vr = this.char.viral, g = this.game; if (!vr) return false;
@@ -472,7 +491,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -612,6 +631,8 @@ class Player {
       if (this.formCd > 0) return { name: tf.name, state: 'cd', frac: 1 - this.formCd / tf.cooldown, sub: `RECHARGING ${Math.ceil(this.formCd)}s` };
       return { name: tf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' };
     }
+    const mn = this.char.money;
+    if (mn) { if (this.moneyT > 0) return { name: mn.name, state: 'active', frac: this.moneyT / mn.duration, sub: `${Math.ceil(this.moneyT)}s · LMB THROW · \u221e BAGS` }; if (this.moneyCd > 0) return { name: mn.name, state: 'cd', frac: 1 - this.moneyCd / mn.cooldown, sub: `RECHARGING ${Math.ceil(this.moneyCd)}s` }; return { name: mn.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const vr = this.char.viral;
     if (vr) { if (this.viralT > 0) return { name: vr.name, state: 'active', frac: this.viralT / vr.duration, sub: `${Math.ceil(this.viralT)}s · THEY CAN'T LOOK AWAY` }; if (this.viralCd > 0) return { name: vr.name, state: 'cd', frac: 1 - this.viralCd / vr.cooldown, sub: `RECHARGING ${Math.ceil(this.viralCd)}s` }; return { name: vr.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const lv = this.char.lava;
@@ -874,6 +895,9 @@ class Player {
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x);
     this.flip = Math.cos(this.angle) < 0;
     this.fireTimer -= dt; this.invuln -= dt; this.hurtFlash -= dt; this.recoil *= Math.pow(0.001, dt); this.sinceHurt += dt;
+    if (this.char.money) { const mn = this.char.money; this.throwCd -= dt;
+      if (this.moneyT > 0) { this.moneyT -= dt; if (this.moneyT <= 0) { this.moneyT = 0; this.moneyCd = mn.cooldown; this.game.floatText(this.x, this.y - 18, 'OUT OF CASH', '#c9cfdb'); Audio8.play('reloaded'); } }
+      else if (this.moneyCd > 0) { this.moneyCd -= dt; if (this.moneyCd <= 0) { this.moneyCd = 0; this.game.floatText(this.x, this.y - 18, 'PAYDAY READY', '#6ec46a'); Audio8.play('xp'); } } }
     if (this.viralT > 0) { const vr = this.char.viral, g = this.game; this.viralT -= dt;
       for (const z of g.zombies) { if (z.dead || z.web > 0 || z.webImmune > 0) continue; if (dist(z.x, z.y, this.x, this.y) < vr.radius + z.r) { z.web = z.cfg.boss ? vr.bossFreeze : vr.freeze; z.kx = z.ky = 0; g.floatText(z.x, z.y - 12 * z.scale, 'RECORDING', '#8af0ff'); if (Math.random() < 0.3) Audio8.play('click'); } }
       for (const t of g.turrets) { if (t.dead || t.web > 0 || (t.webImmune || 0) > 0) continue; if (dist(t.x, t.y, this.x, this.y) < vr.radius + t.r) { t.web = vr.freeze; g.floatText(t.x, t.y - 20, 'RECORDING', '#8af0ff'); } }
@@ -902,6 +926,7 @@ class Player {
     this.tickReload(dt);
     if (this.venom) { this.venomAttacks(input); return; }
     if (this.lavaT > 0) { this.lavaAttacks(input); return; }
+    if (this.moneyT > 0) { this.moneyAttacks(input); return; }
     if (this.frog) { this.frogAttacks(input); return; }
     if (this.demon) { this.demonAttacks(input); return; }
     if (this.beast) return; // no guns in beast form — the Flesh Cannon / smash are handled in updateForm
@@ -1286,13 +1311,29 @@ class Zombie {
       this.wander = (this.wander || 0) - dt; if (this.wander <= 0) { this.wander = 0.8 + Math.random() * 2; this.wanderA = Math.random() * TAU; this.wanderStop = Math.random() < 0.35; }
       this.hit -= dt; this.attackCd = Math.max(this.attackCd, 0.5); this.gunCd = Math.max(this.gunCd || 0, 0.5); this.aiming = 0; this.burstLeft = 0; this.charge = 0; this.leap = null; this.rush = null; this.slam = 0; this.drum = null; this.height = 0;
       if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); if (this.dead) return; } }
-      if (this.poison > 0) { this.poison -= dt; this.poisonTick = (this.poisonTick || 0) + dt; if (this.poisonTick > 0.25) { this.poisonTick = 0; this.takeDamage(1.5 + this.maxHp * 0.012, 0, undefined, 0, true); if (this.dead) return; } }
+    if (this.poison > 0) { this.poison -= dt; this.poisonTick = (this.poisonTick || 0) + dt; if (this.poisonTick > 0.25) { this.poisonTick = 0; this.takeDamage(1.5 + this.maxHp * 0.012, 0, undefined, 0, true); if (this.dead) return; } }
       if (this.web > 0) { this.web -= dt; return; }
       if (!this.wanderStop) { const sp = this.speed * 0.45, mr = Math.min(this.r, 7); this.x += Math.cos(this.wanderA) * sp * dt + this.kx * dt; let p = this.game.map.resolve(this.x, this.y, mr); this.x = p.x; this.y += Math.sin(this.wanderA) * sp * dt + this.ky * dt; p = this.game.map.resolve(this.x, this.y, mr); this.x = p.x; this.y = p.y; this.flip = Math.cos(this.wanderA) < 0; this.walk += dt * (sp / 12); }
       this.kx *= Math.pow(0.0005, dt); this.ky *= Math.pow(0.0005, dt);
       return;
     }
     if (this.poison > 0) { this.poison -= dt; this.poisonTick = (this.poisonTick || 0) + dt; if (this.poisonTick > 0.25) { this.poisonTick = 0; this.takeDamage(1.5 + this.maxHp * 0.012, 0, undefined, 0, true); if (this.dead) return; if (Math.random() < 0.6) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 8 * this.scale, this.y, (Math.random() - 0.5) * 6, 12, 0.5, '#5fd35a', 2, 'blood')); } }
+      const lure = this.cfg.boss ? null : this.game.nearestLure(this.x, this.y);   // bosses don't care about money
+    if (lure && !(this.captured > 0) && !(this.web > 0) && !(this.pullT > 0)) {   // pullT is undefined until something pulls it, so test the positive
+      this.hit -= dt; this.attackCd = Math.max(this.attackCd, 0.4); this.gunCd = Math.max(this.gunCd || 0, 0.5); this.charge = 0;
+      if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); if (this.dead) return; } }
+      const bx = lure.x - this.x, by = lure.y - this.y, bd = Math.hypot(bx, by) || 1;
+      this.grabT = (this.grabT || 0) + dt;
+      if (bd > 14) { const sp = this.speed * 1.1, mr = Math.min(this.r, 7);   // scramble for it
+        this.x += bx / bd * sp * dt; let q = this.game.map.resolve(this.x, this.y, mr); this.x = q.x;
+        this.y += by / bd * sp * dt; q = this.game.map.resolve(this.x, this.y, mr); this.x = q.x; this.y = q.y;
+        this.flip = bx < 0; this.walk += dt * (sp / 10);
+      } else { this.walk += dt * 6; this.flip = Math.sin(this.grabT * 5) < 0;   // fighting over it
+        if (Math.random() < 0.06) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 14, this.y - 6, (Math.random() - 0.5) * 30, -30, 0.5, '#6ec46a', 2, 'blood'));
+      }
+      this.kx *= Math.pow(0.0005, dt); this.ky *= Math.pow(0.0005, dt);
+      return;
+    }
     if (this.captured > 0) { // drowning in liquid symbiote: frozen, then it's ours
       this.captured -= dt; this.hit -= dt; this.attackCd = 1; this.burstLeft = 0; this.aiming = 0; this.charge = 0; this.leap = null; this.height = 0;
       if (Math.random() < 0.7) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 16 * this.scale, this.y - 6 * this.scale + Math.random() * 12 * this.scale, (Math.random() - 0.5) * 8, 18, 0.5, '#0a0a0e', 2 + Math.random() * 2, 'blood'));

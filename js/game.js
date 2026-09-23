@@ -50,7 +50,7 @@ class Game {
   reset() {
     this.map = this.getMap(this.loadout.map); this.resize();
     this.player = new Player(this, this.map.playerStart.x, this.map.playerStart.y, this.loadout.char, this.loadout.weapons);
-    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = [];
+    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = [];
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0; this.heartsBought = 0;
@@ -296,6 +296,57 @@ class Game {
     this.flash = 0.05; this.lights.push({ x, y, r: 130, life: 0.08, max: 0.08 });
   }
   showAbilityBanner(name, sub) { this.ui.showBanner(name, sub); }
+
+  /* ---- Jeffry's money bags: a thrown bag arcs to where you aimed, bursts, and holds the horde while it lasts ---- */
+  throwBag(x, y, tx, ty) {
+    const B = this.player.char.money.bag;
+    this.lures.push({ sx: x, sy: y, x, y, tx, ty, t: 0, h: 0, fly: Math.max(0.25, Math.min(0.55, dist(x, y, tx, ty) / 800)), life: B.life, max: B.life, r: B.radius, landed: false, notes: [] });
+    Audio8.play('swap');
+  }
+  updateLures(dt) {
+    for (const L of this.lures) {
+      if (!L.landed) { // in the air
+        L.t += dt; const k = Math.min(1, L.t / L.fly);
+        L.x = L.sx + (L.tx - L.sx) * k; L.y = L.sy + (L.ty - L.sy) * k; L.h = Math.sin(k * Math.PI) * 34;
+        if (k >= 1) { // it bursts
+          L.landed = true; L.h = 0; Audio8.play('coin'); this.shake(1.5);
+          for (let i = 0; i < 14; i++) { const a = Math.random() * TAU, sp = 30 + Math.random() * 70; L.notes.push({ x: 0, y: 0, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 30, r: Math.random() * TAU, sp: (Math.random() - 0.5) * 6 }); }
+          for (let i = 0; i < 10; i++) this.particles.push(new Particle(L.x, L.y, (Math.random() - 0.5) * 90, -40 - Math.random() * 60, 0.7, i % 2 ? '#6ec46a' : '#d8d4c8', 2, 'blood'));
+          this.floatText(L.x, L.y - 14, 'CASH!', '#6ec46a');
+        }
+      } else {
+        L.life -= dt;
+        for (const n of L.notes) { n.x += n.vx * dt; n.y += n.vy * dt; n.vy += 60 * dt; n.vx *= 0.94; n.r += n.sp * dt; if (n.y > 4) { n.y = 4; n.vy = 0; n.vx *= 0.7; } }
+        if (Math.random() < 0.3) this.particles.push(new Particle(L.x + (Math.random() - 0.5) * 26, L.y + (Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12, -14, 0.8, '#6ec46a', 2, 'smoke'));
+      }
+    }
+    this.lures = this.lures.filter(L => L.life > 0);
+  }
+  /* the bag a zombie should be running at: the closest landed one whose pull reaches it */
+  nearestLure(x, y) {
+    let best = null, bd = 1e9;
+    for (const L of this.lures) { if (!L.landed) continue; const d = dist(x, y, L.x, L.y); if (d < L.r && d < bd) { bd = d; best = L; } }
+    return best;
+  }
+  drawLures(ctx) {
+    const t = this.time;
+    for (const L of this.lures) {
+      const fade = Math.min(1, L.life / 1.2);
+      if (L.landed) { // show what the bag is holding
+        ctx.strokeStyle = `rgba(110,196,106,${0.35 * fade})`; ctx.lineWidth = 1.5; ctx.setLineDash([5, 8]); ctx.lineDashOffset = -t * 18;
+        ctx.beginPath(); ctx.arc(L.x, L.y, L.r * (0.35 + 0.65 * Math.min(1, (L.max - L.life) * 3)), 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+        for (const n of L.notes) { ctx.save(); ctx.translate(L.x + n.x, L.y + n.y); ctx.rotate(n.r); ctx.globalAlpha = fade; ctx.fillStyle = '#4f8c4a'; ctx.fillRect(-4, -2, 8, 4); ctx.fillStyle = '#8fd48a'; ctx.fillRect(-3, -1, 6, 2); ctx.fillStyle = '#e8e6dc'; ctx.fillRect(-1, -1, 2, 2); ctx.restore(); ctx.globalAlpha = 1; }
+      }
+      const by = L.y - (L.h || 0);
+      ctx.fillStyle = `rgba(0,0,0,${0.3 * fade})`; ctx.beginPath(); ctx.ellipse(L.x, L.y + 3, 7, 3, 0, 0, TAU); ctx.fill();
+      ctx.globalAlpha = fade;
+      ctx.fillStyle = '#2a1a10'; ctx.fillRect(Math.round(L.x - 6), Math.round(by - 8), 12, 11);   // the bag
+      ctx.fillStyle = '#c8b06a'; ctx.fillRect(Math.round(L.x - 5), Math.round(by - 7), 10, 9);
+      ctx.fillStyle = '#9a7f42'; ctx.fillRect(Math.round(L.x - 5), Math.round(by - 7), 10, 2);
+      ctx.fillStyle = '#2a1a10'; ctx.fillRect(Math.round(L.x - 1), Math.round(by - 5), 2, 5); ctx.fillRect(Math.round(L.x - 3), Math.round(by - 4), 6, 2);
+      ctx.globalAlpha = 1;
+    }
+  }
   /* the last boss of the dread wave is gone — killed or dragged off by Genom. Either way, something comes through. */
   armScare() {
     if (!this.dread || !this.dread.armed || this.boss) return;
@@ -420,6 +471,7 @@ class Game {
     for (const z of this.zombies) z.update(dt, multi ? this.nearestTarget(z.x, z.y) : p, this.near(z.x, z.y));
     this.zombies = this.zombies.filter(z => !z.dead);
     this.clones.forEach(c => c.update(dt)); this.clones = this.clones.filter(c => !c.dead);
+    this.updateLures(dt);
     for (const b of this.bullets) {
       b.update(dt); if (b.dead) continue;
       if (this.siege) {
@@ -477,6 +529,7 @@ class Game {
     ctx.save(); ctx.translate(-cx, -cy);
     if (this.siege) this.drawHouse(ctx);
     if (this.map.cars.length) this.drawCars(ctx);
+    this.drawLures(ctx);
     this.pickups.forEach(k => inView(k) && k.draw(ctx));
     this.zombies.forEach(z => inView(z) && z.draw(ctx));
     this.clones.forEach(c => inView(c) && c.draw(ctx));
@@ -666,6 +719,7 @@ class Game {
     this.zombies.forEach(z => { if (z.bk && z.bk.bona) radial(z.x, z.y - 10, 110 + Math.sin(t * 9) * 8 + (z.enraged ? 30 : 0), 1, 0.15); });
     this.ebullets.forEach(b => { if (b.cannon) radial(b.x, b.y, 30, 0.8); });
     this.bullets.forEach(b => { if (b.flame) radial(b.x, b.y, 16, 0.5); if (b.lava) radial(b.x, b.y, 40, 0.9, 0.1); });
+    this.lures.forEach(L => L.landed && radial(L.x, L.y, 46, 0.7, 0.12));
     this.ebullets.forEach(b => radial(b.x, b.y, b.flame ? 16 : 10, 0.6));
     this.pickups.forEach(k => { if (k.type === 'crate' && Math.sin(t * 6) > 0) radial(k.x, k.y, 22, 0.8); });
     this.lights.forEach(l => radial(l.x, l.y, l.r, l.life / l.max));
@@ -708,7 +762,7 @@ class Game {
     const ay0 = 17 + hh, off = hh - 13; // everything below the hearts shifts down with extra rows
     Sprites.draw(ctx, 'pickup_ammo', 14, ay0, { ox: 0, oy: 0, scale: 1 });
     ctx.font = F; ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';
-    const w = p.wstate; ctx.fillText(p.venom ? 'VENOM' : p.frog ? 'FROG' : p.demon ? 'DEMON' : p.lavaT > 0 ? '∞ LAVA' : p.beast ? `${p.beastAmmo}/${BEAST_GUN.mag}` : (p.overdrive || p.rushing || (p.driving && !p.car.civil)) ? '∞/∞' : `${w.mag}/${w.reserve === Infinity ? '∞' : w.reserve}`, 30, ay0 + 3);
+    const w = p.wstate; ctx.fillText(p.venom ? 'VENOM' : p.frog ? 'FROG' : p.demon ? 'DEMON' : p.lavaT > 0 ? '∞ LAVA' : p.moneyT > 0 ? '∞ CASH' : p.beast ? `${p.beastAmmo}/${BEAST_GUN.mag}` : (p.overdrive || p.rushing || (p.driving && !p.car.civil)) ? '∞/∞' : `${w.mag}/${w.reserve === Infinity ? '∞' : w.reserve}`, 30, ay0 + 3);
     if (p.beast) { ctx.fillStyle = p.beastAmmo > 0 ? '#c9cfdb' : '#ff6a5a'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(`REFILL ${p.beastKills}/${BEAST_GUN.refillKills} KILLS`, 8, 56 + off); ctx.font = F; }
     if (p.reloading) { ctx.fillStyle = '#f5c518'; ctx.fillText('RELOADING', 8, 56 + off); } else if (w.mag === 0 && w.reserve === 0) { ctx.fillStyle = '#ff6a5a'; ctx.fillText('NO AMMO - [B] BUY', 8, 56 + off); }
     // coins + supply cart button
@@ -727,7 +781,8 @@ class Game {
     const remain = this.zombies.length + this.toSpawn; ctx.fillStyle = '#c9cfdb'; ctx.fillText(this.siege ? `☠ ${this.zombies.length} · ∞` : `☠ ${remain}`, this.vw - 112, 50);
     // weapon (bottom-left)
     box(8, this.vh - 34, 130, 26);
-    if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, this.vh - 16); }
+    if (p.moneyT > 0) { ctx.fillStyle = '#6ec46a'; ctx.fillText('MONEY BAGS', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · THEY GRAB IT', 116), 14, this.vh - 16); }
+    else if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, this.vh - 16); }
     else if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('DEMON KATANA', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SLASH · RMB KICK · ♪ CHARM', 116), 14, this.vh - 16); }
     else if (p.frog) { ctx.fillStyle = '#9ccf72'; ctx.fillText('TONGUE', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LASH · SPACE HOP · R ARMY', 116), 14, this.vh - 16); }
     else if (p.venom) { ctx.fillStyle = '#5fd35a'; ctx.fillText('VENOM SPIT', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SPIT · RMB CLAW · R CAPTURE', 116), 14, this.vh - 16); }

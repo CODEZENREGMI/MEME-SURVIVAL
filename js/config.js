@@ -227,8 +227,10 @@ const CHARACTERS = {
             pal: { K: '#14100c', H: '#2b1a12', h: '#432a1c', S: '#e0a982', s: '#c08a62', W: '#f4f2ea', E: '#2a1a10', G: '#1e1e26', N: '#27407a', n: '#1b2c56', L: '#f0c39c', R: '#b04a58' },
             viral: { name: 'GOING VIRAL', duration: 14, cooldown: 32, radius: 165, freeze: 2.5, bossFreeze: 1.2, vuln: 2, sound: 'assets/audio/kiya_viral.mp3', soundLen: 3.5 } },
   jeffry:  { name: 'Jeffry', tag: 'Gunman', hp: 110, speed: 1.0, damage: 1.05, firerate: 1.0, reload: 1.1, regen: 0, sprite: 'jeffry', portrait: 'jeffry_portrait',
-            desc: 'An ordinary man in a work jacket. Steady hands, a bit tougher than most, reloads quick. (Ability coming.)',
-            pal: { K: '#14100c', H: '#5a3a22', S: '#e8b892', s: '#c89a76', W: '#f4f2ea', E: '#2a1a10', J: '#3d5a3a', j: '#2a3f28', T: '#d8d4c8', P: '#2f3646', p: '#232836' } },
+            desc: 'An ordinary man in a work jacket. PAYDAY (Space): for 20 s he throws an endless supply of money bags — LMB lobs one wherever you aim, it bursts into cash, and every zombie in range drops what it was doing to scramble for it. 30 s recharge.',
+            pal: { K: '#14100c', H: '#5a3a22', S: '#e8b892', s: '#c89a76', W: '#f4f2ea', E: '#2a1a10', J: '#3d5a3a', j: '#2a3f28', T: '#d8d4c8', P: '#2f3646', p: '#232836' },
+            money: { name: 'PAYDAY', duration: 20, cooldown: 30, interval: 0.4, range: 360,
+                     bag: { life: 7, radius: 250, hold: 1.1 } } },   // unlimited bags for the whole window; each one is a lure that pulls the horde off you
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry'];
 
