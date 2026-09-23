@@ -233,7 +233,7 @@ const CHARACTERS = {
                      bag: { life: 7, radius: 250, hold: 1.1 } } },   // unlimited bags for the whole window; each one is a lure that pulls the horde off you
   jonny:   { name: 'Johnny', tag: 'Doctor · plumber · pilot', hp: 125, speed: 0.95, damage: 1.1, firerate: 0.95, reload: 1.0, regen: 0, sprite: 'jonny', portrait: 'jonny_portrait',
             desc: 'Doctor, plumber, pilot — Johnny has every licence there is and finished none of the shifts. MILK QUAKE (Space): he drives a fist into the ground and a flood of white bursts out of it; every zombie the wave touches is knocked flat and left twitching in the milk, taking double damage until it gets up. 10 s recharge.',
-            pal: { K: '#14100c', S: '#f0c49c', s: '#cf9e78', H: '#ffdfbd', W: '#f4f2ea', E: '#2a1a10', L: '#3173c9', l: '#204f92', B: '#1f5aa8', D: '#2b4a80', d: '#1d3560' },   // blue scrubs
+            pal: { K: '#14100c', S: '#edb894', s: '#a8836a', H: '#ffe0c0', W: '#f6f4ec', E: '#4a6a78', L: '#3173c9', l: '#204f92', B: '#1f5aa8', D: '#2b4a80', d: '#1d3560' },   // blue scrubs
             slam: { name: 'MILK QUAKE', cooldown: 10, windup: 0.4, radius: 330, damage: 70, stun: 3, bossStun: 1.2, wave: 0.7, sound: 'assets/audio/milk_quake.mp3' } },
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny'];
