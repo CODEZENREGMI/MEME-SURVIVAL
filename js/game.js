@@ -63,6 +63,7 @@ class Game {
   }
   start() {
     Audio8.init(); Audio8.resume(); Audio8.stopMusic(); Audio8.startMusic(this.map.cfg.dark); Audio8.preloadClip(DREAD.sound); this.preloadScareImg();
+    { const ch = CHARACTERS[this.loadout.char]; if (ch && ch.slam && ch.slam.sound) Audio8.preloadClip(ch.slam.sound); }   // the character's own one-shots, ready before they're needed
     this.reset(); this.state = 'playing'; this.ui.setState('playing');
     this.startWave(1);
   }

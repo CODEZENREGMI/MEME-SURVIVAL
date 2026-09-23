@@ -286,13 +286,15 @@ class Player {
     if (this.slamT > 0) return false;
     if (this.slamCd2 > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `QUAKE IN ${Math.ceil(this.slamCd2)}s`, '#9aa3b5'); return false; }
     this.slamT = sl.windup; this.reloading = false; this.slamCd2 = sl.cooldown;
+    if (sl.sound) Audio8.preloadClip(sl.sound);   // decoded during the wind-up at the latest, so the hit lands with it
     Audio8.play('growl'); g.shake(3);
     return true;
   }
   milkQuake() {
     const sl = this.char.slam, g = this.game;
     g.milkWave(this.x, this.y, sl.radius, sl.wave);
-    g.shake(18); g.whiteFlash = 0.45; Audio8.play('thud'); Audio8.play('explode');
+    g.shake(18); g.whiteFlash = 0.45; Audio8.play('thud');
+    if (sl.sound) Audio8.playClip(sl.sound, 1);   // on the exact frame the fist lands
     for (const z of g.zombies) {
       if (z.dead || z.captured > 0) continue;
       const d = dist(z.x, z.y, this.x, this.y); if (d > sl.radius + z.r) continue;
