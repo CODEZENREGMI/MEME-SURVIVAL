@@ -57,16 +57,16 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .btn.primary{border-color:#fff}
 .btn.big{font-family:var(--pixel);font-size:16px;padding:16px 44px}
 /* title-screen buttons: icon on the left, red brackets framing PLAY */
-.play-btn,.gear-btn{display:inline-flex;align-items:center;justify-content:center;position:relative;width:260px;padding-left:44px;padding-right:44px}
+.play-btn,.gear-btn{display:inline-flex;align-items:center;justify-content:center;gap:11px;position:relative;width:260px;padding-left:24px;padding-right:24px}
 .play-btn{background:#2f3a4e;border-color:#f2f0e8;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 6px 20px rgba(0,0,0,.55)}
 .play-btn:hover{background:#3b4a63}
-/* the icons sit on the left without pushing the label off centre */
-.tri{position:absolute;left:30px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:14px solid #fff;border-top:9px solid transparent;border-bottom:9px solid transparent}
+/* icon and label travel together as one centred group */
+.tri{flex:0 0 auto;width:0;height:0;border-left:14px solid #fff;border-top:9px solid transparent;border-bottom:9px solid transparent}
 .play-btn::before,.play-btn::after{content:"";position:absolute;top:-7px;bottom:-7px;width:13px;
   border:3px solid var(--red);filter:drop-shadow(0 0 6px rgba(211,55,43,.65))}
 .play-btn::before{left:-13px;border-right:0}
 .play-btn::after{right:-13px;border-left:0}
-.gear{position:absolute;left:30px;top:50%;margin-top:-8px;width:16px;height:16px;border-radius:50%;
+.gear{flex:0 0 16px;width:16px;height:16px;border-radius:50%;
   background:radial-gradient(circle,transparent 30%,#dfe3ea 31% 58%,transparent 59%);
   box-shadow:0 -7px 0 -5px #dfe3ea,0 7px 0 -5px #dfe3ea,-7px 0 0 -5px #dfe3ea,7px 0 0 -5px #dfe3ea,
              5px 5px 0 -5px #dfe3ea,-5px -5px 0 -5px #dfe3ea,5px -5px 0 -5px #dfe3ea,-5px 5px 0 -5px #dfe3ea}
