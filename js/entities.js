@@ -548,6 +548,7 @@ class Player {
     // arcade steering: WASD = the direction on screen you want to go; the car swings its nose toward it
     const k = input.keys; let ix = 0, iy = 0;
     if (k.w || k.ArrowUp) iy -= 1; if (k.s || k.ArrowDown) iy += 1; if (k.a || k.ArrowLeft) ix -= 1; if (k.d || k.ArrowRight) ix += 1;
+    if (input.moveX || input.moveY) { ix += input.moveX; iy += input.moveY; } // the move stick steers the truck too
     const pushing = ix !== 0 || iy !== 0;
     let left = false, right = false;
     if (pushing) {
@@ -862,6 +863,7 @@ class Player {
     if (zipping) { this.moving = true; this.fireTimer -= dt; this.invuln -= dt; this.hurtFlash -= dt; this.tickReload(dt); if (input.keys.r) this.startReload(); if (input.mouseDown && this.fireTimer <= 0 && !this.reloading) this.shoot(); return; }
     if (input.keys.w || input.keys.ArrowUp) dy -= 1; if (input.keys.s || input.keys.ArrowDown) dy += 1;
     if (input.keys.a || input.keys.ArrowLeft) dx -= 1; if (input.keys.d || input.keys.ArrowRight) dx += 1;
+    if (input.moveX || input.moveY) { dx += input.moveX; dy += input.moveY; } // the move stick, analog
     this.moving = dx !== 0 || dy !== 0;
     if (this.moving) {
       const l = Math.hypot(dx, dy); dx /= l; dy /= l;

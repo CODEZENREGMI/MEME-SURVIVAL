@@ -13,7 +13,8 @@ class Game {
     this.mini = document.createElement('canvas'); this.mini.width = 120; this.mini.height = 75;
     this.lights = []; this.lightCanvas = document.createElement('canvas'); this.lctx = this.lightCanvas.getContext('2d'); this.ambientTimer = 8;
     this.coneCanvas = document.createElement('canvas'); this.cctx = this.coneCanvas.getContext('2d'); this.canBlur = ('filter' in this.lctx);
-    this.input = { keys: {}, mouseX: 320, mouseY: 200, worldX: 0, worldY: 0, mouseDown: false };
+    this.input = { keys: {}, mouseX: 320, mouseY: 200, worldX: 0, worldY: 0, mouseDown: false, moveX: 0, moveY: 0 };
+    this.touch = { on: false, move: null, aim: null, aimAngle: 0, aimPush: 0, taps: [] }; // two floating sticks + the buttons they share with the mouse
     this.state = 'menu'; this.time = 0; this.last = 0; this.fps = 0; this._fpsAcc = 0; this._fpsN = 0;
     this.cam = { x: 0, y: 0 }; this.shakeAmt = 0;
     this.grid = new Map();
@@ -67,7 +68,8 @@ class Game {
     this.startWave(1);
   }
   toMenu() { if (this.event) this.endEvent(true); this.state = 'menu'; Audio8.stopMusic(); Audio8.stopTrack(); this.reset(); this.ui.setState('menu'); }
-  pause() { if (this.state === 'playing' || this.state === 'wavebreak') { this.prevState = this.state; this.state = 'paused'; this.ui.setState('paused'); } }
+  pause() {
+    this.clearTouch(); if (this.state === 'playing' || this.state === 'wavebreak') { this.prevState = this.state; this.state = 'paused'; this.ui.setState('paused'); } }
   openShop() { if (this.state !== 'playing' && this.state !== 'wavebreak') return; this.prevState = this.state; this.state = 'shop'; this.input.mouseDown = false; this.ui.showShop(); Audio8.play('swap'); }
   closeShop() { if (this.state !== 'shop') return; this.state = this.prevState || 'playing'; this.ui.hideShop(); }
   toggleShop() { this.state === 'shop' ? this.closeShop() : this.openShop(); }
@@ -86,6 +88,7 @@ class Game {
     this.floatText(p.x, p.y - 18, `-${cost}`, '#f5c518');
     return true;
   }
+  clearTouch() { const T = this.touch; T.move = null; T.aim = null; T.aimPush = 0; this.input.moveX = 0; this.input.moveY = 0; this.input.mouseDown = false; }
   resume() { if (this.state === 'paused') { this.state = this.prevState || 'playing'; this.ui.setState('playing'); Audio8.resume(); } }
 
   /* ------------------------------------------------------------ waves */
@@ -371,21 +374,159 @@ class Game {
     const toLogical = e => { const r = c.getBoundingClientRect(); this.input.mouseX = clamp((e.clientX - r.left) / r.width * this.vw, 0, this.vw); this.input.mouseY = clamp((e.clientY - r.top) / r.height * this.vh, 0, this.vh); };
     c.addEventListener('mousemove', toLogical);
     c.addEventListener('mousedown', e => { toLogical(e); Audio8.init(); Audio8.resume(); if (e.button === 2) { this.input.rightDown = true; return; } if (e.button !== 0) return;
-      const r = this.cartRect; if (r && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= r.x && this.input.mouseX <= r.x + r.w && this.input.mouseY >= r.y && this.input.mouseY <= r.y + r.h) { this.openShop(); return; }
-      const ar = this.abilityRect; if (ar && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= ar.x && this.input.mouseX <= ar.x + ar.w && this.input.mouseY >= ar.y && this.input.mouseY <= ar.y + ar.h) { this.player.useAbility(); return; }
-      const cr = this.carRect; if (cr && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= cr.x && this.input.mouseX <= cr.x + cr.w && this.input.mouseY >= cr.y && this.input.mouseY <= cr.y + cr.h) { this.player.toggleCar(); return; }
-      const tr2 = this.transformRect2; if (tr2 && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr2.x && this.input.mouseX <= tr2.x + tr2.w && this.input.mouseY >= tr2.y && this.input.mouseY <= tr2.y + tr2.h) { if (this.player.char.wife) this.player.useWife(); else if (this.player.char.frog) this.player.useFrogArmy(); else if (this.player.char.symbiote) this.player.useCapture(); else this.player.usePull(); return; }
-      const tr = this.transformRect; if (tr && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr.x && this.input.mouseX <= tr.x + tr.w && this.input.mouseY >= tr.y && this.input.mouseY <= tr.y + tr.h) { this.player.useCharAbility(); return; }
+      if (this.hitHUD(this.input.mouseX, this.input.mouseY)) return;
       this.input.mouseDown = true; });
     window.addEventListener('mouseup', e => { if (e.button === 2) this.input.rightDown = false; else this.input.mouseDown = false; });
     c.addEventListener('contextmenu', e => e.preventDefault());
     c.addEventListener('wheel', e => { e.preventDefault(); if (this.state === 'playing' || this.state === 'wavebreak') this.player.cycle(e.deltaY > 0 ? 1 : -1); }, { passive: false });
+    this.bindTouch(c);
+  }
+
+  /* landscape only on touch devices: the sticks and the map need the width */
+  checkOrientation() {
+    const el = document.getElementById('rotate'); if (!el) return;
+    const portrait = window.innerHeight > window.innerWidth * 1.05;
+    const show = this.touchEnabled() && portrait;
+    el.classList.toggle('on', show);
+    if (show && (this.state === 'playing' || this.state === 'wavebreak')) this.pause();
+  }
+  /* the two floating sticks, plus the buttons that only touch needs */
+  drawTouch(ctx) {
+    const T = this.touch, p = this.player, W = this.vw, H = this.vh, B = TOUCH.btn;
+    const btn = (x, y, w, h, label, sub, tint, on) => {
+      ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
+      ctx.fillStyle = on ? 'rgba(70,84,112,0.95)' : 'rgba(16,20,30,0.92)'; ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = tint || 'rgba(170,205,255,0.5)'; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+      ctx.font = '7px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = tint || '#e8e6dc'; ctx.fillText(label, x + w / 2, y + h / 2 - (sub ? 5 : 0));
+      if (sub) { ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#9aa3b5'; ctx.fillText(sub, x + w / 2, y + h / 2 + 7); }
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    };
+    // pause, top-right under the wave box
+    this.pauseRect = { x: W - B - 8, y: 8, w: B, h: 30 }; btn(this.pauseRect.x, this.pauseRect.y, B, 30, 'II');
+    // weapon swap + reload, above the right stick — only when guns are actually in his hands
+    const hasGun = !p.venom && !p.frog && !p.demon && !p.beast && !p.giant && !(p.lavaT > 0) && !p.driving;
+    if (hasGun) {
+      const colY = Math.round(H * 0.46);
+      this.swapRect = { x: W - B - 8, y: colY, w: B, h: 30 }; btn(this.swapRect.x, this.swapRect.y, B, 30, 'SWAP', `${p.weaponOrder.indexOf(p.current) + 1}/${p.weaponOrder.length}`);
+      const w = p.wstate, canReload = w && w.mag < p.wcfg.mag && w.reserve !== 0;
+      this.reloadRect = { x: W - B - 8, y: colY + 34, w: B, h: 30 };
+      btn(this.reloadRect.x, this.reloadRect.y, B, 30, p.reloading ? '...' : 'RLD', null, canReload && !p.reloading ? '#f5c518' : 'rgba(120,130,150,0.6)');
+    }
+    // the sticks themselves
+    const ring = (cx, cy, r, a) => { ctx.strokeStyle = `rgba(200,220,255,${a})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke(); };
+    const knob = (cx, cy, r, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.5; ctx.stroke(); };
+    const stick = (st, col) => {
+      if (!st) return;
+      let dx = st.x - st.ox, dy = st.y - st.oy; const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / TOUCH.stickR);
+      ring(st.ox, st.oy, TOUCH.stickR, 0.3); ring(st.ox, st.oy, TOUCH.stickR * 0.45, 0.14);
+      knob(st.ox + dx / d * TOUCH.stickR * k, st.oy + dy / d * TOUCH.stickR * k, 15, col);
+    };
+    stick(T.move, 'rgba(120,180,255,0.5)');
+    stick(T.aim, T.aimPush >= TOUCH.fireDead ? 'rgba(255,110,90,0.65)' : 'rgba(255,200,120,0.45)');
+    if (!T.move && !T.aim) { // hint on an untouched screen
+      ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(200,215,240,0.28)';
+      ctx.fillText('DRAG TO MOVE', W * 0.25, H - 34); ctx.fillText('DRAG TO AIM + FIRE', W * 0.75, H - 34); ctx.textAlign = 'left';
+    }
+  }
+
+  /* every tappable thing on the HUD, shared by the mouse and by touch */
+  hitHUD(x, y) {
+    if (this.state !== 'playing' && this.state !== 'wavebreak') return false;
+    const p = this.player, inside = r => r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+    if (inside(this.cartRect)) { this.openShop(); return true; }
+    if (inside(this.pauseRect)) { this.pause(); return true; }
+    if (inside(this.reloadRect)) { p.startReload(); return true; }
+    if (inside(this.swapRect)) { p.cycle(1); return true; }
+    if (inside(this.abilityRect)) { p.useAbility(); return true; }
+    if (inside(this.carRect)) { p.toggleCar(); return true; }
+    if (inside(this.transformRect2)) { if (p.char.wife) p.useWife(); else if (p.char.frog) p.useFrogArmy(); else if (p.char.symbiote) p.useCapture(); else p.usePull(); return true; }
+    if (inside(this.transformRect)) { p.useCharAbility(); return true; }
+    return false;
+  }
+
+  /* ---------------------------------------------------------- touch */
+  /* Two floating sticks: the left half moves, the right half aims and fires. Buttons are shared with the mouse. */
+  touchEnabled() {
+    const mode = (this.settings && this.settings.touch) || 'auto';
+    if (mode === 'on') return true;
+    if (mode === 'off') return false;
+    return this._coarse;
+  }
+  bindTouch(c) {
+    this._coarse = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints > 0 && !(window.matchMedia && window.matchMedia('(pointer: fine)').matches));
+    const T = this.touch;
+    const logical = t => { const r = c.getBoundingClientRect(); return { x: clamp((t.clientX - r.left) / r.width * this.vw, 0, this.vw), y: clamp((t.clientY - r.top) / r.height * this.vh, 0, this.vh) }; };
+    const start = e => {
+      if (!this.touchEnabled()) return;
+      e.preventDefault(); Audio8.init(); Audio8.resume(); T.on = true;
+      for (const t of e.changedTouches) {
+        const q = logical(t);
+        if (this.hitHUD(q.x, q.y)) continue;                                   // a button beats a stick
+        if (q.x < this.vw * 0.5) { if (!T.move) T.move = { id: t.identifier, ox: q.x, oy: q.y, x: q.x, y: q.y }; }
+        else if (!T.aim) T.aim = { id: t.identifier, ox: q.x, oy: q.y, x: q.x, y: q.y };
+      }
+    };
+    const move = e => {
+      if (!this.touchEnabled()) return;
+      e.preventDefault();
+      for (const t of e.changedTouches) { const q = logical(t);
+        if (T.move && t.identifier === T.move.id) { T.move.x = q.x; T.move.y = q.y; }
+        if (T.aim && t.identifier === T.aim.id) { T.aim.x = q.x; T.aim.y = q.y; }
+      }
+    };
+    const end = e => {
+      if (!this.touchEnabled()) return;
+      e.preventDefault();
+      for (const t of e.changedTouches) {
+        if (T.move && t.identifier === T.move.id) { T.move = null; this.input.moveX = 0; this.input.moveY = 0; }
+        if (T.aim && t.identifier === T.aim.id) { T.aim = null; this.input.mouseDown = false; T.aimPush = 0; }
+      }
+    };
+    c.addEventListener('touchstart', start, { passive: false });
+    c.addEventListener('touchmove', move, { passive: false });
+    c.addEventListener('touchend', end, { passive: false });
+    c.addEventListener('touchcancel', end, { passive: false });
+  }
+  /* turn the two sticks into the movement axis and the aim point the whole game already understands */
+  updateTouch() {
+    const T = this.touch, inp = this.input;
+    if (!T.on || !this.touchEnabled()) return;
+    if (T.move) { let dx = T.move.x - T.move.ox, dy = T.move.y - T.move.oy; const d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / TOUCH.stickR);
+      if (k < TOUCH.dead) { inp.moveX = 0; inp.moveY = 0; } else { inp.moveX = dx / d * k; inp.moveY = dy / d * k; }
+    }
+    if (T.aim && this.player && !this.player.dead) {
+      const dx = T.aim.x - T.aim.ox, dy = T.aim.y - T.aim.oy, d = Math.hypot(dx, dy);
+      T.aimPush = Math.min(1, d / TOUCH.stickR);
+      if (d > 2) T.aimAngle = Math.atan2(dy, dx);
+      const p = this.player;
+      let ax = p.x + Math.cos(T.aimAngle) * TOUCH.aimDist, ay = p.y + Math.sin(T.aimAngle) * TOUCH.aimDist;
+      const snap = this.assistTarget(T.aimAngle);                              // soft aim assist: nudge onto a zombie in the cone
+      if (snap) { ax = snap.x; ay = snap.y; }
+      inp.worldX = ax; inp.worldY = ay; inp.mouseX = ax - this.cam.x; inp.mouseY = ay - this.cam.y;
+      inp.mouseDown = T.aimPush >= TOUCH.fireDead;
+    }
+  }
+  /* the nearest living thing within ~12 degrees of where the stick points */
+  assistTarget(angle) {
+    if (this.settings && this.settings.assist === false) return null;
+    const p = this.player; let best = null, bd = 1e9;
+    for (const z of this.zombies) {
+      if (z.dead || z.captured > 0) continue;
+      const dx = z.x - p.x, dy = z.y - p.y, d = Math.hypot(dx, dy);
+      if (d > TOUCH.assistRange || d < 8) continue;
+      let da = Math.atan2(dy, dx) - angle; da = Math.atan2(Math.sin(da), Math.cos(da));
+      if (Math.abs(da) > TOUCH.assistArc) continue;
+      const score = d + Math.abs(da) * 300;
+      if (score < bd) { bd = score; best = z; }
+    }
+    return best;
   }
 
   /* ------------------------------------------------------------ loop */
   loop(t) {
     const dt = Math.min(0.05, (t - this.last) / 1000 || 0); this.last = t;
-    if (window.innerWidth !== this._lastW || window.innerHeight !== this._lastH) this.resize();
+    if (window.innerWidth !== this._lastW || window.innerHeight !== this._lastH) { this.resize(); this.checkOrientation(); }
     this._fpsAcc += dt; this._fpsN++; if (this._fpsAcc >= 0.5) { this.fps = Math.round(this._fpsN / this._fpsAcc); this._fpsAcc = 0; this._fpsN = 0; }
     try { // one bad frame must never freeze the whole game
       if (this.state === 'playing' || this.state === 'wavebreak' || this.state === 'gameover') this.update(dt);
@@ -406,6 +547,7 @@ class Game {
     if (this.map.cfg.dark) { this.ambientTimer -= dt; if (this.ambientTimer <= 0) { this.ambientTimer = 7 + Math.random() * 12; Audio8.play(Math.random() < 0.35 ? 'scream' : 'moan'); } }
   }
   update(dt) {
+    this.updateTouch();
     this.time += dt;
     const p = this.player, inp = this.input;
     inp.worldX = this.cam.x + inp.mouseX; inp.worldY = this.cam.y + inp.mouseY;
@@ -513,6 +655,7 @@ class Game {
       const p = this.player;
       if (p.hp < p.maxHp * 0.3 && !p.dead) { ctx.globalAlpha = 0.25 + Math.sin(this.time * 6) * 0.12; ctx.drawImage(this.vignette('rgba(180,0,0,1)', 0.3), 0, 0); ctx.globalAlpha = 1; }
       this.drawHUD(ctx);
+      if (this.touchEnabled() && (this.state === 'playing' || this.state === 'wavebreak')) this.drawTouch(ctx);
     }
   }
 
@@ -689,7 +832,9 @@ class Game {
 
   drawHUD(ctx) {
     const p = this.player, F = '8px "Press Start 2P", monospace';
+    const tapWord = t => this.touchEnabled() ? String(t).replace(/ · CLICK/g, ' · TAP').replace(/CLICK/g, 'TAP') : t;
     // on dark maps (Industrial, the Lab, the wave-5 blackout, Bona) the panels have to fight a pure-black background
+    const touch = this.touchEnabled(); this.pauseRect = this.reloadRect = this.swapRect = null;
     const dk = !!this.map.cfg.dark, panel = dk ? 'rgba(16,20,30,0.97)' : 'rgba(12,14,20,0.78)', panelHov = dk ? 'rgba(70,84,112,0.97)' : 'rgba(60,70,90,0.9)', panelEdge = dk ? 'rgba(170,205,255,0.55)' : 'rgba(255,255,255,0.15)', dim = dk ? '#cdd6e6' : '#9aa3b5';
     const fit = (text, maxW) => { while (text.length > 1 && ctx.measureText(text).width > maxW) text = text.slice(0, -1); return text; }; // never let a label spill out of its box
     const box = (x, y, w, h) => { if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4); } ctx.fillStyle = panel; ctx.fillRect(x, y, w, h); ctx.strokeStyle = panelEdge; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); };
@@ -721,22 +866,24 @@ class Game {
     Sprites.draw(ctx, 'icon_cart', 12, cy0 + 5, { ox: 0, oy: 0 }); ctx.fillStyle = '#fff'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText('CART', 30, cy0 + 5); ctx.fillStyle = '#9aa3b5'; ctx.fillText('[B]', 30, cy0 + 14); ctx.font = F;
     // wave + score (top-right)
     const goal = Math.ceil(Math.max(1, this.wave) / CONFIG.WAVES_PER_LEVEL) * CONFIG.WAVES_PER_LEVEL;
-    box(this.vw - 120, 8, 112, 36); ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
-    ctx.fillText(this.event ? `BLACKOUT W${this.wave}` : `WAVE ${this.wave}/${goal}`, this.vw - 112, 14); ctx.fillText(`SCORE: ${this.score}`, this.vw - 112, 28);
+    const wbX = this.vw - 120 - (touch ? TOUCH.btn + 8 : 0);                 // touch: leave the corner for the pause button
+    box(wbX, 8, 112, 36); ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
+    ctx.fillText(this.event ? `BLACKOUT W${this.wave}` : `WAVE ${this.wave}/${goal}`, wbX + 8, 14); ctx.fillText(`SCORE: ${this.score}`, wbX + 8, 28);
     // remaining
     const remain = this.zombies.length + this.toSpawn; ctx.fillStyle = '#c9cfdb'; ctx.fillText(this.siege ? `☠ ${this.zombies.length} · ∞` : `☠ ${remain}`, this.vw - 112, 50);
     // weapon (bottom-left)
-    box(8, this.vh - 34, 130, 26);
-    if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, this.vh - 16); }
-    else if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('DEMON KATANA', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SLASH · RMB KICK · ♪ CHARM', 116), 14, this.vh - 16); }
-    else if (p.frog) { ctx.fillStyle = '#9ccf72'; ctx.fillText('TONGUE', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LASH · SPACE HOP · R ARMY', 116), 14, this.vh - 16); }
-    else if (p.venom) { ctx.fillStyle = '#5fd35a'; ctx.fillText('VENOM SPIT', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SPIT · RMB CLAW · R CAPTURE', 116), 14, this.vh - 16); }
-    else if (p.driving && !p.car.civil) { ctx.drawImage(Sprites.get('gun_m249'), 10, this.vh - 29, 36, 15); ctx.fillStyle = '#5a8ad8'; ctx.fillText(fit('TWIN M249', 86), 48, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD DRIVE · LMB TURRETS', 86), 48, this.vh - 16); }
-    else if (p.beast) { ctx.drawImage(Sprites.get('gun_flesh'), 10, this.vh - 31, 36, 15); ctx.fillStyle = p.beastAmmo > 0 ? '#ff8a6a' : '#9aa3b5'; ctx.fillText(fit(p.beastAmmo > 0 ? 'FLESH CANNON' : 'CANNON DRY', 86), 48, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(p.beastAmmo > 0 ? 'LMB FIRE · RMB SMASH · SPC LEAP' : 'LMB SMASH · SPACE LEAP', 86), 48, this.vh - 16); }
-    else { const img = Sprites.get(p.wcfg.sprite); ctx.drawImage(img, 12, this.vh - 30, 32, 16); ctx.fillStyle = '#fff'; ctx.fillText(fit(p.wcfg.name.toUpperCase(), 130 + 8 - 48 - 4), 48, this.vh - 27);
-    ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(`[${p.weaponOrder.indexOf(p.current) + 1}/${p.weaponOrder.length}] Q/SCROLL SWAP`, 86), 48, this.vh - 16); }
+    const wbY = touch ? Math.round(this.vh * 0.52) : this.vh - 34;   // touch: keep the bottom corners clear for thumbs
+    box(8, wbY, 130, 26);
+    if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, wbY + 7); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, wbY + 18); }
+    else if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('DEMON KATANA', 14, wbY + 7); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SLASH · RMB KICK · ♪ CHARM', 116), 14, wbY + 18); }
+    else if (p.frog) { ctx.fillStyle = '#9ccf72'; ctx.fillText('TONGUE', 14, wbY + 7); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LASH · SPACE HOP · R ARMY', 116), 14, wbY + 18); }
+    else if (p.venom) { ctx.fillStyle = '#5fd35a'; ctx.fillText('VENOM SPIT', 14, wbY + 7); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SPIT · RMB CLAW · R CAPTURE', 116), 14, wbY + 18); }
+    else if (p.driving && !p.car.civil) { ctx.drawImage(Sprites.get('gun_m249'), 10, wbY + 5, 36, 15); ctx.fillStyle = '#5a8ad8'; ctx.fillText(fit('TWIN M249', 86), 48, wbY + 7); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD DRIVE · LMB TURRETS', 86), 48, wbY + 18); }
+    else if (p.beast) { ctx.drawImage(Sprites.get('gun_flesh'), 10, wbY + 3, 36, 15); ctx.fillStyle = p.beastAmmo > 0 ? '#ff8a6a' : '#9aa3b5'; ctx.fillText(fit(p.beastAmmo > 0 ? 'FLESH CANNON' : 'CANNON DRY', 86), 48, wbY + 7); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(p.beastAmmo > 0 ? 'LMB FIRE · RMB SMASH · SPC LEAP' : 'LMB SMASH · SPACE LEAP', 86), 48, wbY + 18); }
+    else { const img = Sprites.get(p.wcfg.sprite); ctx.drawImage(img, 12, wbY + 4, 32, 16); ctx.fillStyle = '#fff'; ctx.fillText(fit(p.wcfg.name.toUpperCase(), 130 + 8 - 48 - 4), 48, wbY + 7);
+    ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(`[${p.weaponOrder.indexOf(p.current) + 1}/${p.weaponOrder.length}] Q/SCROLL SWAP`, 86), 48, wbY + 18); }
     // GET IN / GET OUT prompt for parked cars (Urban City)
-    this.carRect = null; let slotY = this.vh - 64;
+    this.carRect = null; let slotY = wbY - 30;
     const nearCar = p.nearbyCar(), inCar = p.car && p.car.civil;
     if (nearCar || inCar) {
       const ax = 8, ay = slotY, aw = 130, ah = 26; this.carRect = { x: ax, y: ay, w: aw, h: ah }; slotY -= 30;
@@ -760,7 +907,7 @@ class Game {
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? col : '#ffffff') : active ? col : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
       ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = ready ? col : active ? '#fff' : '#9aa3b5';
       ctx.fillText(ca.name, ax + 6, ay + 5);
-      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(ca.sub, aw - 12), ax + 6, ay + 15);
+      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(tapWord(ca.sub), aw - 12), ax + 6, ay + 15);
       ctx.font = F;
     }
     // second character ability (Spider Mad's WEB PULL)
@@ -773,7 +920,7 @@ class Game {
       if (ca2.state === 'cd') { ctx.fillStyle = 'rgba(120,130,150,0.25)'; ctx.fillRect(ax, ay, aw * ca2.frac, ah); }
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? col : '#ffffff') : active ? col : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
       ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = ready ? col : active ? '#fff' : '#9aa3b5'; ctx.fillText(ca2.name, ax + 6, ay + 5);
-      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(ca2.sub, aw - 12), ax + 6, ay + 15); ctx.font = F;
+      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(tapWord(ca2.sub), aw - 12), ax + 6, ay + 15); ctx.font = F;
     }
     // weapon ability button (only when the current weapon has one)
     const ab = p.wcfg.ability; this.abilityRect = null;
@@ -787,7 +934,7 @@ class Game {
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? '#ffb02a' : '#ffe08a') : active ? '#ff8a2a' : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
       ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = ready ? '#ffb02a' : active ? '#fff' : '#9aa3b5';
       ctx.fillText(ab.name, ax + 6, ay + 5);
-      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife ? 'F' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
+      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(tapWord(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife ? 'F' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`), aw - 12), ax + 6, ay + 15);
       ctx.font = F;
     }
     // xp bar (bottom-centre)
@@ -799,7 +946,7 @@ class Game {
     const bosses = this.zombies.filter(z => z.cfg.boss && !z.dead);
     bosses.slice(0, 3).forEach((b, i) => { const bw = 240, bxx = this.vw / 2 - bw / 2, by = barTop + i * 24; ctx.fillStyle = '#0c0e14'; ctx.fillRect(bxx - 2, by, bw + 4, 12); ctx.fillStyle = '#5f2e8a'; ctx.fillRect(bxx, by + 2, bw, 8); ctx.fillStyle = b.aiming > 0 ? '#ff4a3a' : '#c05aff'; ctx.fillRect(bxx, by + 2, bw * clamp(b.hp / b.maxHp, 0, 1), 8); ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(`${b.bk ? b.bk.name : 'BOSS'} LV ${this.wave} · ${Math.ceil(b.hp)}`, this.vw / 2, by + 15); ctx.textAlign = 'left'; ctx.font = F; });
     if (this.state === 'wavebreak') { ctx.font = F; ctx.fillStyle = '#f5c518'; ctx.textAlign = 'center'; ctx.fillText(`NEXT WAVE IN ${Math.ceil(this.breakTimer)}`, this.vw / 2, 60); ctx.textAlign = 'left'; }
-    if (this.settings.minimap !== false) { this.map.drawMinimap(this.mini, p, this.zombies, this.pickups); ctx.globalAlpha = 0.85; ctx.drawImage(this.mini, this.vw - this.mini.width - 8, this.vh - this.mini.height - 40); ctx.globalAlpha = 1; ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.strokeRect(this.vw - this.mini.width - 8.5, this.vh - this.mini.height - 40.5, this.mini.width + 1, this.mini.height + 1); }
+    if (this.settings.minimap !== false) { this.map.drawMinimap(this.mini, p, this.zombies, this.pickups); ctx.globalAlpha = 0.85; ctx.drawImage(this.mini, this.vw - this.mini.width - 8, touch ? 88 : this.vh - this.mini.height - 40); ctx.globalAlpha = 1; ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.strokeRect(this.vw - this.mini.width - 8.5, this.vh - this.mini.height - 40.5, this.mini.width + 1, this.mini.height + 1); }
     if (this.admin) { ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#ffd23a'; ctx.textAlign = 'center'; ctx.fillText('ADMIN' + (this.god ? ' · GOD' : '') + (this.infAmmo ? ' · ∞AMMO' : ''), this.vw / 2, 4); ctx.textAlign = 'left'; ctx.font = F; }
     if (this.settings.fps) { ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#8bc46e'; ctx.fillText(`${this.fps} FPS  Z:${this.zombies.length} P:${this.particles.length}`, this.vw - 140, this.vh - 10); }
   }

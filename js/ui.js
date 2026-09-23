@@ -15,7 +15,7 @@ class UI {
     this.step = 0; this.sel = null;
   }
   load() {
-    const def = { highScore: 0, bestWave: 0, runs: 0, loadout: { char: 'rookie', weapons: ['shotgun', 'smg', 'rifle'], map: 'city' }, settings: { sfx: 0.7, music: 0.4, shake: true, blood: true, fps: false, aimLine: true, minimap: true } };
+    const def = { highScore: 0, bestWave: 0, runs: 0, loadout: { char: 'rookie', weapons: ['shotgun', 'smg', 'rifle'], map: 'city' }, settings: { sfx: 0.7, music: 0.4, shake: true, blood: true, fps: false, aimLine: true, minimap: true, touch: 'auto', assist: true } };
     try {
       const s = JSON.parse(localStorage.getItem(SAVE_KEY));
       if (s && typeof s === 'object') {
@@ -260,9 +260,11 @@ class UI {
   initSettings() {
     const s = this.save.settings;
     const bind = (id, key, isRange) => { const el = $(id); el[isRange ? 'value' : 'checked'] = isRange ? s[key] * 100 : s[key]; el.addEventListener('input', () => { s[key] = isRange ? el.value / 100 : el.checked; this.applySettings(); this.saveGame(); }); };
-    bind('#setSfx', 'sfx', true); bind('#setMusic', 'music', true); bind('#setShake', 'shake'); bind('#setBlood', 'blood'); bind('#setFps', 'fps'); bind('#setAimLine', 'aimLine'); bind('#setMinimap', 'minimap');
+    bind('#setSfx', 'sfx', true); bind('#setMusic', 'music', true); bind('#setShake', 'shake'); bind('#setBlood', 'blood'); bind('#setFps', 'fps'); bind('#setAimLine', 'aimLine'); bind('#setMinimap', 'minimap'); bind('#setAssist', 'assist');
+    const tc = $('#setTouch'); if (!['auto', 'on', 'off'].includes(s.touch)) s.touch = 'auto';
+    tc.value = s.touch; tc.addEventListener('change', () => { s.touch = tc.value; this.applySettings(); this.saveGame(); if (this.game) { this.game.clearTouch(); this.game.checkOrientation(); } });
     $('#resetProgress').addEventListener('click', () => { if (confirm('Reset high score and best wave?')) { this.save.highScore = 0; this.save.bestWave = 0; this.saveGame(); this.refreshTitle(); this.toast('Progress reset.'); } });
     this.applySettings();
   }
-  applySettings() { const s = this.save.settings; Audio8.setSfx(s.sfx); Audio8.setMusic(s.music); if (this.game) this.game.settings = s; }
+  applySettings() { const s = this.save.settings; Audio8.setSfx(s.sfx); Audio8.setMusic(s.music); if (this.game) { this.game.settings = s; this.game.checkOrientation && this.game.checkOrientation(); } }
 }

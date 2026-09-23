@@ -9,7 +9,7 @@ button{font-family:inherit;cursor:pointer}
 canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 
 #stage{position:fixed;inset:0;background:#000;overflow:hidden}
-#game{display:block;cursor:crosshair;position:absolute;left:0;top:0;width:100vw;height:100vh}
+#game{display:block;cursor:crosshair;position:absolute;left:0;top:0;width:100vw;height:100vh;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 
 /* ---------- overlays ---------- */
 .overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(8,10,16,.72);text-align:center;padding:24px;z-index:5}
@@ -154,6 +154,8 @@ img.coin{width:14px;height:14px;vertical-align:-2px;margin-right:2px;image-rende
 .setting{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
 .setting input[type=range]{width:160px}
 .setting input[type=checkbox]{width:18px;height:18px;accent-color:var(--green)}
+.setting select{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-family:var(--mono);font-size:13px}
+.setting small{color:var(--muted);font-size:11px}
 .setting-actions{padding-top:14px;text-align:center}
 
 .toast{position:absolute;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#2c3444;border:1px solid #6c7688;color:#fff;padding:8px 16px;border-radius:4px;font-size:13px;opacity:0;transition:.25s;z-index:200;pointer-events:none}
@@ -176,3 +178,13 @@ img.coin{width:14px;height:14px;vertical-align:-2px;margin-right:2px;image-rende
 @keyframes jsshake{0%{margin:0 0}25%{margin:-1.2vh 1.6vh}50%{margin:1.4vh -1.2vh}75%{margin:-1vh -1.6vh}100%{margin:1.2vh 1vh}}
 @keyframes jsflash{0%,100%{background:#000}50%{background:#3a0000}}
 @media (prefers-reduced-motion: reduce){#jumpscare img{animation:jsin .2s both}}
+
+
+/* ---- landscape gate: this is a twin-stick game, portrait is unplayable ---- */
+#rotate{position:fixed;inset:0;z-index:9000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#0b0d12;color:var(--text);text-align:center;padding:24px}
+#rotate.on{display:flex}
+#rotate .phone{width:64px;height:104px;border:4px solid var(--text);border-radius:10px;position:relative;animation:rot 1.8s ease-in-out infinite}
+#rotate .phone::after{content:"";position:absolute;left:50%;bottom:6px;width:20px;height:3px;background:var(--text);transform:translateX(-50%);border-radius:2px}
+#rotate b{font-family:'Press Start 2P',monospace;font-size:13px;letter-spacing:1px}
+#rotate span{font-size:13px;color:var(--muted);max-width:300px;line-height:1.6}
+@keyframes rot{0%,40%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
