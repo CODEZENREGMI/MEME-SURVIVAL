@@ -61,7 +61,7 @@ class Player {
     this.webZip = null; this.webCd = 0; this.pullCd = 0; this.pulling = null;
     this.sym = 'human'; this.symT = 0; this.clawCd = 0; this.captureCd = 0; this.capturing = null;
     this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0; this.armyCd = 0; this.armyTime = 0;
-    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0; this.viralT = 0; this.viralCd = 0; this.moneyT = 0; this.moneyCd = 0; this.throwCd = 0;
+    this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0; this.viralT = 0; this.viralCd = 0; this.moneyT = 0; this.moneyCd = 0; this.throwCd = 0; this.slamT = 0; this.slamCd2 = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -280,6 +280,32 @@ class Player {
     }
     return false;
   }
+  /* ---- Jonny: MILK QUAKE — fist into the ground, a white flood, everything in it goes down ---- */
+  useSlam() {
+    const sl = this.char.slam, g = this.game; if (!sl) return false;
+    if (this.slamT > 0) return false;
+    if (this.slamCd2 > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `QUAKE IN ${Math.ceil(this.slamCd2)}s`, '#9aa3b5'); return false; }
+    this.slamT = sl.windup; this.reloading = false; this.slamCd2 = sl.cooldown;
+    Audio8.play('growl'); g.shake(3);
+    return true;
+  }
+  milkQuake() {
+    const sl = this.char.slam, g = this.game;
+    g.milkWave(this.x, this.y, sl.radius, sl.wave);
+    g.shake(18); g.whiteFlash = 0.45; Audio8.play('thud'); Audio8.play('explode');
+    for (const z of g.zombies) {
+      if (z.dead || z.captured > 0) continue;
+      const d = dist(z.x, z.y, this.x, this.y); if (d > sl.radius + z.r) continue;
+      z.takeDamage(sl.damage * this.damageMult * (1 - d / (sl.radius * 2)), Math.atan2(z.y - this.y, z.x - this.x), undefined, z.cfg.boss ? 1 : 5);
+      if (z.dead) continue;
+      z.web = Math.max(z.web, z.cfg.boss ? sl.bossStun : sl.stun); z.webImmune = 0; z.kx = z.ky = 0; z.milked = 1;
+      g.floatText(z.x, z.y - 12 * z.scale, 'SPLAT', '#f4f2ea');
+    }
+    for (const t of g.turrets) { if (!t.dead && dist(t.x, t.y, this.x, this.y) < sl.radius + t.r) { t.web = sl.stun; t.webImmune = 0; } }
+    if (g.house && !g.house.dead) { const h = g.map.house; if (Math.abs(this.x - h.x) < h.w / 2 + sl.radius && Math.abs(this.y - h.y) < h.h / 2 + sl.radius) g.damageHouse(sl.damage * this.damageMult, this.x, this.y); }
+    g.lights.push({ x: this.x, y: this.y, r: sl.radius * 0.7, life: 0.4, max: 0.4 });
+    g.showAbilityBanner('MILK QUAKE', 'The ground gave up. So did they.');
+  }
   /* ---- Jeffry: PAYDAY — 20 s of endless money bags. Every bag is a lure the horde can't walk past. ---- */
   usePayday() {
     const mn = this.char.money, g = this.game; if (!mn) return false;
@@ -491,7 +517,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -631,6 +657,8 @@ class Player {
       if (this.formCd > 0) return { name: tf.name, state: 'cd', frac: 1 - this.formCd / tf.cooldown, sub: `RECHARGING ${Math.ceil(this.formCd)}s` };
       return { name: tf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' };
     }
+    const sl = this.char.slam;
+    if (sl) { if (this.slamT > 0) return { name: sl.name, state: 'busy', frac: 1 - this.slamT / sl.windup, sub: 'WINDING UP...' }; if (this.slamCd2 > 0) return { name: sl.name, state: 'cd', frac: 1 - this.slamCd2 / sl.cooldown, sub: `RECHARGING ${Math.ceil(this.slamCd2)}s` }; return { name: sl.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const mn = this.char.money;
     if (mn) { if (this.moneyT > 0) return { name: mn.name, state: 'active', frac: this.moneyT / mn.duration, sub: `${Math.ceil(this.moneyT)}s · RMB THROW · \u221e BAGS` }; if (this.moneyCd > 0) return { name: mn.name, state: 'cd', frac: 1 - this.moneyCd / mn.cooldown, sub: `RECHARGING ${Math.ceil(this.moneyCd)}s` }; return { name: mn.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const vr = this.char.viral;
@@ -895,6 +923,11 @@ class Player {
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x);
     this.flip = Math.cos(this.angle) < 0;
     this.fireTimer -= dt; this.invuln -= dt; this.hurtFlash -= dt; this.recoil *= Math.pow(0.001, dt); this.sinceHurt += dt;
+    if (this.char.slam) { const sl = this.char.slam;
+      if (this.slamT > 0) { this.slamT -= dt; this.invuln = Math.max(this.invuln, 0.1); this.game.shakeAmt = Math.max(this.game.shakeAmt, 2 + (sl.windup - this.slamT) * 6);
+        if (Math.random() < 0.5) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 22, this.y + 8, (Math.random() - 0.5) * 20, -20 - Math.random() * 20, 0.35, '#f4f2ea', 2, 'dot'));
+        if (this.slamT <= 0) { this.slamT = 0; this.milkQuake(); } }
+      else if (this.slamCd2 > 0) { this.slamCd2 -= dt; if (this.slamCd2 <= 0) { this.slamCd2 = 0; this.game.floatText(this.x, this.y - 18, 'MILK QUAKE READY', '#f4f2ea'); Audio8.play('xp'); } } }
     if (this.char.money) { const mn = this.char.money; this.throwCd -= dt;
       if (this.moneyT > 0) { this.moneyT -= dt; if (this.moneyT <= 0) { this.moneyT = 0; this.moneyCd = mn.cooldown; this.game.floatText(this.x, this.y - 18, 'OUT OF CASH', '#c9cfdb'); Audio8.play('reloaded'); } }
       else if (this.moneyCd > 0) { this.moneyCd -= dt; if (this.moneyCd <= 0) { this.moneyCd = 0; this.game.floatText(this.x, this.y - 18, 'PAYDAY READY', '#6ec46a'); Audio8.play('xp'); } } }
@@ -1580,6 +1613,12 @@ class Zombie {
     }
     if (this.poison > 0 && Math.random() < 0.5) { ctx.fillStyle = '#5fd35a'; ctx.fillRect(Math.round(this.x + (Math.random() - 0.5) * 10 * s), Math.round(this.y + (Math.random() - 0.5) * 10 * s), 2, 2); }
     if (this.burn > 0) { for (let i = 0; i < 3; i++) { ctx.fillStyle = i % 2 ? '#ffd23a' : '#ff6a2a'; ctx.fillRect(Math.round(this.x + (Math.random() - 0.5) * 10 * s), Math.round(this.y + (Math.random() - 0.7) * 12 * s), 2, 2); } }
+    if (this.web > 0 && this.game.player.char.slam) { // face down in the milk
+      const tt = this.game.time, w = 11 * s;
+      ctx.fillStyle = 'rgba(244,242,234,0.85)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 4 * s, w, w * 0.45, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.ellipse(this.x - 2, this.y + 3 * s, w * 0.5, w * 0.22, 0, 0, TAU); ctx.fill();
+      for (let i = 0; i < 3; i++) { const dx = Math.sin(tt * 3 + i * 2.1) * 5 * s, dy = ((tt * 22 + i * 7) % 14) - 10; ctx.fillStyle = `rgba(244,242,234,${0.9 - Math.abs(dy) / 16})`; ctx.fillRect(Math.round(this.x + dx), Math.round(this.y - 8 * s + dy), 2, 3); }
+    }
     if (this.charm > 0) { const tt = this.charmT || 0; ctx.font = '7px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = `rgba(255,120,190,${0.6 + Math.sin(tt * 8) * 0.3})`; ctx.fillText(tt % 1 < 0.5 ? '♪' : '♫', this.x + Math.sin(tt * 5) * 3, this.y - 12 * s - 6 + Math.sin(tt * 6) * 2); ctx.textAlign = 'left'; }
     if (this.web > 0 && this.game.player.char.viral) { // held by Kiya's crowd: it stopped to film her
       const tt = this.game.time, px = this.x, py = this.y - 12 * s, glow = 0.5 + Math.sin(tt * 8 + this.walk) * 0.3;

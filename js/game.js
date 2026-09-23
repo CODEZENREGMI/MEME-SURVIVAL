@@ -50,7 +50,7 @@ class Game {
   reset() {
     this.map = this.getMap(this.loadout.map); this.resize();
     this.player = new Player(this, this.map.playerStart.x, this.map.playerStart.y, this.loadout.char, this.loadout.weapons);
-    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = [];
+    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = [];
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0; this.heartsBought = 0;
@@ -297,6 +297,36 @@ class Game {
   }
   showAbilityBanner(name, sub) { this.ui.showBanner(name, sub); }
 
+  /* ---- Jonny's milk quake: a white flood rolling out from the punch, leaving the ground soaked ---- */
+  milkWave(x, y, radius, dur) {
+    this.milk.push({ x, y, r: 10, max: radius, t: 0, dur, splat: 0 });
+    for (let i = 0; i < 40; i++) { const a = Math.random() * TAU, sp = 60 + Math.random() * 220; this.particles.push(new Particle(x, y, Math.cos(a) * sp, Math.sin(a) * sp * 0.6 - 40, 0.5 + Math.random() * 0.5, Math.random() < 0.75 ? '#f4f2ea' : '#dcd8cc', 3, 'blood')); }
+    this.map.splat(x, y, 26, '#eae6da');
+  }
+  updateMilk(dt) {
+    for (const M of this.milk) {
+      const was = M.r; M.t += dt;
+      M.r = M.max * Math.min(1, M.t / M.dur);
+      // soak the ground behind the front as it passes
+      M.splat -= dt;
+      if (M.splat <= 0 && M.r < M.max) { M.splat = 0.045;
+        for (let i = 0; i < 3; i++) { const a = Math.random() * TAU, rr = was + (M.r - was) * Math.random(); this.map.splat(M.x + Math.cos(a) * rr, M.y + Math.sin(a) * rr, 9 + Math.random() * 12, '#eae6da'); }
+      }
+      if (Math.random() < 0.7) { const a = Math.random() * TAU; this.particles.push(new Particle(M.x + Math.cos(a) * M.r, M.y + Math.sin(a) * M.r, Math.cos(a) * 40, Math.sin(a) * 40 - 30, 0.5, '#f4f2ea', 2, 'blood')); }
+    }
+    this.milk = this.milk.filter(M => M.t < M.dur + 0.45);
+  }
+  drawMilk(ctx) {
+    for (const M of this.milk) {
+      const k = Math.min(1, M.t / M.dur), fade = Math.max(0, 1 - Math.max(0, M.t - M.dur) / 0.45);
+      const g = ctx.createRadialGradient(M.x, M.y, Math.max(1, M.r * 0.55), M.x, M.y, M.r);
+      g.addColorStop(0, `rgba(240,238,230,${0.10 * fade})`); g.addColorStop(0.82, `rgba(246,244,238,${0.34 * fade})`); g.addColorStop(1, `rgba(255,255,255,${0.85 * fade})`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(M.x, M.y, M.r, 0, TAU); ctx.fill();
+      ctx.strokeStyle = `rgba(255,255,255,${0.9 * fade})`; ctx.lineWidth = 5 - k * 2.5; ctx.beginPath(); ctx.arc(M.x, M.y, M.r, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,255,255,${0.35 * fade})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(M.x, M.y, Math.max(1, M.r - 9), 0, TAU); ctx.stroke();
+    }
+  }
+
   /* ---- Jeffry's money bags: a thrown bag arcs to where you aimed, bursts, and holds the horde while it lasts ---- */
   throwBag(x, y, tx, ty) {
     const B = this.player.char.money.bag;
@@ -472,6 +502,7 @@ class Game {
     this.zombies = this.zombies.filter(z => !z.dead);
     this.clones.forEach(c => c.update(dt)); this.clones = this.clones.filter(c => !c.dead);
     this.updateLures(dt);
+    this.updateMilk(dt);
     for (const b of this.bullets) {
       b.update(dt); if (b.dead) continue;
       if (this.siege) {
@@ -529,6 +560,7 @@ class Game {
     ctx.save(); ctx.translate(-cx, -cy);
     if (this.siege) this.drawHouse(ctx);
     if (this.map.cars.length) this.drawCars(ctx);
+    this.drawMilk(ctx);
     this.drawLures(ctx);
     this.pickups.forEach(k => inView(k) && k.draw(ctx));
     this.zombies.forEach(z => inView(z) && z.draw(ctx));
@@ -720,6 +752,7 @@ class Game {
     this.ebullets.forEach(b => { if (b.cannon) radial(b.x, b.y, 30, 0.8); });
     this.bullets.forEach(b => { if (b.flame) radial(b.x, b.y, 16, 0.5); if (b.lava) radial(b.x, b.y, 40, 0.9, 0.1); });
     this.lures.forEach(L => L.landed && radial(L.x, L.y, 46, 0.7, 0.12));
+    this.milk.forEach(M => radial(M.x, M.y, M.r + 20, 0.9, 0.3));
     this.ebullets.forEach(b => radial(b.x, b.y, b.flame ? 16 : 10, 0.6));
     this.pickups.forEach(k => { if (k.type === 'crate' && Math.sin(t * 6) > 0) radial(k.x, k.y, 22, 0.8); });
     this.lights.forEach(l => radial(l.x, l.y, l.r, l.life / l.max));

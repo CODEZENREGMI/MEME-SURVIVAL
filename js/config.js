@@ -231,9 +231,10 @@ const CHARACTERS = {
             pal: { K: '#14100c', H: '#5a3a22', S: '#e8b892', s: '#c89a76', W: '#f4f2ea', E: '#2a1a10', J: '#3d5a3a', j: '#2a3f28', T: '#d8d4c8', P: '#2f3646', p: '#232836' },
             money: { name: 'PAYDAY', duration: 20, cooldown: 30, interval: 0.4, range: 360,
                      bag: { life: 7, radius: 250, hold: 1.1 } } },   // unlimited bags for the whole window; each one is a lure that pulls the horde off you
-  jonny:   { name: 'Jonny', tag: 'Bruiser', hp: 125, speed: 0.95, damage: 1.1, firerate: 0.95, reload: 1.0, regen: 0, sprite: 'jonny', portrait: 'jonny_portrait',
-            desc: 'Bald, broad and slow to rattle. The most health of anyone without a transformation, and he hits harder — he just does not move as fast. (Ability coming.)',
-            pal: { K: '#14100c', S: '#f0c49c', s: '#cf9e78', H: '#ffdfbd', W: '#f4f2ea', E: '#2a1a10', L: '#23252c', l: '#15171c', D: '#39507a', d: '#26355a' } },
+  jonny:   { name: 'Johnny', tag: 'Doctor · plumber · pilot', hp: 125, speed: 0.95, damage: 1.1, firerate: 0.95, reload: 1.0, regen: 0, sprite: 'jonny', portrait: 'jonny_portrait',
+            desc: 'Doctor, plumber, pilot — Johnny has every licence there is and finished none of the shifts. MILK QUAKE (Space): he drives a fist into the ground and a flood of white bursts out of it; every zombie the wave touches is knocked flat and left twitching in the milk, taking double damage until it gets up. 28 s recharge.',
+            pal: { K: '#14100c', S: '#f0c49c', s: '#cf9e78', H: '#ffdfbd', W: '#f4f2ea', E: '#2a1a10', L: '#23252c', l: '#15171c', D: '#39507a', d: '#26355a' },
+            slam: { name: 'MILK QUAKE', cooldown: 28, windup: 0.4, radius: 330, damage: 70, stun: 3, bossStun: 1.2, wave: 0.7 } },
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny'];
 
