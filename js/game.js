@@ -53,7 +53,7 @@ class Game {
     this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = [];
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
-    this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0;
+    this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0; this.heartsBought = 0;
     if (this.event) this.endEvent(true); this.bonaGone(); this.endDread(); this.hideJumpscare(); this.event = null; this.eventFlicker = 0;
     this.siege = !!this.map.cfg.house; this.house = null; this.turrets = []; this.siegeTimer = 0;
     if (this.siege) this.setupHouse(1);
@@ -62,7 +62,7 @@ class Game {
     this.ui.refreshAll();
   }
   start() {
-    Audio8.init(); Audio8.resume(); Audio8.stopMusic(); Audio8.startMusic(this.map.cfg.dark); Audio8.preloadClip(DREAD.sound);
+    Audio8.init(); Audio8.resume(); Audio8.stopMusic(); Audio8.startMusic(this.map.cfg.dark); Audio8.preloadClip(DREAD.sound); this.preloadScareImg();
     this.reset(); this.state = 'playing'; this.ui.setState('playing');
     this.startWave(1);
   }
@@ -72,13 +72,15 @@ class Game {
   closeShop() { if (this.state !== 'shop') return; this.state = this.prevState || 'playing'; this.ui.hideShop(); }
   toggleShop() { this.state === 'shop' ? this.closeShop() : this.openShop(); }
   /* buy something from the supply cart; returns true on success */
+  heartCost() { return CART.heart + (this.heartsBought || 0) * (CART.heartStep || 0); }
   buy(kind, id) {
     const p = this.player; let cost = 0, apply = null;
     if (kind === 'ammo') { const w = p.weapons[id]; if (!w || w.reserve >= w.maxReserve) return false; cost = CART.ammo[id]; apply = () => { w.reserve = w.maxReserve; if (w.mag === 0 && id === p.current) p.startReload(); }; }
     else if (kind === 'health') { if (p.hp >= p.maxHp) return false; cost = CART.health; apply = () => { p.hp = Math.min(p.maxHp, p.hp + 25); }; }
     else if (kind === 'fullheal') { if (p.hp >= p.maxHp) return false; cost = CART.fullHeal; apply = () => { p.hp = p.maxHp; }; }
-    else if (kind === 'heart') { cost = CART.heart; apply = () => { p.maxHp += 25; p.hp += 25; if (p.form !== 'human' && p.humanMaxHp) p.humanMaxHp += 25; }; }
+    else if (kind === 'heart') { cost = this.heartCost(); apply = () => { p.maxHp += 25; p.hp += 25; this.heartsBought = (this.heartsBought || 0) + 1; if (p.form !== 'human' && p.humanMaxHp) p.humanMaxHp += 25; }; }
     else if (kind === 'weapon') { if (p.weapons[id]) return false; cost = CART.weapon[id]; apply = () => { p.addWeapon(id, true); p.switchTo(id); }; }
+    if (!apply || !(cost >= 0)) return false; // unknown item: never charge, never crash
     if (this.coins < cost) { Audio8.play('empty'); this.ui.toast(`Not enough coins — need ${cost - this.coins} more`); return false; }
     this.coins -= cost; apply(); Audio8.play(kind === 'weapon' ? 'weapon' : kind === 'ammo' ? 'ammo' : 'health');
     this.floatText(p.x, p.y - 18, `-${cost}`, '#f5c518');
@@ -247,7 +249,7 @@ class Game {
       this.boss = this.zombies.find(o => o !== z && o.cfg.boss && !o.dead) || null;
       for (let i = 0; i < 6 + Math.min(14, this.wave); i++) this.dropAt('coin', z.x, z.y); for (let i = 0; i < 3 + Math.floor(this.wave / 4); i++) this.dropAt('xp', z.x, z.y); this.dropAt('health', z.x, z.y); if (Math.random() < 0.5) this.dropAt('ammo', z.x, z.y);
       this.shake(12); this.ui.showBanner((z.bk ? z.bk.name : 'BOSS') + ' DOWN', `+${z.cfg.score + bonus} score`);
-      if (this.dread && this.dread.armed && !this.boss) { this.dread.armed = false; setTimeout(() => { if (this.state === 'playing' || this.state === 'wavebreak' || this.state === 'levelup') this.jumpscare(); }, 700); }
+      this.armScare();
     }
     else this.dropLoot(z);
     this.player.addXp(Math.round(z.cfg.xp * 0.5));
@@ -294,10 +296,16 @@ class Game {
     this.flash = 0.05; this.lights.push({ x, y, r: 130, life: 0.08, max: 0.08 });
   }
   showAbilityBanner(name, sub) { this.ui.showBanner(name, sub); }
+  /* the last boss of the dread wave is gone — killed or dragged off by Genom. Either way, something comes through. */
+  armScare() {
+    if (!this.dread || !this.dread.armed || this.boss) return;
+    this.dread.armed = false;
+    setTimeout(() => { if (this.state === 'playing' || this.state === 'wavebreak' || this.state === 'levelup') this.jumpscare(); }, 700);
+  }
   /* wave 5: the power dies everywhere, and killing the boss lets something through */
   startDread() {
     if (this.dread) return;
-    this.dread = { armed: true }; this.dreadDark = !this.map.cfg.dark; Audio8.preloadClip(DREAD.sound);
+    this.dread = { armed: true }; this.dreadDark = !this.map.cfg.dark; Audio8.preloadClip(DREAD.sound); this.preloadScareImg();
     if (this.dreadDark) { this.map.cfg.dark = true; this.map.lamps.forEach((l, i) => l.broken = i % 2 === 0); Audio8.stopMusic(); Audio8.startMusic(true); }
     this.eventFlicker = Math.max(this.eventFlicker, 1.2); this.shake(6); Audio8.play('flicker'); Audio8.play('thud');
     setTimeout(() => { if (this.dread && this.state !== 'menu') this.ui.showBanner('THE LIGHTS DIE', 'Something came in with the dark. Kill the boss.'); }, 900);
@@ -307,11 +315,13 @@ class Game {
     const wasDark = this.dreadDark; this.dread = null; this.dreadDark = false;
     if (wasDark && !this.event && !this.bonaDark) { this.map.cfg.dark = false; this.map.lamps.forEach(l => l.broken = false); Audio8.stopMusic(); Audio8.startMusic(false); }
   }
+  /* the face has to be decoded before the scare, exactly like the sound — otherwise it arrives late on a slow connection */
+  preloadScareImg() { const img = document.getElementById('jumpscareImg'); if (img && !img.src) img.src = DREAD.img; }
   /* the face. full screen, loud, then it's over. */
   jumpscare() {
     const el = document.getElementById('jumpscare'), img = document.getElementById('jumpscareImg');
     if (!el || !img) return;
-    if (!img.src) img.src = DREAD.img;
+    if (!img.src) img.src = DREAD.img; // normally already loaded by preloadScareImg()
     this.shake(26); this.whiteFlash = 0; this.darkFlash = 0;
     Audio8.stopMusic(); Audio8.stopTrack();
     el.classList.remove('on'); void el.offsetWidth;                      // reset the animation
@@ -356,7 +366,7 @@ class Game {
       if (['w', 'a', 's', 'd', ' ', 'e', 'g', 'f', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) e.preventDefault();
     });
     window.addEventListener('keyup', e => { const key = e.key.length === 1 ? e.key.toLowerCase() : e.key; k[key] = false; });
-    window.addEventListener('blur', () => { for (const i in k) k[i] = false; this.input.mouseDown = false; this.input.rightDown = false; });
+    window.addEventListener('blur', () => { for (const i in k) k[i] = false; this.input.mouseDown = false; this.input.rightDown = false; if (this.state === 'playing' || this.state === 'wavebreak') this.pause(); }); // never get eaten while you're looking at another window
     const c = this.canvas;
     const toLogical = e => { const r = c.getBoundingClientRect(); this.input.mouseX = clamp((e.clientX - r.left) / r.width * this.vw, 0, this.vw); this.input.mouseY = clamp((e.clientY - r.top) / r.height * this.vh, 0, this.vh); };
     c.addEventListener('mousemove', toLogical);
@@ -511,6 +521,7 @@ class Game {
     if (z.dead) return; z.dead = true; z.captured = 0;
     this.zombies = this.zombies.filter(o => o !== z); this.boss = this.zombies.find(o => o.cfg.boss && !o.dead) || null;
     const ally = new AllyBoss(this, this.player, z); this.clones.push(ally);
+    this.armScare(); // dragging the dread-wave boss off still lets the thing through
     this.darkFlash = 0.35; this.shake(9); Audio8.play('roar'); Audio8.play('scream');
     for (let i = 0; i < 40; i++) { const a = i / 40 * TAU, sp = 60 + Math.random() * 120; this.particles.push(new Particle(z.x, z.y, Math.cos(a) * sp, Math.sin(a) * sp, 0.5 + Math.random() * 0.4, i % 5 ? '#0a0a0e' : '#5fd35a', 3, 'blood')); }
     this.lights.push({ x: z.x, y: z.y, r: 160, life: 0.4, max: 0.4 });
@@ -684,9 +695,16 @@ class Game {
     const box = (x, y, w, h) => { if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4); } ctx.fillStyle = panel; ctx.fillRect(x, y, w, h); ctx.strokeStyle = panelEdge; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); };
     // hearts + ammo (top-left)
     // hearts wrap into rows of 10 so a big heart count never runs off across the screen
-    const hearts = Math.ceil(p.maxHp / 25), perRow = 10, rows = Math.ceil(hearts / perRow), hw = Math.min(hearts, perRow) * 13 + 12, hh = rows * 13;
+    const hearts = Math.ceil(p.maxHp / 25), perRow = 10, maxRows = 2, bigHeap = hearts > perRow * maxRows;
+    const rows = bigHeap ? 1 : Math.ceil(hearts / perRow), hw = Math.min(hearts, perRow) * 13 + 12, hh = rows * 13 + (bigHeap ? 10 : 0);
     box(8, 8, Math.max(hw, 96), 30 + hh);
-    for (let i = 0; i < hearts; i++) { const v = p.hp - i * 25; const name = v >= 25 ? 'heart_full' : v >= 12 ? 'heart_half' : 'heart_empty'; Sprites.draw(ctx, name, 14 + (i % perRow) * 13, 14 + Math.floor(i / perRow) * 13, { ox: 0, oy: 0, scale: 1.5 }); }
+    if (bigHeap) { // too many to draw one by one — ten hearts as a gauge, with the real numbers on a bar under them
+      const frac = clamp(p.hp / p.maxHp, 0, 1), bw = Math.max(hw, 96) - 12;
+      for (let i = 0; i < perRow; i++) { const v = frac * perRow - i; const name = v >= 1 ? 'heart_full' : v >= 0.5 ? 'heart_half' : 'heart_empty'; Sprites.draw(ctx, name, 14 + i * 13, 14, { ox: 0, oy: 0, scale: 1.5 }); }
+      ctx.fillStyle = '#111'; ctx.fillRect(14, 27, bw, 8); ctx.fillStyle = frac > 0.5 ? '#b3221a' : frac > 0.25 ? '#e08a2a' : '#ff5a4a'; ctx.fillRect(15, 28, (bw - 2) * frac, 6);
+      ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#fff'; ctx.textBaseline = 'top'; ctx.fillText(`${Math.ceil(p.hp)}/${p.maxHp} \u00b7 ${hearts} HEARTS`, 17, 29); ctx.font = F;
+    }
+    else for (let i = 0; i < hearts; i++) { const v = p.hp - i * 25; const name = v >= 25 ? 'heart_full' : v >= 12 ? 'heart_half' : 'heart_empty'; Sprites.draw(ctx, name, 14 + (i % perRow) * 13, 14 + Math.floor(i / perRow) * 13, { ox: 0, oy: 0, scale: 1.5 }); }
     const ay0 = 17 + hh, off = hh - 13; // everything below the hearts shifts down with extra rows
     Sprites.draw(ctx, 'pickup_ammo', 14, ay0, { ox: 0, oy: 0, scale: 1 });
     ctx.font = F; ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';

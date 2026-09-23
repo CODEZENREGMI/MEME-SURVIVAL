@@ -83,7 +83,8 @@ your beam hits them; only their glowing eyes give them away.
   face with a scream (`assets/img/jumpscare.png` + `assets/audio/jumpscare.mp3`, ~2 s — the clip is fetched and
   decoded into an AudioBuffer when the wave starts, so it fires on the exact frame the face appears, with a sub-bass
   drop under it), then the lights come back
-  on wave 6. Respects `prefers-reduced-motion` (no shake). On any dark map the HUD panels switch to an opaque
+  on wave 6. Respects `prefers-reduced-motion` (no shake). The face and the sound are both preloaded when the
+  wave starts, and the scare fires whether the last boss is killed **or** captured by Genom. On any dark map the HUD panels switch to an opaque
   background with a bright border so hearts, ammo, the cart, the weapon box and the ability slots stay readable
   against pure black.
 - Pickups: Health, Ammo, Coins, XP.
@@ -114,3 +115,9 @@ js/game.js      game loop, waves, spawning, combat, camera, HUD
 js/ui.js        title, loadout wizard, overlays, settings, save/load
 js/main.js      bootstrap
 ```
+
+## Development
+
+- No build step: edit the files and reload.
+- `./bump.sh` bumps the `?v=` cache tag on every script and stylesheet in `index.html`. Run it after any change to `js/` or `css/` so nobody gets a half-stale build.
+- The game auto-pauses when the window loses focus mid-run.

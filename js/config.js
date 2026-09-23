@@ -245,7 +245,8 @@ const CART = {
   weapon: { shotgun: 120, smg: 150, rifle: 180, rocket: 250, magnum: 160, flamer: 180, minigun: 220 },
   health: 20,      // +25 HP
   fullHeal: 50,
-  heart: 20,       // +1 max heart (25 max HP), filled — buy as many as you can afford
+  heart: 20,       // +1 max heart (25 max HP), filled — still unlimited, but each one costs more than the last
+  heartStep: 10,   // every heart bought this run adds this much to the next one's price
 };
 
 /* Research Lab BLACKOUT: wave 8 (and every 10 waves after) — lights out, giant armed zombies, giant player */
