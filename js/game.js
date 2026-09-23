@@ -301,7 +301,7 @@ class Game {
   milkWave(x, y, radius, dur) {
     this.milk.push({ x, y, r: 10, max: radius, t: 0, dur, splat: 0 });
     for (let i = 0; i < 40; i++) { const a = Math.random() * TAU, sp = 60 + Math.random() * 220; this.particles.push(new Particle(x, y, Math.cos(a) * sp, Math.sin(a) * sp * 0.6 - 40, 0.5 + Math.random() * 0.5, Math.random() < 0.75 ? '#f4f2ea' : '#dcd8cc', 3, 'blood')); }
-    this.map.splat(x, y, 26, '#eae6da');
+    this.map.splat(x, y, 24, '#fbfaf6');
   }
   updateMilk(dt) {
     for (const M of this.milk) {
@@ -309,8 +309,8 @@ class Game {
       M.r = M.max * Math.min(1, M.t / M.dur);
       // soak the ground behind the front as it passes
       M.splat -= dt;
-      if (M.splat <= 0 && M.r < M.max) { M.splat = 0.045;
-        for (let i = 0; i < 3; i++) { const a = Math.random() * TAU, rr = was + (M.r - was) * Math.random(); this.map.splat(M.x + Math.cos(a) * rr, M.y + Math.sin(a) * rr, 9 + Math.random() * 12, '#eae6da'); }
+      if (M.splat <= 0 && M.r < M.max) { M.splat = 0.06;
+        for (let i = 0; i < 2; i++) { const a = Math.random() * TAU, rr = was + (M.r - was) * Math.random(); this.map.splat(M.x + Math.cos(a) * rr, M.y + Math.sin(a) * rr, 8 + Math.random() * 10, '#fbfaf6'); }
       }
       if (Math.random() < 0.7) { const a = Math.random() * TAU; this.particles.push(new Particle(M.x + Math.cos(a) * M.r, M.y + Math.sin(a) * M.r, Math.cos(a) * 40, Math.sin(a) * 40 - 30, 0.5, '#f4f2ea', 2, 'blood')); }
     }
@@ -320,10 +320,10 @@ class Game {
     for (const M of this.milk) {
       const k = Math.min(1, M.t / M.dur), fade = Math.max(0, 1 - Math.max(0, M.t - M.dur) / 0.45);
       const g = ctx.createRadialGradient(M.x, M.y, Math.max(1, M.r * 0.55), M.x, M.y, M.r);
-      g.addColorStop(0, `rgba(240,238,230,${0.10 * fade})`); g.addColorStop(0.82, `rgba(246,244,238,${0.34 * fade})`); g.addColorStop(1, `rgba(255,255,255,${0.85 * fade})`);
+      g.addColorStop(0, `rgba(252,251,247,${0.30 * fade})`); g.addColorStop(0.7, `rgba(254,253,250,${0.62 * fade})`); g.addColorStop(1, `rgba(255,255,255,${0.97 * fade})`);
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(M.x, M.y, M.r, 0, TAU); ctx.fill();
-      ctx.strokeStyle = `rgba(255,255,255,${0.9 * fade})`; ctx.lineWidth = 5 - k * 2.5; ctx.beginPath(); ctx.arc(M.x, M.y, M.r, 0, TAU); ctx.stroke();
-      ctx.strokeStyle = `rgba(255,255,255,${0.35 * fade})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(M.x, M.y, Math.max(1, M.r - 9), 0, TAU); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,255,255,${fade})`; ctx.lineWidth = 7 - k * 3; ctx.beginPath(); ctx.arc(M.x, M.y, M.r, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,255,255,${0.6 * fade})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(M.x, M.y, Math.max(1, M.r - 9), 0, TAU); ctx.stroke();
     }
   }
 
