@@ -288,12 +288,12 @@ class Player {
     this.moneyT = mn.duration; this.throwCd = 0; this.reloading = false;
     Audio8.play('coin'); Audio8.play('levelup'); g.shake(2);
     for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 70, Math.sin(a) * 70 - 20, 0.5, i % 2 ? '#6ec46a' : '#c8b06a', 2, 'blood')); }
-    g.showAbilityBanner('PAYDAY', `${mn.duration}s · LMB throws money bags · they stop to grab the cash`);
+    g.showAbilityBanner('PAYDAY', `${mn.duration}s · RMB throws money bags · keep shooting with LMB`);
     return true;
   }
   moneyAttacks(input) {
     const mn = this.char.money, g = this.game;
-    if (!(input.mouseDown && this.throwCd <= 0)) return;
+    if (!(input.rightDown && this.throwCd <= 0)) return;
     this.throwCd = mn.interval / this.fireMult; this.recoil = 1.2;
     const gx = this.x + Math.cos(this.angle) * 8, gy = this.y - 4 + Math.sin(this.angle) * 8;
     const d = Math.min(mn.range, dist(gx, gy, input.worldX, input.worldY)) || 40;
@@ -632,7 +632,7 @@ class Player {
       return { name: tf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' };
     }
     const mn = this.char.money;
-    if (mn) { if (this.moneyT > 0) return { name: mn.name, state: 'active', frac: this.moneyT / mn.duration, sub: `${Math.ceil(this.moneyT)}s · LMB THROW · \u221e BAGS` }; if (this.moneyCd > 0) return { name: mn.name, state: 'cd', frac: 1 - this.moneyCd / mn.cooldown, sub: `RECHARGING ${Math.ceil(this.moneyCd)}s` }; return { name: mn.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
+    if (mn) { if (this.moneyT > 0) return { name: mn.name, state: 'active', frac: this.moneyT / mn.duration, sub: `${Math.ceil(this.moneyT)}s · RMB THROW · \u221e BAGS` }; if (this.moneyCd > 0) return { name: mn.name, state: 'cd', frac: 1 - this.moneyCd / mn.cooldown, sub: `RECHARGING ${Math.ceil(this.moneyCd)}s` }; return { name: mn.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const vr = this.char.viral;
     if (vr) { if (this.viralT > 0) return { name: vr.name, state: 'active', frac: this.viralT / vr.duration, sub: `${Math.ceil(this.viralT)}s · THEY CAN'T LOOK AWAY` }; if (this.viralCd > 0) return { name: vr.name, state: 'cd', frac: 1 - this.viralCd / vr.cooldown, sub: `RECHARGING ${Math.ceil(this.viralCd)}s` }; return { name: vr.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const lv = this.char.lava;
@@ -926,7 +926,7 @@ class Player {
     this.tickReload(dt);
     if (this.venom) { this.venomAttacks(input); return; }
     if (this.lavaT > 0) { this.lavaAttacks(input); return; }
-    if (this.moneyT > 0) { this.moneyAttacks(input); return; }
+    if (this.moneyT > 0) this.moneyAttacks(input);   // RMB throws, LMB keeps shooting — falls through to the gun below
     if (this.frog) { this.frogAttacks(input); return; }
     if (this.demon) { this.demonAttacks(input); return; }
     if (this.beast) return; // no guns in beast form — the Flesh Cannon / smash are handled in updateForm

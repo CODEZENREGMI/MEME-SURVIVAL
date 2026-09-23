@@ -762,7 +762,7 @@ class Game {
     const ay0 = 17 + hh, off = hh - 13; // everything below the hearts shifts down with extra rows
     Sprites.draw(ctx, 'pickup_ammo', 14, ay0, { ox: 0, oy: 0, scale: 1 });
     ctx.font = F; ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';
-    const w = p.wstate; ctx.fillText(p.venom ? 'VENOM' : p.frog ? 'FROG' : p.demon ? 'DEMON' : p.lavaT > 0 ? '∞ LAVA' : p.moneyT > 0 ? '∞ CASH' : p.beast ? `${p.beastAmmo}/${BEAST_GUN.mag}` : (p.overdrive || p.rushing || (p.driving && !p.car.civil)) ? '∞/∞' : `${w.mag}/${w.reserve === Infinity ? '∞' : w.reserve}`, 30, ay0 + 3);
+    const w = p.wstate; ctx.fillText(p.venom ? 'VENOM' : p.frog ? 'FROG' : p.demon ? 'DEMON' : p.lavaT > 0 ? '∞ LAVA' : p.beast ? `${p.beastAmmo}/${BEAST_GUN.mag}` : (p.overdrive || p.rushing || (p.driving && !p.car.civil)) ? '∞/∞' : `${w.mag}/${w.reserve === Infinity ? '∞' : w.reserve}`, 30, ay0 + 3);
     if (p.beast) { ctx.fillStyle = p.beastAmmo > 0 ? '#c9cfdb' : '#ff6a5a'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(`REFILL ${p.beastKills}/${BEAST_GUN.refillKills} KILLS`, 8, 56 + off); ctx.font = F; }
     if (p.reloading) { ctx.fillStyle = '#f5c518'; ctx.fillText('RELOADING', 8, 56 + off); } else if (w.mag === 0 && w.reserve === 0) { ctx.fillStyle = '#ff6a5a'; ctx.fillText('NO AMMO - [B] BUY', 8, 56 + off); }
     // coins + supply cart button
@@ -781,15 +781,14 @@ class Game {
     const remain = this.zombies.length + this.toSpawn; ctx.fillStyle = '#c9cfdb'; ctx.fillText(this.siege ? `☠ ${this.zombies.length} · ∞` : `☠ ${remain}`, this.vw - 112, 50);
     // weapon (bottom-left)
     box(8, this.vh - 34, 130, 26);
-    if (p.moneyT > 0) { ctx.fillStyle = '#6ec46a'; ctx.fillText('MONEY BAGS', 14, this.vh - 27); ctx.fillStyle = '#9aa3b5'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · THEY GRAB IT', 116), 14, this.vh - 16); }
-    else if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, this.vh - 16); }
+    if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, this.vh - 16); }
     else if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('DEMON KATANA', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SLASH · RMB KICK · ♪ CHARM', 116), 14, this.vh - 16); }
     else if (p.frog) { ctx.fillStyle = '#9ccf72'; ctx.fillText('TONGUE', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LASH · SPACE HOP · R ARMY', 116), 14, this.vh - 16); }
     else if (p.venom) { ctx.fillStyle = '#5fd35a'; ctx.fillText('VENOM SPIT', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SPIT · RMB CLAW · R CAPTURE', 116), 14, this.vh - 16); }
     else if (p.driving && !p.car.civil) { ctx.drawImage(Sprites.get('gun_m249'), 10, this.vh - 29, 36, 15); ctx.fillStyle = '#5a8ad8'; ctx.fillText(fit('TWIN M249', 86), 48, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD DRIVE · LMB TURRETS', 86), 48, this.vh - 16); }
     else if (p.beast) { ctx.drawImage(Sprites.get('gun_flesh'), 10, this.vh - 31, 36, 15); ctx.fillStyle = p.beastAmmo > 0 ? '#ff8a6a' : '#9aa3b5'; ctx.fillText(fit(p.beastAmmo > 0 ? 'FLESH CANNON' : 'CANNON DRY', 86), 48, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(p.beastAmmo > 0 ? 'LMB FIRE · RMB SMASH · SPC LEAP' : 'LMB SMASH · SPACE LEAP', 86), 48, this.vh - 16); }
     else { const img = Sprites.get(p.wcfg.sprite); ctx.drawImage(img, 12, this.vh - 30, 32, 16); ctx.fillStyle = '#fff'; ctx.fillText(fit(p.wcfg.name.toUpperCase(), 130 + 8 - 48 - 4), 48, this.vh - 27);
-    ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(`[${p.weaponOrder.indexOf(p.current) + 1}/${p.weaponOrder.length}] Q/SCROLL SWAP`, 86), 48, this.vh - 16); }
+    ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(p.moneyT > 0 ? 'RMB = MONEY BAG' : `[${p.weaponOrder.indexOf(p.current) + 1}/${p.weaponOrder.length}] Q/SCROLL SWAP`, 86), 48, this.vh - 16); }
     // GET IN / GET OUT prompt for parked cars (Urban City)
     this.carRect = null; let slotY = this.vh - 64;
     const nearCar = p.nearbyCar(), inCar = p.car && p.car.civil;
