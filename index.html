@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meme Survival</title>
 <meta name="description" content="Meme Survival — a top-down pixel-art zombie survival shooter. Pick a survivor, three weapons and a map, then survive as many waves as you can.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%A7%9F%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=101">
+<link rel="stylesheet" href="css/style.css?v=97">
 </head>
 <body>
 <div id="stage">
@@ -117,8 +117,6 @@
       <label class="setting"><span>Show FPS</span><input type="checkbox" id="setFps"></label>
       <label class="setting"><span>Aim Line</span><input type="checkbox" id="setAimLine" checked></label>
       <label class="setting"><span>Minimap</span><input type="checkbox" id="setMinimap" checked></label>
-      <label class="setting"><span>Touch Controls</span><select id="setTouch"><option value="auto">Auto (detect device)</option><option value="on">Always on</option><option value="off">Off — PC controls</option></select></label>
-      <label class="setting"><span>Aim Assist <small>(touch)</small></span><input type="checkbox" id="setAssist" checked></label>
       <div class="setting-actions"><button class="btn danger small" id="resetProgress">RESET HIGH SCORE</button></div>
     </div>
   </div>
@@ -147,16 +145,15 @@
 
   <div class="toast" id="toast"></div>
   <div id="jumpscare"><img id="jumpscareImg" alt=""></div>
-  <div id="rotate"><div class="phone"></div><b>ROTATE YOUR PHONE</b><span>Meme Survival is a twin-stick shooter — it needs landscape to fit the sticks and the map.</span></div>
 </div>
 
-<script src="js/sprites.js?v=101"></script>
-<script src="js/config.js?v=101"></script>
-<script src="js/audio.js?v=101"></script>
-<script src="js/map.js?v=101"></script>
-<script src="js/entities.js?v=101"></script>
-<script src="js/game.js?v=101"></script>
-<script src="js/ui.js?v=101"></script>
-<script src="js/main.js?v=101"></script>
+<script src="js/sprites.js?v=97"></script>
+<script src="js/config.js?v=97"></script>
+<script src="js/audio.js?v=97"></script>
+<script src="js/map.js?v=97"></script>
+<script src="js/entities.js?v=97"></script>
+<script src="js/game.js?v=97"></script>
+<script src="js/ui.js?v=97"></script>
+<script src="js/main.js?v=97"></script>
 </body>
 </html>

@@ -251,17 +251,6 @@ const CART = {
 
 /* Research Lab BLACKOUT: wave 8 (and every 10 waves after) — lights out, giant armed zombies, giant player */
 const BLACKOUT = { firstWave: 8, every: 10, zombieScale: 2, zombieHp: 2.5, zombieDmg: 1.5, playerScale: 2.2, shotDmg: 2.5, leap: 240, leapDmg: 160, leapCd: 2.5, gunDmg: 0.35 };
-/* Touch controls: two floating sticks, soft aim assist, landscape only */
-const TOUCH = {
-  stickR: 42,        // how far the knob can travel from where the thumb landed
-  dead: 0.16,        // ignore tiny wobble
-  fireDead: 0.3,     // push the aim stick this far before it starts shooting
-  aimDist: 190,      // the synthetic cursor sits this far along the aim direction
-  assistArc: 0.21,   // ~12 degrees: a zombie inside this cone gets the shot
-  assistRange: 520,
-  btn: 46,           // minimum thumb-sized button
-};
-
 /* Wave 5 on every map: the lights die, and when the boss goes down something is waiting on the screen */
 const DREAD = { wave: 5, img: 'assets/img/jumpscare.png', sound: 'assets/audio/jumpscare.mp3', hold: 2.1 };
 function isBlackoutWave(mapId, wave) { return mapId === 'lab' && wave >= BLACKOUT.firstWave && (wave - BLACKOUT.firstWave) % BLACKOUT.every === 0; }

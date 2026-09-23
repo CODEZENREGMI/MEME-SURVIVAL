@@ -116,25 +116,6 @@ js/ui.js        title, loadout wizard, overlays, settings, save/load
 js/main.js      bootstrap
 ```
 
-## Touch / mobile
-
-Landscape-only, auto-detected. **Settings → Touch Controls** switches between `Auto (detect device)`, `Always on`
-and `Off — PC controls`, so a laptop with a touchscreen isn't forced into it and a phone that guesses wrong can be
-corrected.
-
-- **Left half of the screen — floating move stick.** Put your thumb down anywhere; the stick appears there. Analog,
-  so you can walk slowly. It also steers Canimal's truck.
-- **Right half — floating aim stick with auto-fire.** Drag to aim; push past ~30% and he starts shooting. The stick
-  feeds the same `worldX/worldY` the mouse does, so every cursor-aimed ability (Frogepepe's hop, Spider Mad's zip,
-  Genom's capture, Videoman's lava, Bezuko's kick) works unchanged.
-- **Soft aim assist** (Settings → Aim Assist): a zombie within ~12° of where you're pointing and 520 px gets the
-  shot, nearest-and-straightest first. Turn it off for pure manual aim.
-- **Buttons**: the ability slots, the cart and the car prompt were already click targets and are now thumb-sized
-  taps; `SWAP`, `RLD` and pause are touch-only additions on the right edge.
-- **HUD moves out of the way**: abilities and the weapon box lift to mid-left, the minimap goes top-right, and both
-  bottom corners stay clear for thumbs. "CLICK" becomes "TAP" in every label.
-- **Portrait shows a rotate card and pauses the run** — the sticks and the map need the width.
-
 ## Development
 
 - No build step: edit the files and reload.
