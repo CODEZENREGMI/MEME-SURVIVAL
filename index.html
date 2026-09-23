@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%A7%9F%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=112">
+<link rel="stylesheet" href="css/style.css?v=122">
 </head>
 <body>
 <div id="stage">
@@ -19,12 +19,20 @@
   <div class="overlay show" id="ov-title">
     <div class="title-block">
       <div class="ttl-zombie">MEME</div>
-      <div class="ttl-survival">SURVIVAL</div>
+      <div class="ttl-survival">SURVIVAL<span class="drips" aria-hidden="true"></span></div>
     </div>
-    <button class="btn primary big" data-action="play">PLAY</button>
-    <button class="btn" data-action="settings">SETTINGS</button>
-    <p class="hint" id="titleBest">High score: 0</p>
-    <p class="hint small">WASD move · Mouse aim · Click shoot · R reload · 1-5 / scroll swap weapon · ESC pause · F fullscreen (Shift+F as Spider Mad)</p>
+    <button class="btn primary big play-btn" data-action="play"><span class="tri"></span>PLAY</button>
+    <button class="btn big gear-btn" data-action="settings"><span class="gear"></span>SETTINGS</button>
+    <p class="hint score-line" id="titleBest">High score: 0</p>
+    <div class="keybar">
+      <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span><i>•</i>
+      <span>Mouse aim</span><i>•</i>
+      <span>Click shoot</span><i>•</i>
+      <span><kbd>R</kbd> reload</span><i>•</i>
+      <span><kbd>1</kbd>–<kbd>5</kbd> / scroll swap weapon</span><i>•</i>
+      <span><kbd>ESC</kbd> pause</span><i>•</i>
+      <span><kbd>F</kbd> fullscreen <em>(Shift+F as Spider Mad)</em></span>
+    </div>
   </div>
 
   <!-- ============ SETUP (character / weapon / map) ============ -->
@@ -147,13 +155,13 @@
   <div id="jumpscare"><img id="jumpscareImg" alt=""></div>
 </div>
 
-<script src="js/sprites.js?v=112"></script>
-<script src="js/config.js?v=112"></script>
-<script src="js/audio.js?v=112"></script>
-<script src="js/map.js?v=112"></script>
-<script src="js/entities.js?v=112"></script>
-<script src="js/game.js?v=112"></script>
-<script src="js/ui.js?v=112"></script>
-<script src="js/main.js?v=112"></script>
+<script src="js/sprites.js?v=122"></script>
+<script src="js/config.js?v=122"></script>
+<script src="js/audio.js?v=122"></script>
+<script src="js/map.js?v=122"></script>
+<script src="js/entities.js?v=122"></script>
+<script src="js/game.js?v=122"></script>
+<script src="js/ui.js?v=122"></script>
+<script src="js/main.js?v=122"></script>
 </body>
 </html>

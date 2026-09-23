@@ -118,6 +118,23 @@ js/ui.js        title, loadout wizard, overlays, settings, save/load
 js/main.js      bootstrap
 ```
 
+## Title screen
+
+The menu is its own night scene, independent of whatever map you last played:
+
+- Urban City after dark — the map renders normally and a cool tint, warm sodium lamp pools, parked-car headlight
+  cones and a vignette are composited over it (the horror `cfg.dark` renderer is *not* used, so the buildings,
+  trees and road stay readable).
+- The camera picks the best-lit crossroads on the map — scored by lamps, cars and how much road is on screen —
+  and drifts slowly across it.
+- Six zombies shuffle around at random for atmosphere, and old blood is splattered across the tarmac.
+- `MEME` and `SURVIVAL` are stacked-shadow extruded, with blood running off the bottom of `SURVIVAL` (one drip
+  falls every few seconds).
+- `PLAY` carries a triangle and red target brackets, `SETTINGS` a gear, and the controls sit along the bottom with
+  every key in its own cap.
+
+Starting a run hands the map back to whatever you actually chose.
+
 ## Development
 
 - No build step: edit the files and reload.

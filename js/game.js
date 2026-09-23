@@ -23,6 +23,65 @@ class Game {
     requestAnimationFrame(t => this.loop(t));
   }
   getMap(id) { return this.maps[id] || (this.maps[id] = new GameMap(id)); }
+  /* the title screen is a night scene: Urban City after dark, lamps burning, headlights on, blood on the road */
+  menuScene() {
+    if (this._menuSetup === this.state) return;
+    this._menuSetup = this.state;
+    this.map = this.getMap('city'); this.resize();
+    this.map.cfg.dark = false; this.map.lamps.forEach(l => { l.broken = false; });   // the map still renders normally; the night is a tint on top
+    this.menuNight = true;
+    if (!this.map._menuBlood) { // a few old splatters on the tarmac
+      this.map._menuBlood = true;
+      for (let i = 0; i < 26; i++) { const x = Math.random() * this.map.pw, y = Math.random() * this.map.ph; if (!this.map.solidAt(x, y)) this.map.splat(x, y, 8 + Math.random() * 16, Math.random() < 0.6 ? '#5a0f0b' : '#3a0a08'); }
+    }
+    this.menuZombies(6);
+    // frame a lit crossroads: score candidate points by lamps and cars in shot, and by how much road is on screen
+    const m = this.map, ts = 16; let best = null, bestScore = -1;
+    for (let gy = 0; gy < 7; gy++) for (let gx = 0; gx < 7; gx++) {
+      const x = m.pw * (gx + 1) / 8, y = m.ph * (gy + 1) / 8;
+      if (m.solidAt(x, y)) continue;
+      let score = 0;
+      for (const l of m.lamps) if (Math.abs(l.x - x) < this.vw * 0.45 && Math.abs(l.y - y) < this.vh * 0.45) score += 3;
+      for (const c of m.cars) if (Math.abs(c.x - x) < this.vw * 0.45 && Math.abs(c.y - y) < this.vh * 0.45) score += 1;
+      let road = 0, n = 0;                                      // prefer tarmac over rooftops
+      for (let sy = -5; sy <= 5; sy++) for (let sx = -7; sx <= 7; sx++) {
+        const tx = Math.floor(x / ts) + sx * 3, ty = Math.floor(y / ts) + sy * 3;
+        if (tx < 0 || ty < 0 || tx >= m.w || ty >= m.h) continue;
+        n++; const t = m.t(tx, ty); if (t === 0 || t === 1) road++;
+      }
+      score += n ? (road / n) * 10 : 0;
+      if (score > bestScore) { bestScore = score; best = { x, y }; }
+    }
+    this.menuCam = best || { x: m.pw / 2, y: m.ph / 2 };
+  }
+  menuLeave() {
+    if (!this.menuNight) return;
+    this.menuNight = false; this._menuSetup = null;
+    if (!this.event && !this.bonaDark && !this.dread) { this.map.cfg.dark = !!MAPS[this.map.id].dark; this.map.lamps.forEach(l => { l.broken = !!this.map.cfg.dark; }); }   // hand the map back to whatever it normally is
+    this.zombies = [];
+  }
+  /* a handful of shufflers wandering through frame, purely for atmosphere */
+  menuZombies(n) {
+    this.zombies = [];
+    for (let i = 0; i < n; i++) {
+      const s = this.pickSpawn ? this.pickSpawn() : { x: Math.random() * this.map.pw, y: Math.random() * this.map.ph };
+      const z = new Zombie(this, Math.random() < 0.25 ? 'fast' : 'normal', s.x, s.y, 1);
+      z.menu = true; z.wanderA = Math.random() * TAU; z.wander = 1 + Math.random() * 3;
+      this.zombies.push(z);
+    }
+  }
+  updateMenuZombies(dt) {
+    for (const z of this.zombies) {
+      z.wander -= dt; if (z.wander <= 0) { z.wander = 1.5 + Math.random() * 3.5; z.wanderA = Math.random() * TAU; z.stop = Math.random() < 0.3; }
+      z.hit -= dt; z.walk += dt * 3;
+      if (!z.stop) { const sp = z.speed * 0.4, mr = Math.min(z.r, 7);
+        z.x += Math.cos(z.wanderA) * sp * dt; let q = this.map.resolve(z.x, z.y, mr); z.x = q.x;
+        z.y += Math.sin(z.wanderA) * sp * dt; q = this.map.resolve(z.x, z.y, mr); z.x = q.x; z.y = q.y;
+        z.flip = Math.cos(z.wanderA) < 0;
+      }
+      if (z.x < 20 || z.y < 20 || z.x > this.map.pw - 20 || z.y > this.map.ph - 20) z.wanderA += Math.PI;
+    }
+  }
   /* admin: jump straight to a wave (starts a run first if needed) */
   adminJump(wave) {
     if (this.state === 'menu' || this.state === 'gameover') { this.ui.closeModals(); this.start(); }
@@ -62,6 +121,7 @@ class Game {
     this.ui.refreshAll();
   }
   start() {
+    this.menuLeave();
     Audio8.init(); Audio8.resume(); Audio8.stopMusic(); Audio8.startMusic(this.map.cfg.dark); Audio8.preloadClip(DREAD.sound); this.preloadScareImg();
     { const ch = CHARACTERS[this.loadout.char]; if (ch && ch.slam && ch.slam.sound) Audio8.preloadClip(ch.slam.sound); }   // the character's own one-shots, ready before they're needed
     this.reset(); this.state = 'playing'; this.ui.setState('playing');
@@ -476,7 +536,14 @@ class Game {
     } catch (err) { this._errCount = (this._errCount || 0) + 1; if (this._errCount <= 3) console.error('frame error', err); }
     requestAnimationFrame(tt => this.loop(tt));
   }
-  updateAmbient(dt) { this.time += dt; this.updateFx(dt); }
+  updateAmbient(dt) {
+    this.time += dt; this.updateFx(dt); this.menuScene(); this.updateMenuZombies(dt);
+    if (this.menuCam) { // a slow drift so the title screen never looks like a still
+      const t = this.time * 0.06;
+      const tx = this.menuCam.x + Math.cos(t) * 90 - this.vw / 2, ty = this.menuCam.y + Math.sin(t * 0.8) * 60 - this.vh / 2;
+      this.cam.x = clamp(tx, 0, Math.max(0, this.map.pw - this.vw)); this.cam.y = clamp(ty, 0, Math.max(0, this.map.ph - this.vh));
+    }
+  }
   updateFx(dt) {
     this.map.fires.forEach(f => { for (let i = 0; i < 2; i++) this.particles.push(new Particle(f.x + (Math.random() - 0.5) * 10, f.y + (Math.random() - 0.5) * 4, (Math.random() - 0.5) * 12, -20 - Math.random() * 30, 0.5 + Math.random() * 0.5, '#ff6a2a', 2 + Math.random() * 3, 'fire')); if (Math.random() < 0.3) this.particles.push(new Particle(f.x, f.y - 6, (Math.random() - 0.5) * 8, -25, 1.5, '#333', 3, 'smoke')); });
     this.particles.forEach(p => p.update(dt)); this.particles = this.particles.filter(p => !p.dead);
@@ -572,6 +639,28 @@ class Game {
     if (dark) this.drawDarkness(ctx, cx, cy, inGame);
     // ---- glow layer (visible in the dark) ----
     ctx.save(); ctx.translate(-cx, -cy);
+    if (this.menuNight) { // dusk over the city: cool tint first, then the warm lights punched over it
+      ctx.save();
+      ctx.fillStyle = 'rgba(12,16,38,0.34)'; ctx.fillRect(cx - 10, cy - 10, this.vw + 20, this.vh + 20);
+      ctx.globalCompositeOperation = 'lighter';
+      for (const l of this.map.lamps) {
+        if (Math.abs(l.x - cx - this.vw / 2) > this.vw || Math.abs(l.y - cy - this.vh / 2) > this.vh) continue;
+        const r = 92 + Math.sin(this.time * 2 + l.x) * 4, g = ctx.createRadialGradient(l.x, l.y, 2, l.x, l.y, r);
+        g.addColorStop(0, 'rgba(255,200,118,0.62)'); g.addColorStop(0.4, 'rgba(255,164,74,0.24)'); g.addColorStop(1, 'rgba(255,150,60,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(l.x, l.y, r, 0, TAU); ctx.fill();
+        ctx.fillStyle = 'rgba(255,225,170,0.85)'; ctx.fillRect(Math.round(l.x) - 1, Math.round(l.y) - 10, 3, 4);   // the bulb itself
+      }
+      for (const c of this.map.cars) {
+        if (Math.abs(c.x - cx - this.vw / 2) > this.vw || Math.abs(c.y - cy - this.vh / 2) > this.vh) continue;
+        const dir = c.x < this.map.pw / 2 ? 1 : -1, hx = c.x + dir * 15, hy = c.y + 2;
+        ctx.beginPath(); ctx.moveTo(hx, hy - 3); ctx.lineTo(hx + dir * 100, hy - 30); ctx.lineTo(hx + dir * 100, hy + 30); ctx.closePath();
+        const gg = ctx.createLinearGradient(hx, hy, hx + dir * 100, hy); gg.addColorStop(0, 'rgba(255,240,200,0.30)'); gg.addColorStop(1, 'rgba(255,230,180,0)');
+        ctx.fillStyle = gg; ctx.fill();
+        ctx.fillStyle = 'rgba(255,245,215,0.9)'; ctx.fillRect(Math.round(hx), Math.round(hy) - 2, 2, 3);
+      }
+      ctx.restore();
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 0.5; ctx.drawImage(this.vignette('rgba(0,0,0,1)', 0.45), 0, 0); ctx.restore();
+    }
     if (dark) this.drawEyes(ctx, inView);
     this.zombies.forEach(z => z.bk && inView(z) && z.drawFx(ctx));
     this.bullets.forEach(b => b.draw(ctx));
@@ -695,7 +784,7 @@ class Game {
   drawDarkness(ctx, cx, cy, inGame) {
     const L = this.lctx, t = this.time; const p = this.player;
     L.setTransform(1, 0, 0, 1, 0, 0); L.globalCompositeOperation = 'source-over';
-    L.fillStyle = 'rgba(1,2,6,0.985)'; L.fillRect(0, 0, this.vw, this.vh);
+    L.fillStyle = this.menuNight ? 'rgba(6,10,26,0.74)' : 'rgba(1,2,6,0.985)'; L.fillRect(0, 0, this.vw, this.vh);   // the title screen is dusk, not a blackout
     L.globalCompositeOperation = 'destination-out';
     L.translate(-cx, -cy);
     const radial = (x, y, r, a, inner = 0) => { const g = L.createRadialGradient(x, y, r * inner, x, y, r); g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(0.55, `rgba(0,0,0,${a * 0.55})`); g.addColorStop(1, 'rgba(0,0,0,0)'); L.fillStyle = g; L.fillRect(x - r, y - r, r * 2, r * 2); };
