@@ -23,7 +23,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .hint.small{font-size:11px}
 .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 
-.title-block{text-align:center;line-height:1;margin-bottom:18px;filter:drop-shadow(0 6px 0 #000)}
+.title-block{text-align:center;line-height:1;margin-bottom:54px;filter:drop-shadow(0 6px 0 #000)}
 .ttl-zombie{font-family:var(--pixel);font-size:clamp(36px,7vw,84px);color:#f2efe4;letter-spacing:3px;
   text-shadow:0 3px 0 #9b968a,0 6px 0 #5f5c54,0 9px 0 #34322d,5px 5px 0 rgba(0,0,0,.55)}
 .ttl-survival{position:relative;font-family:var(--pixel);font-size:clamp(36px,7vw,84px);color:#d8342a;letter-spacing:3px;margin-top:14px;
@@ -58,7 +58,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .btn.big{font-family:var(--pixel);font-size:16px;padding:16px 44px}
 /* title-screen buttons: icon on the left, red brackets framing PLAY */
 .play-btn,.gear-btn{display:inline-flex;align-items:center;justify-content:center;gap:11px;position:relative;width:260px;padding-left:24px;padding-right:24px}
-.play-btn{background:#2f3a4e;border-color:#f2f0e8;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 6px 20px rgba(0,0,0,.55)}
+.play-btn{margin-bottom:16px;background:#2f3a4e;border-color:#f2f0e8;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 6px 20px rgba(0,0,0,.55)}
 .play-btn:hover{background:#3b4a63}
 /* icon and label travel together as one centred group */
 .tri{flex:0 0 auto;width:0;height:0;border-left:14px solid #fff;border-top:9px solid transparent;border-bottom:9px solid transparent}
