@@ -62,6 +62,7 @@ class Player {
     this.sym = 'human'; this.symT = 0; this.clawCd = 0; this.captureCd = 0; this.capturing = null;
     this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0; this.armyCd = 0; this.armyTime = 0;
     this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0; this.viralT = 0; this.viralCd = 0; this.moneyT = 0; this.moneyCd = 0; this.throwCd = 0; this.slamT = 0; this.slamCd2 = 0;
+    this.frenzyT = 0; this.frenzyCd = 0; this.biteCd = 0; this.lunge = null; this.chomp = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -88,7 +89,7 @@ class Player {
   get wstate() { return this.weapons[this.current]; }
   get damageMult() { return (1 + 0.15 * this.upgrades.damage) * this.char.damage; }
   get fireMult() { return (1 + 0.12 * this.upgrades.firerate) * this.char.firerate; }
-  get speed() { return this.baseSpeed * (1 + 0.08 * this.upgrades.speed) * (this.beast ? this.tf.speed : 1) * (this.venom ? this.sb.speed : 1) * (this.frog ? this.fr.speed : 1) * (this.demon ? this.dm.speed : 1) * (this.rushing ? this.char.rush.speed : 1); }
+  get speed() { return this.baseSpeed * (1 + 0.08 * this.upgrades.speed) * (this.beast ? this.tf.speed : 1) * (this.venom ? this.sb.speed : 1) * (this.frog ? this.fr.speed : 1) * (this.demon ? this.dm.speed : 1) * (this.frenzy ? this.char.shark.speed : 1) * (this.rushing ? this.char.rush.speed : 1); }
 
   get tf() { return this.char.transform; }
   get rushing() { return this.rush > 0; }
@@ -279,6 +280,41 @@ class Player {
       return true;
     }
     return false;
+  }
+  /* ---- Sharkjutta: FEEDING FRENZY — 12 s of jaws. Lunge, bite, swallow, heal. ---- */
+  get frenzy() { return this.frenzyT > 0; }
+  useFrenzy() {
+    const sk = this.char.shark, g = this.game; if (!sk) return false;
+    if (this.frenzyT > 0) return false;
+    if (this.frenzyCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `FRENZY IN ${Math.ceil(this.frenzyCd)}s`, '#9aa3b5'); return false; }
+    this.frenzyT = sk.duration; this.reloading = false; this.biteCd = 0;
+    Audio8.play('roar'); Audio8.play('growl'); g.shake(4); g.whiteFlash = 0.15;
+    for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 80, Math.sin(a) * 80, 0.45, i % 3 ? '#b3221a' : '#d9dee3', 3, 'blood')); }
+    g.showAbilityBanner('FEEDING FRENZY', `${sk.duration}s · LMB to lunge and swallow them whole`);
+    return true;
+  }
+  frenzyAttacks(input) {
+    const b = this.char.shark.bite, g = this.game;
+    if (!(input.mouseDown && this.biteCd <= 0 && !this.lunge)) return;
+    this.biteCd = b.cd; this.chomp = 0.18;
+    const a = this.angle;
+    this.lunge = { t: 0, dur: b.dur, sx: this.x, sy: this.y, tx: this.x + Math.cos(a) * b.lunge, ty: this.y + Math.sin(a) * b.lunge };
+    this.invuln = Math.max(this.invuln, b.dur);
+    let ate = 0;
+    for (const z of g.zombies) {
+      if (z.dead || z.captured > 0) continue;
+      const d = dist(this.x, this.y, z.x, z.y); if (d > b.reach + b.lunge * 0.7 + z.r) continue;
+      let da = Math.atan2(z.y - this.y, z.x - this.x) - a; da = Math.atan2(Math.sin(da), Math.cos(da));
+      if (Math.abs(da) > b.arc) continue;
+      if (z.cfg.boss) { z.takeDamage(b.bossDamage * this.damageMult, a, undefined, 2); continue; }   // too big to swallow
+      const zx = z.x, zy = z.y;
+      z.takeDamage(z.hp + 9999, a, undefined, 0, true);                                              // gone, whole
+      ate++;
+      for (let i = 0; i < 8; i++) g.particles.push(new Particle(zx, zy, (Math.random() - 0.5) * 90, -30 - Math.random() * 60, 0.5, i % 2 ? '#b3221a' : '#6b1410', 3, 'blood'));
+      g.map.splat(zx, zy, 7, '#6b1410');
+    }
+    if (ate) { this.hp = Math.min(this.maxHp, this.hp + b.heal * ate); g.floatText(this.x, this.y - 22, ate > 1 ? `NOM ×${ate}` : 'NOM', '#8af0ff'); Audio8.play('thud'); Audio8.play('zdie'); g.shake(3 + ate); }
+    else Audio8.play('swap');
   }
   /* ---- Jonny: MILK QUAKE — fist into the ground, a white flood, everything in it goes down ---- */
   useSlam() {
@@ -519,7 +555,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -659,6 +695,8 @@ class Player {
       if (this.formCd > 0) return { name: tf.name, state: 'cd', frac: 1 - this.formCd / tf.cooldown, sub: `RECHARGING ${Math.ceil(this.formCd)}s` };
       return { name: tf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' };
     }
+    const sk = this.char.shark;
+    if (sk) { if (this.frenzyT > 0) return { name: sk.name, state: 'active', frac: this.frenzyT / sk.duration, sub: `${Math.ceil(this.frenzyT)}s · LMB BITE` }; if (this.frenzyCd > 0) return { name: sk.name, state: 'cd', frac: 1 - this.frenzyCd / sk.cooldown, sub: `RECHARGING ${Math.ceil(this.frenzyCd)}s` }; return { name: sk.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const sl = this.char.slam;
     if (sl) { if (this.slamT > 0) return { name: sl.name, state: 'busy', frac: 1 - this.slamT / sl.windup, sub: 'WINDING UP...' }; if (this.slamCd2 > 0) return { name: sl.name, state: 'cd', frac: 1 - this.slamCd2 / sl.cooldown, sub: `RECHARGING ${Math.ceil(this.slamCd2)}s` }; return { name: sl.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const mn = this.char.money;
@@ -858,6 +896,7 @@ class Player {
     if (this.venom) dmg = Math.round(dmg * this.sb.armor);
     if (this.frog) dmg = Math.round(dmg * this.fr.armor);
     if (this.demon) dmg = Math.round(dmg * this.dm.armor);
+    if (this.frenzy) dmg = Math.round(dmg * this.char.shark.armor);
     if (this.driving && this.car.civil) { // the car takes the hit — and a swarm can all chew on it at once
       this.car.hp -= dmg; this.hurtFlash = 0.2; this.invuln = 0.06; this.game.spark(this.x + (Math.random() - 0.5) * 30, this.y + (Math.random() - 0.5) * 16, 2);
       if (this.car.hp <= 0) this.wreckCar(); return;
@@ -925,6 +964,14 @@ class Player {
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x);
     this.flip = Math.cos(this.angle) < 0;
     this.fireTimer -= dt; this.invuln -= dt; this.hurtFlash -= dt; this.recoil *= Math.pow(0.001, dt); this.sinceHurt += dt;
+    if (this.char.shark) { const sk = this.char.shark; this.biteCd -= dt; this.chomp -= dt;
+      if (this.lunge) { const L = this.lunge; L.t += dt; const k = Math.min(1, L.t / L.dur);
+        const q = this.game.map.resolve(L.sx + (L.tx - L.sx) * k, L.sy + (L.ty - L.sy) * k, this.r); this.x = q.x; this.y = q.y;
+        if (k >= 1) this.lunge = null; }
+      if (this.frenzyT > 0) { this.frenzyT -= dt;
+        if (Math.random() < 0.3) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 18, this.y + 6, (Math.random() - 0.5) * 16, -14, 0.4, '#b3221a', 2, 'blood'));
+        if (this.frenzyT <= 0) { this.frenzyT = 0; this.frenzyCd = sk.cooldown; this.lunge = null; this.game.floatText(this.x, this.y - 18, 'FULL', '#c9cfdb'); Audio8.play('reloaded'); } }
+      else if (this.frenzyCd > 0) { this.frenzyCd -= dt; if (this.frenzyCd <= 0) { this.frenzyCd = 0; this.game.floatText(this.x, this.y - 18, 'HUNGRY AGAIN', '#8af0ff'); Audio8.play('xp'); } } }
     if (this.char.slam) { const sl = this.char.slam;
       if (this.slamT > 0) { this.slamT -= dt; this.invuln = Math.max(this.invuln, 0.1); this.game.shakeAmt = Math.max(this.game.shakeAmt, 2 + (sl.windup - this.slamT) * 6);
         if (Math.random() < 0.5) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 22, this.y + 8, (Math.random() - 0.5) * 20, -20 - Math.random() * 20, 0.35, '#f4f2ea', 2, 'dot'));
@@ -961,6 +1008,7 @@ class Player {
     this.tickReload(dt);
     if (this.venom) { this.venomAttacks(input); return; }
     if (this.lavaT > 0) { this.lavaAttacks(input); return; }
+    if (this.frenzyT > 0) { this.frenzyAttacks(input); return; }   // jaws, not guns
     if (this.moneyT > 0) this.moneyAttacks(input);   // RMB throws, LMB keeps shooting — falls through to the gun below
     if (this.frog) { this.frogAttacks(input); return; }
     if (this.demon) { this.demonAttacks(input); return; }
@@ -1036,6 +1084,17 @@ class Player {
       const gr = ctx.createRadialGradient(this.x, this.y, R * 0.5, this.x, this.y, R); gr.addColorStop(0, `rgba(120,230,255,${0.04 * fade})`); gr.addColorStop(0.85, `rgba(120,230,255,${(0.16 + hitK * 0.3) * fade})`); gr.addColorStop(1, `rgba(120,230,255,${0.3 * fade})`); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.fill();
       ctx.strokeStyle = `rgba(180,245,255,${(0.6 + hitK * 0.4) * fade})`; ctx.lineWidth = 1.5 + hitK * 2; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.stroke();
       ctx.strokeStyle = `rgba(255,255,255,${0.35 * fade})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(this.x, this.y, R - 4, -0.6 + tt * 1.5, 0.4 + tt * 1.5); ctx.stroke(); // a gleam travelling around the bubble
+    }
+    if (this.frenzy) { // blood haze and snapping jaws
+      const tt = performance.now() / 1000, R = 22 + Math.sin(tt * 9) * 2;
+      const gr = ctx.createRadialGradient(this.x, this.y, 2, this.x, this.y, R); gr.addColorStop(0, 'rgba(180,30,20,0.28)'); gr.addColorStop(1, 'rgba(180,30,20,0)');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.fill();
+      if (this.chomp > 0) { const k = this.chomp / 0.18, a = this.angle, r0 = 16, r1 = 40;
+        ctx.save(); ctx.beginPath(); ctx.arc(this.x, this.y, r1, a - 1.1, a + 1.1); ctx.arc(this.x, this.y, r0, a + 1.1, a - 1.1, true); ctx.closePath();
+        ctx.fillStyle = `rgba(246,244,236,${0.5 * k})`; ctx.fill(); ctx.restore();
+        for (let i = -2; i <= 2; i++) { const ta = a + i * 0.42, tx = this.x + Math.cos(ta) * (r1 - 4), ty = this.y + Math.sin(ta) * (r1 - 4);
+          ctx.fillStyle = `rgba(255,255,255,${0.9 * k})`; ctx.fillRect(Math.round(tx) - 1, Math.round(ty) - 1, 3, 3); }
+      }
     }
     if (this.invisible) { const tt = performance.now() / 1000; ctx.strokeStyle = `rgba(200,220,96,${0.35 + Math.sin(tt * 6) * 0.15})`; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.lineDashOffset = -tt * 20; ctx.beginPath(); ctx.arc(this.x, this.y, 13, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 0.28 + Math.sin(tt * 9) * 0.08; }
     const blink = this.invuln > 0 && Math.floor(this.invuln * 20) % 2 === 0;
