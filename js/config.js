@@ -267,6 +267,7 @@ const MAPS = {
 const MAP_ORDER = ['city', 'suburbs', 'industrial', 'lab', 'race', 'horror'];
 // events (blackouts, Bona, the menu) flip cfg.dark at runtime; this is what each map really is, recorded before anything touches it
 for (const id in MAPS) MAPS[id].baseDark = !!MAPS[id].dark;
+const MENU_MAP = 'horror';   // the map shown behind the title screen
 
 /* in-run supply cart — paid with coins collected during the run */
 const CART = {

@@ -27,11 +27,11 @@ class Game {
   menuScene() {
     if (this._menuSetup === this.state) return;
     this._menuSetup = this.state;
-    this.map = this.getMap('city'); this.resize();
+    this.map = this.getMap(MENU_MAP); this.resize();
     this.siege = false; this.house = null; this.turrets = [];   // reset() may have built Race City's haunted house for the chosen map
     this.map.cfg.dark = false; this.map.lamps.forEach(l => { l.broken = false; });   // the map still renders normally; the night is a tint on top
     this.menuNight = true;
-    if (!this.map._menuBlood) { // a few old splatters on the tarmac
+    if (!this.map._menuBlood && !this.map.cfg.image) { // a few old splatters on the tarmac (a painted map already has its own)
       this.map._menuBlood = true;
       for (let i = 0; i < 26; i++) { const x = Math.random() * this.map.pw, y = Math.random() * this.map.ph; if (!this.map.solidAt(x, y)) this.map.splat(x, y, 8 + Math.random() * 16, Math.random() < 0.6 ? '#5a0f0b' : '#3a0a08'); }
     }
@@ -53,7 +53,7 @@ class Game {
       score += n ? (road / n) * 10 : 0;
       if (score > bestScore) { bestScore = score; best = { x, y }; }
     }
-    this.menuCam = best || { x: m.pw / 2, y: m.ph / 2 };
+    this.menuCam = m.cfg.image ? { x: m.playerStart.x, y: m.playerStart.y } : (best || { x: m.pw / 2, y: m.ph / 2 });   // painted maps: frame the heart of the picture
   }
   menuLeave() {
     if (!this.menuNight) return;
@@ -690,6 +690,8 @@ class Game {
     // ---- glow layer (visible in the dark) ----
     ctx.save(); ctx.translate(-cx, -cy);
     if (this.menuNight) { // dusk over the city: cool tint first, then the warm lights punched over it
+      const painted = !!this.map.cfg.image;   // a painted map has its lighting baked in — just the vignette
+      if (!painted) {
       ctx.save();
       ctx.fillStyle = 'rgba(12,16,38,0.34)'; ctx.fillRect(cx - 10, cy - 10, this.vw + 20, this.vh + 20);
       ctx.globalCompositeOperation = 'lighter';
@@ -709,6 +711,7 @@ class Game {
         ctx.fillStyle = 'rgba(255,245,215,0.9)'; ctx.fillRect(Math.round(hx), Math.round(hy) - 2, 2, 3);
       }
       ctx.restore();
+      }
       ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 0.5; ctx.drawImage(this.vignette('rgba(0,0,0,1)', 0.45), 0, 0); ctx.restore();
     }
     if (dark) this.drawEyes(ctx, inView);

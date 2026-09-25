@@ -135,14 +135,12 @@ minimap are the painting itself. Any map can do this: give it `image` + `layout`
 
 ## Title screen
 
-The menu is its own night scene, independent of whatever map you last played:
+The title screen sits over **Horror House** (`MENU_MAP` in `js/config.js`), whatever map you last played:
 
-- Urban City after dark — the map renders normally and a cool tint, warm sodium lamp pools, parked-car headlight
-  cones and a vignette are composited over it (the horror `cfg.dark` renderer is *not* used, so the buildings,
-  trees and road stay readable).
-- The camera picks the best-lit crossroads on the map — scored by lamps, cars and how much road is on screen —
-  and drifts slowly across it.
-- Six zombies shuffle around at random for atmosphere, and old blood is splattered across the tarmac.
+- The painting brings its own night lighting, so the menu only adds a vignette. (For a tile-built map like Urban
+  City it instead composites a cool tint, warm lamp pools and headlight cones over the lit map.)
+- The camera frames the heart of the plaza and drifts slowly across it.
+- Six zombies shuffle around at random for atmosphere.
 - `MEME` and `SURVIVAL` are stacked-shadow extruded, with blood running off the bottom of `SURVIVAL` (one drip
   falls every few seconds).
 - `PLAY` carries a triangle and red target brackets, `SETTINGS` a gear, and the controls sit along the bottom with
