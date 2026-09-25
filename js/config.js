@@ -241,6 +241,7 @@ const CHARACTERS = {
             shark: { name: 'FEEDING FRENZY', duration: 12, cooldown: 30, speed: 1.3, armor: 0.7,
                      bite: { cd: 0.42, lunge: 52, dur: 0.15, reach: 34, arc: 1.15, bossDamage: 240, heal: 8 } } },   // non-bosses go down the hatch whole
   cry:     { name: 'Cry XD', tag: 'Meme', hp: 100, speed: 1.0, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'cry', portrait: 'cry_portrait',
+            spriteImg: 'assets/img/cry_sprite.png', portraitImg: 'assets/img/cry_portrait.png',   // cut from the real meme, not redrawn
             desc: 'He is not okay. Never has been. (Ability coming.)',
             pal: { K: '#16160f', W: '#f2f0e8', w: '#c9c7bd', B: '#2f7fd8', b: '#7ab2ea', M: '#241a18', R: '#8c3a34', C: '#2c3340', c: '#1c222c' } },
 };

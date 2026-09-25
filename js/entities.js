@@ -23,6 +23,26 @@ Sprites.tintOf = function (name, color) {
   this.cache[key] = c; return c;
 };
 
+/* characters cut from real images: swap the pixel placeholders for the picture once it arrives */
+Sprites.loadImageArt = function () {
+  const swap = (key, url, after) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+      const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0);
+      this.cache[key] = c;
+      for (const k in this.cache) if (k.startsWith(key + '_')) delete this.cache[k];   // tints were built from the placeholder
+      if (after) after();
+    };
+    img.src = url;
+  };
+  for (const id in CHARACTERS) {
+    const ch = CHARACTERS[id];
+    if (ch.spriteImg) swap('player_' + id, ch.spriteImg, () => { const n = 'player_' + id; this.tintOf(n, '#ff3a2a'); this.tintOf(n, '#5ec2ff'); this.tintOf(n, '#8bd35a'); this.whiteOf(n); });
+    if (ch.portraitImg) swap('portrait_' + id, ch.portraitImg, () => document.querySelectorAll(`#charCards .card[data-id="${id}"] canvas`).forEach(el => this.renderTo(el, 'portrait_' + id)));
+  }
+};
+
 /* build every animation variant up front — generating them mid-transformation caused a visible hitch */
 Sprites.prewarm = function () {
   for (const id in CHARACTERS) { const n = 'player_' + id; this.tintOf(n, '#ff3a2a'); this.tintOf(n, '#5ec2ff'); this.tintOf(n, '#8bd35a'); this.whiteOf(n); }
