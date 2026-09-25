@@ -26,7 +26,7 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 /* ---- title screen: the painted plaza shows through, the letters carry their own weight ---- */
 #ov-title{background:radial-gradient(ellipse 46% 42% at 50% 44%,rgba(0,0,0,.26),rgba(0,0,0,0) 100%),
   linear-gradient(to top,rgba(0,0,0,.62),rgba(0,0,0,0) 92px)}
-.title-block{text-align:center;line-height:1;margin-bottom:58px;display:flex;flex-direction:column;align-items:center}
+.title-block{text-align:center;line-height:1;margin:0 0 58px;font-size:inherit;font-weight:400;display:flex;flex-direction:column;align-items:center}
 .ttl-zombie{position:relative;display:inline-block;font-family:var(--pixel);font-size:clamp(36px,6.4vw,92px);letter-spacing:4px;color:#ece6d8;
   text-shadow:0 3px 0 #a39c8d,0 6px 0 #6a655a,0 9px 0 #3a3730,0 12px 0 #1b1a17,4px 14px 8px rgba(0,0,0,.7)}
 /* the face texture sits exactly on top of the glyphs; the solid text below gives the chunky extrusion */

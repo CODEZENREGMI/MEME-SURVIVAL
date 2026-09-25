@@ -160,3 +160,15 @@ A character can point `spriteImg` / `portraitImg` at a PNG in `assets/img/`. `Sp
 - No build step: edit the files and reload.
 - `./bump.sh` bumps the `?v=` cache tag on every script and stylesheet in `index.html`. Run it after any change to `js/` or `css/` so nobody gets a half-stale build.
 - The game auto-pauses when the window loses focus mid-run.
+
+## SEO
+
+The live site is **https://www.memesurvival.com/** (the bare domain 308-redirects there). Everything search engines
+and link previews read:
+
+- `index.html` head: title, description, canonical URL, Open Graph / Twitter card tags (`assets/img/og-image.jpg`,
+  1200×630), favicons, and `VideoGame` JSON-LD structured data. The logo is the page's `<h1>`.
+- `robots.txt` + `sitemap.xml` at the root; `manifest.webmanifest` for install/home-screen.
+- `vercel.json` 301s `meme-survival.vercel.app` to the real domain; the canonical tag covers the GitHub Pages copy.
+- If the title or description changes, update `og:title`/`og:description`/`twitter:*` and the JSON-LD to match, and bump
+  `<lastmod>` in `sitemap.xml` after a big update.

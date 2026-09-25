@@ -1,0 +1,14 @@
+{
+  "name": "Meme Survival",
+  "short_name": "Meme Survival",
+  "description": "Free top-down pixel-art zombie survival shooter.",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b0d12",
+  "theme_color": "#0b0d12",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/assets/img/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
