@@ -308,8 +308,9 @@ class Player {
     const fl = this.char.cry, g = this.game; if (!fl) return false;
     if (this.cryT > 0 || this.floodR > 0) return false;
     if (this.cryCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `CRY IN ${Math.ceil(this.cryCd)}s`, '#9aa3b5'); return false; }
-    this.cryT = fl.duration; this.floodR = 0; this.sob = 1.2;
-    Audio8.play('scream'); Audio8.noise(1.4, 0.4, 650); g.shake(3);
+    this.cryT = fl.duration; this.floodR = 0; this.sob = (fl.soundLen || 1.2) + 0.6;   // the real crying plays first; the small sobs only start after it
+    if (fl.sound) Audio8.playClip(fl.sound, 1); else Audio8.play('scream');
+    Audio8.noise(1.4, 0.4, 650); g.shake(3);
     for (let i = 0; i < 30; i++) { const a = i / 30 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 110, Math.sin(a) * 110 - 30, 0.55, i % 2 ? '#4f9be6' : '#dcecfb', 3, 'blood')); }
     g.showAbilityBanner('CRY FLOOD', `${fl.duration}s · the tears flood the street · keep shooting`);
     return true;

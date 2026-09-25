@@ -124,7 +124,7 @@ class Game {
   start() {
     this.menuLeave();
     Audio8.init(); Audio8.resume(); Audio8.stopMusic(); Audio8.startMusic(this.map.cfg.dark); Audio8.preloadClip(DREAD.sound); this.preloadScareImg();
-    { const ch = CHARACTERS[this.loadout.char]; if (ch && ch.slam && ch.slam.sound) Audio8.preloadClip(ch.slam.sound); }   // the character's own one-shots, ready before they're needed
+    { const ch = CHARACTERS[this.loadout.char] || {}; for (const k in ch) if (ch[k] && typeof ch[k] === 'object' && typeof ch[k].sound === 'string') Audio8.preloadClip(ch[k].sound); }   // every ability clip the character has, decoded before it's needed
     this.reset(); this.state = 'playing'; this.ui.setState('playing');
     this.startWave(1);
   }
