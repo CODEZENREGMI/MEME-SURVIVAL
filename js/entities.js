@@ -25,6 +25,7 @@ Sprites.tintOf = function (name, color) {
 
 /* characters cut from real images: swap the pixel placeholders for the picture once it arrives */
 Sprites.loadImageArt = function () {
+  const ver = ((document.querySelector('script[src*="entities.js"]') || {}).src || '').split('?v=')[1] || '';   // same tag bump.sh gives the scripts
   const swap = (key, url, after) => {
     const img = new Image();
     img.onload = () => {
@@ -34,7 +35,7 @@ Sprites.loadImageArt = function () {
       for (const k in this.cache) if (k.startsWith(key + '_')) delete this.cache[k];   // tints were built from the placeholder
       if (after) after();
     };
-    img.src = url;
+    img.src = ver ? url + '?v=' + ver : url;
   };
   for (const id in CHARACTERS) {
     const ch = CHARACTERS[id];
