@@ -473,9 +473,14 @@ class GameMap {
       if (window.ui && window.ui.renderMapPreviews) window.ui.renderMapPreviews();   // the map-select card can show it now
     };
     img.src = ver ? this.cfg.image + '?v=' + ver : this.cfg.image;
+    if (this.cfg.menuImage) { // a lighter grade of the same painting, used behind the title screen
+      const mi = new Image();
+      mi.onload = () => { const m = document.createElement('canvas'); m.width = this.pw; m.height = this.ph; const mx = m.getContext('2d'); mx.imageSmoothingEnabled = false; mx.drawImage(mi, 0, 0, this.pw, this.ph); this.menuCanvas = m; };
+      mi.src = ver ? this.cfg.menuImage + '?v=' + ver : this.cfg.menuImage;
+    }
   }
-  draw(ctx, camX, camY, vw, vh) {
-    ctx.drawImage(this.canvas, camX, camY, vw, vh, 0, 0, vw, vh);
+  draw(ctx, camX, camY, vw, vh, menu) {
+    ctx.drawImage(menu && this.menuCanvas || this.canvas, camX, camY, vw, vh, 0, 0, vw, vh);
     ctx.drawImage(this.decals, camX, camY, vw, vh, 0, 0, vw, vh);
   }
   /* real thumbnail of the rendered level for the map-select cards */

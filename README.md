@@ -137,14 +137,17 @@ minimap are the painting itself. Any map can do this: give it `image` + `layout`
 
 The title screen sits over **Horror House** (`MENU_MAP` in `js/config.js`), whatever map you last played:
 
-- The painting brings its own night lighting, so the menu only adds a vignette. (For a tile-built map like Urban
+- The menu shows a lighter grade of the same painting (`menuImage`, `assets/img/horror_menu.webp`), so the plaza
+  reads clearly; gameplay keeps the dark grade. Only a soft vignette goes on top. (For a tile-built map like Urban
   City it instead composites a cool tint, warm lamp pools and headlight cones over the lit map.)
-- The camera frames the heart of the plaza and drifts slowly across it.
-- Six zombies shuffle around at random for atmosphere.
-- `MEME` and `SURVIVAL` are stacked-shadow extruded, with blood running off the bottom of `SURVIVAL` (one drip
-  falls every few seconds).
-- `PLAY` carries a triangle and red target brackets, `SETTINGS` a gear, and the controls sit along the bottom with
-  every key in its own cap.
+- The whole painting is cover-fitted to the window (`resize()` drops the integer pixel scale while the menu is up),
+  with the camera drifting gently. The integer scale comes back the moment a run starts.
+- Eleven zombies shuffle around the picture for atmosphere, and the painted fires burn and smoke.
+- `MEME` is cracked bone-white with blood splatter, `SURVIVAL` cracked glowing red with pixel drips hanging off the
+  letters (a drop falls every few seconds). The textures are SVGs (`assets/img/title_*_fx.svg`) clipped to the
+  glyphs through a `data-text` pseudo-element, laid over the solid extruded text.
+- `PLAY` is a grungy dark plate (`assets/img/grunge.svg`) inside a flickering red neon frame, `SETTINGS` the same
+  plate with a gear. The controls sit along the bottom with every key in its own cap and mouse icons for aim/shoot.
 
 Starting a run hands the map back to whatever you actually chose.
 

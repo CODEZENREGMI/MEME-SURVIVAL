@@ -27,7 +27,7 @@ class Game {
   menuScene() {
     if (this._menuSetup === this.state) return;
     this._menuSetup = this.state;
-    this.map = this.getMap(MENU_MAP); this.resize();
+    this.menuNight = true; this.map = this.getMap(MENU_MAP); this.resize();
     this.siege = false; this.house = null; this.turrets = [];   // reset() may have built Race City's haunted house for the chosen map
     this.map.cfg.dark = false; this.map.lamps.forEach(l => { l.broken = false; });   // the map still renders normally; the night is a tint on top
     this.menuNight = true;
@@ -35,7 +35,7 @@ class Game {
       this.map._menuBlood = true;
       for (let i = 0; i < 26; i++) { const x = Math.random() * this.map.pw, y = Math.random() * this.map.ph; if (!this.map.solidAt(x, y)) this.map.splat(x, y, 8 + Math.random() * 16, Math.random() < 0.6 ? '#5a0f0b' : '#3a0a08'); }
     }
-    this.menuZombies(6);
+    this.menuZombies(this.map.cfg.image ? 11 : 6);
     // frame a lit crossroads: score candidate points by lamps and cars in shot, and by how much road is on screen
     const m = this.map, ts = 16; let best = null, bestScore = -1;
     for (let gy = 0; gy < 7; gy++) for (let gx = 0; gx < 7; gx++) {
@@ -53,7 +53,7 @@ class Game {
       score += n ? (road / n) * 10 : 0;
       if (score > bestScore) { bestScore = score; best = { x, y }; }
     }
-    this.menuCam = m.cfg.image ? { x: m.playerStart.x, y: m.playerStart.y } : (best || { x: m.pw / 2, y: m.ph / 2 });   // painted maps: frame the heart of the picture
+    this.menuCam = m.cfg.image ? { x: m.pw / 2, y: m.ph / 2 } : (best || { x: m.pw / 2, y: m.ph / 2 });   // painted maps: frame the heart of the picture
   }
   menuLeave() {
     if (!this.menuNight) return;
@@ -65,7 +65,9 @@ class Game {
   menuZombies(n) {
     this.zombies = [];
     for (let i = 0; i < n; i++) {
-      const s = this.pickSpawn ? this.pickSpawn() : { x: Math.random() * this.map.pw, y: Math.random() * this.map.ph };
+      let s = null;
+      if (this.map.cfg.image) for (let t = 0; t < 40 && !s; t++) { const x = 80 + Math.random() * (this.map.pw - 160), y = 60 + Math.random() * (this.map.ph - 120); if (!this.map.solidAt(x, y)) s = { x, y }; }   // painted maps: shufflers all over the picture
+      if (!s) s = this.pickSpawn ? this.pickSpawn() : { x: Math.random() * this.map.pw, y: Math.random() * this.map.ph };
       const z = new Zombie(this, Math.random() < 0.25 ? 'fast' : 'normal', s.x, s.y, 1);
       z.menu = true; z.wanderA = Math.random() * TAU; z.wander = 1 + Math.random() * 3;
       this.zombies.push(z);
@@ -100,6 +102,7 @@ class Game {
     // integer pixel scale that keeps the view no larger than the map, then stretch the canvas to the full window
     let scale = Math.max(1, Math.floor(H / 400));
     scale = Math.max(scale, Math.ceil(W / mw), Math.ceil(H / mh));
+    if (this.menuNight && this.map && this.map.cfg.image) scale = Math.max(1, W / mw, H / mh);   // title screen: the whole painting, cover-fitted to the window
     this.vw = Math.max(320, Math.ceil(W / scale)); this.vh = Math.max(200, Math.ceil(H / scale)); this.scale = scale;
     this.canvas.width = this.vw; this.canvas.height = this.vh; this.lightCanvas.width = this.vw; this.lightCanvas.height = this.vh; this.coneCanvas.width = Math.ceil(this.vw / 2); this.coneCanvas.height = Math.ceil(this.vh / 2);
     this.canvas.style.width = W + 'px'; this.canvas.style.height = H + 'px';
@@ -669,7 +672,7 @@ class Game {
     const flick = this.eventFlicker > 0 && Math.sin(ts * 0.9) > -0.2 && Math.random() < 0.85;
     const dark = !!this.map.cfg.dark && !flick, inGame = this.state !== 'menu';
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
-    this.map.draw(ctx, cx, cy, this.vw, this.vh);
+    this.map.draw(ctx, cx, cy, this.vw, this.vh, this.menuNight);
     const inView = e => e.x > cx - 40 && e.x < cx + this.vw + 40 && e.y > cy - 40 && e.y < cy + this.vh + 40;
     const glowP = p => p.type === 'fire' || p.type === 'dot' || p.type === 'text';
     // ---- world layer (gets darkened) ----
@@ -712,7 +715,7 @@ class Game {
       }
       ctx.restore();
       }
-      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 0.5; ctx.drawImage(this.vignette('rgba(0,0,0,1)', 0.45), 0, 0); ctx.restore();
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = painted ? 0.35 : 0.5; ctx.drawImage(this.vignette('rgba(0,0,0,1)', 0.45), 0, 0); ctx.restore();
     }
     if (dark) this.drawEyes(ctx, inView);
     this.zombies.forEach(z => z.bk && inView(z) && z.drawFx(ctx));

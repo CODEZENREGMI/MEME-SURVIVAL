@@ -104,7 +104,7 @@ class UI {
     if (this.game.state === 'playing' || this.game.state === 'wavebreak') this.game.pause();
     m.classList.add('show');
   }
-  refreshTitle() { $('#titleBest').textContent = `High score: ${this.save.highScore.toLocaleString()}  ·  Best wave: ${this.save.bestWave}`; }
+  refreshTitle() { $('#titleBest').textContent = `High score: ${this.save.highScore.toLocaleString()} • Best wave: ${this.save.bestWave}`; }
   action(a) {
     const g = this.game;
     switch (a) {

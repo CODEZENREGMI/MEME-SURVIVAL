@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%A7%9F%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=151">
+<link rel="stylesheet" href="css/style.css?v=155">
 </head>
 <body>
 <div id="stage">
@@ -18,19 +18,23 @@
   <!-- ============ TITLE ============ -->
   <div class="overlay show" id="ov-title">
     <div class="title-block">
-      <div class="ttl-zombie">MEME</div>
-      <div class="ttl-survival">SURVIVAL<span class="drips" aria-hidden="true"></span></div>
+      <div class="ttl-zombie" data-text="MEME">MEME</div>
+      <div class="ttl-survival" data-text="SURVIVAL">SURVIVAL<svg class="drips" viewBox="0 0 800 90" preserveAspectRatio="none" aria-hidden="true">
+        <g fill="#c81e10"><path d="M12.0 0h12v24h3v12h-3v3h-12v-3h-3v-12h3z"/><path d="M57.0 0h10v10h3v10h-3v3h-10v-3h-3v-10h3z"/><path d="M116.0 0h12v34h3v12h-3v3h-12v-3h-3v-12h3z"/><path d="M161.0 0h10v14h3v10h-3v3h-10v-3h-3v-10h3z"/><path d="M202.0 0h12v26h3v12h-3v3h-12v-3h-3v-12h3z"/><path d="M267.0 0h10v12h3v10h-3v3h-10v-3h-3v-10h3z"/><path d="M338.0 0h12v40h3v12h-3v3h-12v-3h-3v-12h3z"/><path d="M424.0 0h12v20h3v12h-3v3h-12v-3h-3v-12h3z"/><path d="M465.0 0h10v30h3v10h-3v3h-10v-3h-3v-10h3z"/><path d="M534.0 0h12v34h3v12h-3v3h-12v-3h-3v-12h3z"/><path d="M604.0 0h12v16h3v12h-3v3h-12v-3h-3v-12h3z"/><path d="M671.0 0h10v26h3v10h-3v3h-10v-3h-3v-10h3z"/><path d="M706.0 0h12v40h3v12h-3v3h-12v-3h-3v-12h3z"/><path d="M765.0 0h10v14h3v10h-3v3h-10v-3h-3v-10h3z"/></g>
+        <g fill="#ff6a48" opacity=".55"><rect x="14.0" y="3" width="3" height="22"/><rect x="59.0" y="3" width="3" height="8"/><rect x="118.0" y="3" width="3" height="32"/><rect x="163.0" y="3" width="3" height="12"/><rect x="204.0" y="3" width="3" height="24"/><rect x="269.0" y="3" width="3" height="10"/><rect x="340.0" y="3" width="3" height="38"/><rect x="426.0" y="3" width="3" height="18"/><rect x="467.0" y="3" width="3" height="28"/><rect x="536.0" y="3" width="3" height="32"/><rect x="606.0" y="3" width="3" height="14"/><rect x="673.0" y="3" width="3" height="24"/><rect x="708.0" y="3" width="3" height="38"/><rect x="767.0" y="3" width="3" height="12"/></g>
+        <g class="drop" fill="#c81e10"><rect x="340" y="58" width="8" height="8"/><rect x="708" y="58" width="8" height="8"/></g>
+      </svg></div>
     </div>
-    <button class="btn primary big play-btn" data-action="play"><span class="tri"></span>PLAY</button>
-    <button class="btn big gear-btn" data-action="settings"><span class="gear"></span>SETTINGS</button>
+    <button class="btn primary big play-btn" data-action="play"><svg class="ico" viewBox="0 0 12 14" aria-hidden="true"><path d="M0 0L12 7L0 14z" fill="currentColor"/></svg>PLAY</button>
+    <button class="btn big gear-btn" data-action="settings"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10 1h4l.6 3.1 2.1.9 2.6-1.8 2.8 2.8-1.8 2.6.9 2.1 3.1.6v4l-3.1.6-.9 2.1 1.8 2.6-2.8 2.8-2.6-1.8-2.1.9L14 23h-4l-.6-3.1-2.1-.9-2.6 1.8-2.8-2.8 1.8-2.6-.9-2.1L0 14v-4l3.1-.6.9-2.1-1.8-2.6 2.8-2.8 2.6 1.8 2.1-.9zM12 7.5a4.5 4.5 0 1 0 0 9a4.5 4.5 0 0 0 0-9zm0 2.2a2.3 2.3 0 1 1 0 4.6a2.3 2.3 0 0 1 0-4.6z"/></svg>SETTINGS</button>
     <p class="hint score-line" id="titleBest">High score: 0</p>
     <div class="keybar">
-      <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span><i>•</i>
-      <span>Mouse aim</span><i>•</i>
-      <span>Click shoot</span><i>•</i>
-      <span><kbd>R</kbd> reload</span><i>•</i>
-      <span><kbd>1</kbd>–<kbd>5</kbd> / scroll swap weapon</span><i>•</i>
-      <span><kbd>ESC</kbd> pause</span><i>•</i>
+      <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
+      <span><svg class="mouse" viewBox="0 0 12 18" aria-hidden="true"><rect x="1" y="1" width="10" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 1v6M1.5 7h9" stroke="currentColor" stroke-width="1.2"/><rect x="5" y="3" width="2" height="3" rx="1" fill="currentColor"/></svg> Mouse aim</span>
+      <span><svg class="mouse" viewBox="0 0 12 18" aria-hidden="true"><path d="M6 1A5 5 0 0 0 1 6v1h5z" fill="currentColor"/><rect x="1" y="1" width="10" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 1v6M1.5 7h9" stroke="currentColor" stroke-width="1.2"/></svg> Click shoot</span>
+      <span><kbd>R</kbd> reload</span>
+      <span><kbd>1</kbd><kbd>-</kbd><kbd>5</kbd> scroll swap weapon</span>
+      <span><kbd>ESC</kbd> pause</span>
       <span><kbd>F</kbd> fullscreen <em>(Shift+F as Spider Mad)</em></span>
     </div>
   </div>
@@ -155,13 +159,13 @@
   <div id="jumpscare"><img id="jumpscareImg" alt=""></div>
 </div>
 
-<script src="js/sprites.js?v=151"></script>
-<script src="js/config.js?v=151"></script>
-<script src="js/audio.js?v=151"></script>
-<script src="js/map.js?v=151"></script>
-<script src="js/entities.js?v=151"></script>
-<script src="js/game.js?v=151"></script>
-<script src="js/ui.js?v=151"></script>
-<script src="js/main.js?v=151"></script>
+<script src="js/sprites.js?v=155"></script>
+<script src="js/config.js?v=155"></script>
+<script src="js/audio.js?v=155"></script>
+<script src="js/map.js?v=155"></script>
+<script src="js/entities.js?v=155"></script>
+<script src="js/game.js?v=155"></script>
+<script src="js/ui.js?v=155"></script>
+<script src="js/main.js?v=155"></script>
 </body>
 </html>
