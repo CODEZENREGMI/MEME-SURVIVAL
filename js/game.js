@@ -109,7 +109,7 @@ class Game {
   reset() {
     this.map = this.getMap(this.loadout.map); this.resize();
     this.player = new Player(this, this.map.playerStart.x, this.map.playerStart.y, this.loadout.char, this.loadout.weapons);
-    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = [];
+    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = [];
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0; this.heartsBought = 0;
@@ -240,6 +240,7 @@ class Game {
       if (t.dead) continue; t.smoke -= dt; t.webImmune = (t.webImmune || 0) - dt;
       if (t.web > 0) { t.web -= dt; if (t.web <= 0) { t.web = 0; t.webImmune = 1.5; } continue; } // jammed by the web: can't turn or fire
       t.cd -= dt;
+      { const P = this.player; if (P && P.floodR > 0 && P.char.cry && dist(t.x, t.y, P.x, P.y) < P.floodR + t.r) t.cd = Math.max(t.cd, 0.3); }   // barrel's full of water
       const tg = this.nearestTarget(t.x, t.y); if (tg === this.player && this.player.invisible) continue; const d = dist(t.x, t.y, tg.x, tg.y);
       if (d < HOUSE.cannon.range) { t.angle += Math.atan2(Math.sin(Math.atan2(tg.y - t.y, tg.x - t.x) - t.angle), Math.cos(Math.atan2(tg.y - t.y, tg.x - t.x) - t.angle)) * Math.min(1, dt * 3); }
       if (t.cd <= 0 && d < HOUSE.cannon.range && this.map.los(t.x, t.y, tg.x, tg.y)) { t.cd = HOUSE.cannon.cd; const gx = t.x + Math.cos(t.angle) * 16, gy = t.y + Math.sin(t.angle) * 16; this.ebullets.push(new EnemyBullet(this, gx, gy, t.angle + (Math.random() - 0.5) * 0.06, HOUSE.cannon, t)); this.lights.push({ x: gx, y: gy, r: 100, life: 0.1, max: 0.1 }); Audio8.play('cannon'); this.shake(1.5); t.smoke = 0.3; }
@@ -302,9 +303,15 @@ class Game {
   onZombieDeath(z) {
     this.kills[z.type]++; this.score += z.cfg.score; Audio8.play('zdie'); this.player.onBeastKill();
     if (z.bk && z.bk.bona) { this.bonaGone(); this.shake(14); this.whiteFlash = 0.4; Audio8.play('roar'); Audio8.play('explode'); this.floatText(z.x, z.y - 60, 'BONA FALLS', '#ffb060'); }
-    if (this.settings.blood) this.map.splat(z.x, z.y, z.cfg.boss ? 22 : 7 * z.scale, z.type === 'exploder' ? '#6b2a08' : '#6b1410');
-    this.blood(z.x, z.y, z.cfg.boss ? 30 : 8, z.type === 'exploder' ? '#ff8a20' : '#b3221a');
-    if (z.type === 'exploder') this.explode(z.x, z.y, z.cfg.explodes, z.cfg.damage, false);
+    if ((z.sunk || 0) > 0.4) { // drowned: it slips under with a last gasp of bubbles — no blood, and an exploder's fuse just fizzles
+      this.sinkers.push({ z, t: 0, dur: z.cfg.boss ? 1.4 : 0.9 });
+      for (let i = 0; i < (z.cfg.boss ? 26 : 12); i++) this.particles.push(new Particle(z.x + (Math.random() - 0.5) * 12 * z.scale, z.y, (Math.random() - 0.5) * 16, -10 - Math.random() * 20, 0.7 + Math.random() * 0.6, Math.random() < 0.5 ? '#e6f3ff' : '#9cc8f2', 2 + (Math.random() < 0.3 ? 1 : 0), 'smoke'));
+      this.floatText(z.x, z.y - 12 * z.scale, 'GLUG', '#9cc8f2');
+    } else {
+      if (this.settings.blood) this.map.splat(z.x, z.y, z.cfg.boss ? 22 : 7 * z.scale, z.type === 'exploder' ? '#6b2a08' : '#6b1410');
+      this.blood(z.x, z.y, z.cfg.boss ? 30 : 8, z.type === 'exploder' ? '#ff8a20' : '#b3221a');
+      if (z.type === 'exploder') this.explode(z.x, z.y, z.cfg.explodes, z.cfg.damage, false);
+    }
     if (z.cfg.boss) {
       const bonus = 200 + this.wave * 60; this.score += bonus;
       this.boss = this.zombies.find(o => o !== z && o.cfg.boss && !o.dead) || null;
@@ -357,6 +364,21 @@ class Game {
     this.flash = 0.05; this.lights.push({ x, y, r: 130, life: 0.08, max: 0.08 });
   }
   showAbilityBanner(name, sub) { this.ui.showBanner(name, sub); }
+
+  /* drowned zombies sinking out of sight: the body slides down under a fixed waterline and fades */
+  updateSinkers(dt) {
+    for (const S of this.sinkers) { S.t += dt; if (Math.random() < 0.4) this.particles.push(new Particle(S.z.x + (Math.random() - 0.5) * 8, S.z.y, (Math.random() - 0.5) * 6, -12, 0.6, '#e6f3ff', 2, 'smoke')); }
+    this.sinkers = this.sinkers.filter(S => S.t < S.dur);
+  }
+  drawSinkers(ctx) {
+    for (const S of this.sinkers) {
+      const z = S.z, s = z.scale || 1, k = S.t / S.dur, wl = z.y + 2.8 * s;
+      z.drawSubmerged(ctx, wl, 3 * s + k * 14 * s, 1 - k * 0.5);   // same waterline as when it was alive, the body slides under it
+      const w = (9 - k * 3) * s;   // the surface closing over it
+      ctx.strokeStyle = `rgba(232,246,255,${0.8 * (1 - k)})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(z.x, wl, w, w * 0.38, 0, 0, TAU); ctx.stroke();
+      const rw = (9 + k * 16) * s; ctx.strokeStyle = `rgba(220,240,255,${0.55 * (1 - k)})`; ctx.beginPath(); ctx.ellipse(z.x, wl, rw, rw * 0.38, 0, 0, TAU); ctx.stroke();
+    }
+  }
 
   /* ---- Cry XD's flood: a pool of tears around him, ripples rolling out, foam at the edge ---- */
   drawFlood(ctx) {
@@ -588,6 +610,7 @@ class Game {
     this.clones.forEach(c => c.update(dt)); this.clones = this.clones.filter(c => !c.dead);
     this.updateLures(dt);
     this.updateMilk(dt);
+    this.updateSinkers(dt);
     for (const b of this.bullets) {
       b.update(dt); if (b.dead) continue;
       if (this.siege) {
@@ -646,6 +669,7 @@ class Game {
     if (this.siege) this.drawHouse(ctx);
     if (this.map.cars.length) this.drawCars(ctx);
     this.drawFlood(ctx);
+    this.drawSinkers(ctx);
     this.drawMilk(ctx);
     this.drawLures(ctx);
     this.pickups.forEach(k => inView(k) && k.draw(ctx));

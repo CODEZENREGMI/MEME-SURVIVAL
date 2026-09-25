@@ -1487,6 +1487,16 @@ class Zombie {
     }
     const dx = player.x - this.x, dy = player.y - this.y, d = Math.hypot(dx, dy) || 1;
     const P = this.game.player, song = P.demon && player === P ? P.dm.song : null; // Bezuko's circle of music: charmed zombies walk to her and forget to bite
+    const flooded = P.floodR > 0 && P.char.cry && Math.hypot(this.x - P.x, this.y - P.y) < P.floodR + this.r + 16;
+    this.sunk = (this.sunk || 0) + ((flooded ? 1 : 0) - (this.sunk || 0)) * Math.min(1, dt * 4);   // eases under, eases back out
+    if (flooded) { // underwater: guns flood, powder's wet — no shots, bursts, aims, spit, bats or drums
+      this.gunCd = Math.max(this.gunCd || 0, 0.35); this.aiming = 0; this.burstLeft = 0;
+      if (this.spitCd !== undefined) this.spitCd = Math.max(this.spitCd, 0.35);
+      if (this.batCd !== undefined) this.batCd = Math.max(this.batCd, 0.35);
+      if (this.drumCd !== undefined) { this.drumCd = Math.max(this.drumCd, 0.35); this.drum = null; }
+      if (this.sunk > 0.5 && Math.random() < 0.18) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 8 * this.scale, this.y - 2 * this.scale, (Math.random() - 0.5) * 6, -8, 0.8, Math.random() < 0.5 ? '#e6f3ff' : '#9cc8f2', 2, 'smoke'));   // bubbles
+      if (this.sunk > 0.5 && Math.random() < 0.12) { const side = Math.random() < 0.5 ? -1 : 1; this.game.particles.push(new Particle(this.x + side * 7 * this.scale, this.y, side * (20 + Math.random() * 30), -40 - Math.random() * 30, 0.45, '#cfe6fb', 2, 'blood')); }   // thrashing splashes
+    }
     if (song && d < song.radius + this.r) { if (!(this.charm > 0)) this.charmT = 0; this.charm = 0.5; }
     const charmed = this.charm > 0; if (charmed) { this.charm -= dt; this.charmT = (this.charmT || 0) + dt; }
     let sp = this.speed;
@@ -1708,7 +1718,39 @@ class Zombie {
     else if (Math.random() < 0.3) Audio8.play('flame');
     this.aimAngle = base;
   }
+  /* drowning in Cry XD's flood: up to the chest, bobbing, going under now and then, arms thrashing */
   draw(ctx) {
+    const k = this.sunk || 0;
+    if (k < 0.03) return this.drawBody(ctx);
+    const s = this.scale || 1, t = this.game.time, boss = !!this.cfg.boss;
+    const bob = Math.sin(t * 5 + this.x * 0.1) * 1.4 * k;
+    const dip = !boss && Math.sin(t * 2.3 + this.x * 0.07) > 0.82 ? 5 * s : 0;     // goes under for a moment, comes up gasping
+    const wl = this.y + 7 * s - 4.2 * s * k + bob;                                   // waterline: rises from the feet to the chest as it sinks in
+    const sink = (3 * s + dip) * k;                                                   // the body pushed down into it
+    const w = (7 + 2 * k) * s, ry = w * 0.38;
+    // far side of the water ring, behind the body
+    ctx.fillStyle = `rgba(90,160,235,${0.35 * k})`; ctx.beginPath(); ctx.ellipse(this.x, wl, w, ry, 0, Math.PI, TAU); ctx.fill();
+    ctx.strokeStyle = `rgba(232,246,255,${0.6 * k})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(this.x, wl, w, ry, 0, Math.PI, TAU); ctx.stroke();
+    this.drawSubmerged(ctx, wl, sink, 1);
+    // near side of the water, in front of the body
+    ctx.fillStyle = `rgba(90,160,235,${0.6 * k})`; ctx.beginPath(); ctx.ellipse(this.x, wl, w, ry, 0, 0, Math.PI); ctx.fill();
+    ctx.strokeStyle = `rgba(240,250,255,${0.9 * k})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(this.x, wl, w, ry, 0, 0, Math.PI); ctx.stroke();
+    const rk = (t * 1.6 + this.x * 0.013) % 1, rw = w + rk * 9 * s;                  // a ripple rolling off it
+    ctx.strokeStyle = `rgba(220,240,255,${0.5 * (1 - rk) * k})`; ctx.beginPath(); ctx.ellipse(this.x, wl, rw, rw * 0.38, 0, 0, Math.PI); ctx.stroke();
+    if (!boss && k > 0.5 && !dip) { // arms flailing up out of the water
+      const f = Math.sin(t * 13 + this.x), g = Math.sin(t * 11 + this.y);
+      ctx.strokeStyle = '#6f9450'; ctx.lineWidth = 2 * s; ctx.lineCap = 'round'; ctx.beginPath();
+      ctx.moveTo(this.x - 5 * s, wl - 1); ctx.lineTo(this.x - (8 + f * 2) * s, wl - (7 + f * 3) * s);
+      ctx.moveTo(this.x + 5 * s, wl - 1); ctx.lineTo(this.x + (8 + g * 2) * s, wl - (7 + g * 3) * s);
+      ctx.stroke(); ctx.lineCap = 'butt';
+    }
+  }
+  /* the body, cut off at the waterline and pushed down into it */
+  drawSubmerged(ctx, wl, sink, alpha) {
+    ctx.save(); ctx.beginPath(); ctx.rect(this.x - 400, this.y - 500, 800, wl - (this.y - 500)); ctx.clip();
+    ctx.globalAlpha = alpha; ctx.translate(0, sink); this.drawBody(ctx); ctx.restore(); ctx.globalAlpha = 1;
+  }
+  drawBody(ctx) {
     const s = this.scale, bob = Math.sin(this.walk) * 1.2;
     ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 7 * s, 6 * s, 3 * s, 0, 0, TAU); ctx.fill();
     if (this.bk && this.bk.kraken) { this.drawKraken(ctx); return; }
