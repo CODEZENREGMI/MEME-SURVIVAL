@@ -143,9 +143,9 @@ The title screen sits over **Horror House** (`MENU_MAP` in `js/config.js`), what
 - The whole painting is cover-fitted to the window (`resize()` drops the integer pixel scale while the menu is up),
   with the camera drifting gently. The integer scale comes back the moment a run starts.
 - Eleven zombies shuffle around the picture for atmosphere, and the painted fires burn and smoke.
-- `MEME` is cracked bone-white with blood splatter, `SURVIVAL` cracked glowing red with pixel drips hanging off the
-  letters (a drop falls every few seconds). The textures are SVGs (`assets/img/title_*_fx.svg`) clipped to the
-  glyphs through a `data-text` pseudo-element, laid over the solid extruded text.
+- `MEME` is cracked bone-white text with blood splatter: an SVG texture (`assets/img/title_meme_fx.svg`) clipped to
+  the glyphs through a `data-text` pseudo-element, laid over the solid extruded text. `SURVIVAL` is painted art
+  (`assets/img/title_survival.webp`): the cracked, wet, dripping lettering keyed out of the title mockup.
 - `PLAY` is a grungy dark plate (`assets/img/grunge.svg`) inside a flickering red neon frame, `SETTINGS` the same
   plate with a gear. The controls sit along the bottom with every key in its own cap and mouse icons for aim/shoot.
 

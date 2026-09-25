@@ -27,22 +27,14 @@ canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 #ov-title{background:radial-gradient(ellipse 46% 42% at 50% 44%,rgba(0,0,0,.26),rgba(0,0,0,0) 100%),
   linear-gradient(to top,rgba(0,0,0,.62),rgba(0,0,0,0) 92px)}
 .title-block{text-align:center;line-height:1;margin-bottom:58px;display:flex;flex-direction:column;align-items:center}
-.ttl-zombie,.ttl-survival{position:relative;display:inline-block;font-family:var(--pixel);font-size:clamp(36px,6.4vw,92px);letter-spacing:4px}
-/* the face texture sits exactly on top of the glyphs; the solid text below gives the chunky extrusion */
-.ttl-zombie::after,.ttl-survival::after{content:attr(data-text);position:absolute;left:0;top:0;right:0;color:transparent;text-shadow:none;
-  background-size:100% 100%;-webkit-background-clip:text;background-clip:text;pointer-events:none}
-.ttl-zombie{color:#ece6d8;
+.ttl-zombie{position:relative;display:inline-block;font-family:var(--pixel);font-size:clamp(36px,6.4vw,92px);letter-spacing:4px;color:#ece6d8;
   text-shadow:0 3px 0 #a39c8d,0 6px 0 #6a655a,0 9px 0 #3a3730,0 12px 0 #1b1a17,4px 14px 8px rgba(0,0,0,.7)}
-.ttl-zombie::after{background-image:url(../assets/img/title_meme_fx.svg)}
-.ttl-survival{color:#dd2616;margin-top:18px;
-  text-shadow:0 3px 0 #a3160b,0 6px 0 #74100a,0 9px 0 #4a0905,0 12px 0 #230402,4px 14px 8px rgba(0,0,0,.7);
-  filter:drop-shadow(0 0 16px rgba(255,46,24,.45))}
-.ttl-survival::after{background-image:url(../assets/img/title_survival_fx.svg)}
-/* blood running off the bottom of the letters (each drip hangs under a letter's foot) */
-.drips{position:absolute;left:0;right:0;top:calc(100% - 2px);width:100%;height:1em;overflow:visible;pointer-events:none;
-  filter:drop-shadow(0 3px 0 rgba(40,0,0,.8))}
-.drips .drop{animation:dripfall 3.2s ease-in infinite}
-@keyframes dripfall{0%,62%{opacity:0;transform:translateY(-4px)}72%{opacity:1}100%{opacity:0;transform:translateY(16px)}}
+/* the face texture sits exactly on top of the glyphs; the solid text below gives the chunky extrusion */
+.ttl-zombie::after{content:attr(data-text);position:absolute;left:0;top:0;right:0;color:transparent;text-shadow:none;
+  background:url(../assets/img/title_meme_fx.svg) 0 0/100% 100%;-webkit-background-clip:text;background-clip:text;pointer-events:none}
+/* SURVIVAL is painted art (cracked, wet, dripping) cut out of the title mockup */
+.ttl-survival{display:block;width:clamp(270px,45vw,730px);height:auto;margin-top:16px;user-select:none;pointer-events:none;
+  filter:drop-shadow(0 4px 0 rgba(20,0,0,.85)) drop-shadow(0 0 18px rgba(255,46,24,.4))}
 
 .btn{background:#2c3444;border:2px solid #6c7688;color:#fff;font-weight:700;letter-spacing:.08em;padding:10px 28px;border-radius:3px;font-size:14px;min-width:160px;transition:transform .08s,background .1s}
 .btn:hover{background:#3a4356;transform:translateY(-1px)}
