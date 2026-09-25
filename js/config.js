@@ -240,8 +240,11 @@ const CHARACTERS = {
             pal: { K: '#12161a', G: '#5c6d79', g: '#3c4a54', W: '#d9dee3', T: '#f6f4ec', E: '#0d1013', B: '#1f9ada', b: '#1573a5', S: '#eef1f4' },
             shark: { name: 'FEEDING FRENZY', duration: 12, cooldown: 30, speed: 1.3, armor: 0.7,
                      bite: { cd: 0.42, lunge: 52, dur: 0.15, reach: 34, arc: 1.15, bossDamage: 240, heal: 8 } } },   // non-bosses go down the hatch whole
+  cry:     { name: 'Cry XD', tag: 'Meme', hp: 100, speed: 1.0, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'cry', portrait: 'cry_portrait',
+            desc: 'He is not okay. Never has been. (Ability coming.)',
+            pal: { K: '#16160f', W: '#f2f0e8', w: '#c9c7bd', B: '#2f7fd8', b: '#7ab2ea', M: '#241a18', R: '#8c3a34', C: '#2c3340', c: '#1c222c' } },
 };
-const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark'];
+const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry'];
 
 /* maps */
 const MAPS = {
