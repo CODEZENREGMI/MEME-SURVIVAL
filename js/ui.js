@@ -204,6 +204,7 @@ class UI {
   /* ------------------------------------------------------- states / overlays */
   setState(s) {
     $$('.overlay').forEach(o => { if (!o.classList.contains('banner')) o.classList.remove('show'); });
+    if (s === 'menu' || s === 'setup') { this.bannerTimer = 0; $('#ov-wave').classList.remove('show'); }   // wave banners belong to a run — never let one outlive it onto the menus
     if (s === 'menu') { $('#ov-title').classList.add('show'); this.refreshTitle(); }
     if (s === 'setup') $('#ov-setup').classList.add('show');
     if (s === 'paused') $('#ov-pause').classList.add('show');

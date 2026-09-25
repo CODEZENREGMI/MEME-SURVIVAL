@@ -28,6 +28,7 @@ class Game {
     if (this._menuSetup === this.state) return;
     this._menuSetup = this.state;
     this.map = this.getMap('city'); this.resize();
+    this.siege = false; this.house = null; this.turrets = [];   // reset() may have built Race City's haunted house for the chosen map
     this.map.cfg.dark = false; this.map.lamps.forEach(l => { l.broken = false; });   // the map still renders normally; the night is a tint on top
     this.menuNight = true;
     if (!this.map._menuBlood) { // a few old splatters on the tarmac
@@ -91,7 +92,7 @@ class Game {
     this.zombies = []; this.ebullets = []; this.bullets = []; this.boss = null; this.state = 'playing'; this.ui.setState('playing');
     this.startWave(wave); this.admin = true; this.ui.toast(`Admin: wave ${wave}`);
   }
-  setLoadout(lo) { Object.assign(this.loadout, lo); this.save.loadout = Object.assign({}, this.loadout); this.ui.saveGame(); if (this.state === 'menu') this.reset(); }
+  setLoadout(lo) { Object.assign(this.loadout, lo); this.save.loadout = Object.assign({}, this.loadout); this.ui.saveGame(); if (this.state === 'menu') { this.reset(); this._menuSetup = null; this.menuScene(); } }
   /* integer-scaled canvas that fills the window */
   resize() {
     const W = window.innerWidth, H = window.innerHeight, mw = this.map ? this.map.pw : 1280, mh = this.map ? this.map.ph : 800;
@@ -127,7 +128,7 @@ class Game {
     this.reset(); this.state = 'playing'; this.ui.setState('playing');
     this.startWave(1);
   }
-  toMenu() { if (this.event) this.endEvent(true); this.state = 'menu'; Audio8.stopMusic(); Audio8.stopTrack(); this.reset(); this.ui.setState('menu'); }
+  toMenu() { if (this.event) this.endEvent(true); this.state = 'menu'; this._menuSetup = null; Audio8.stopMusic(); Audio8.stopTrack(); this.reset(); this.menuScene(); this.ui.setState('menu'); }
   pause() { if (this.state === 'playing' || this.state === 'wavebreak') { this.prevState = this.state; this.state = 'paused'; this.ui.setState('paused'); } }
   openShop() { if (this.state !== 'playing' && this.state !== 'wavebreak') return; this.prevState = this.state; this.state = 'shop'; this.input.mouseDown = false; this.ui.showShop(); Audio8.play('swap'); }
   closeShop() { if (this.state !== 'shop') return; this.state = this.prevState || 'playing'; this.ui.hideShop(); }
@@ -576,7 +577,7 @@ class Game {
     requestAnimationFrame(tt => this.loop(tt));
   }
   updateAmbient(dt) {
-    this.time += dt; this.updateFx(dt); this.menuScene(); this.updateMenuZombies(dt);
+    this.time += dt; this.ui.tick(dt); this.updateFx(dt); this.menuScene(); this.updateMenuZombies(dt);
     if (this.menuCam) { // a slow drift so the title screen never looks like a still
       const t = this.time * 0.06;
       const tx = this.menuCam.x + Math.cos(t) * 90 - this.vw / 2, ty = this.menuCam.y + Math.sin(t * 0.8) * 60 - this.vh / 2;
