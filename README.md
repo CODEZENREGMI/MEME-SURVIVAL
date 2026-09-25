@@ -120,6 +120,16 @@ js/ui.js        title, loadout wizard, overlays, settings, save/load
 js/main.js      bootstrap
 ```
 
+### Horror House (painted map)
+
+The whole map is one hand-painted image (`assets/img/horror_map.webp`, 1760×880 = 110×55 tiles): a blood-soaked
+night plaza with four tree planters, crates, abandoned cop cars, burning wrecks on the corners and street lamps.
+Collision is authored by hand as tile rectangles in `MAPS.horror.layout` — `walk` carves out the roads, sidewalks
+and plaza, `block` puts back the planters, crates, parked cars, the flipped car and the wrecks — so you and the
+zombies path around exactly what's in the picture. The layout also places 7 edge spawns, 4 animated fire emitters
+over the painted fires, and 6 lamps (used for lighting during blackouts). The map-select card and minimap are the
+painting itself. Any map can do this: give it `image` + `layout` and `GameMap.genImage()` builds it.
+
 ## Title screen
 
 The menu is its own night scene, independent of whatever map you last played:

@@ -256,8 +256,17 @@ const MAPS = {
   industrial: { name: 'Industrial Zone', tag: '☠ HORROR · PITCH BLACK', desc: 'The power is out. Your flashlight is all you have — they can see you, but you can\'t see them.', tint: 'rgba(5,10,20,0.3)', dark: true },
   lab:        { name: 'Research Lab',    tag: '⚠ RESTRICTED AREA', desc: 'A sealed underground facility — server halls, specimen tanks and tight corridors. They come in through the doors.', tint: 'rgba(20,40,70,0.16)' },
   race:       { name: 'Race City',       tag: '🏁 SPEEDWAY · BIG MAP', desc: 'A huge racing circuit — wide asphalt, curbs, pit lane and grandstands. Room to run (or drive). Nowhere to hide.', tint: 'rgba(10,14,30,0.18)', size: { w: 120, h: 75 }, house: true },
+  horror:     { name: 'Horror House',    tag: '🩸 NIGHT · HAND-PAINTED', desc: 'A blood-soaked plaza after dark — burning wrecks on the corners, cop cars abandoned mid-chase, and the street lamps are the only thing still on.', tint: 'rgba(0,0,0,0)',
+                size: { w: 110, h: 55 }, image: 'assets/img/horror_map.webp',   // the whole map is one painted image; the layout below is its collision
+                layout: { walk: [[0,9,109,16], [26,7,92,8], [18,0,25,54], [0,17,17,18], [16,17,17,47], [26,0,28,8], [26,17,92,47], [93,9,102,54], [86,0,93,8], [18,48,102,52]],
+                    block: [[37,25,41,29], [78,25,82,29], [37,37,41,41], [78,37,82,41], [33,33,35,36], [56,29,57,31], [83,31,84,33], [100,30,101,31], [9,14,10,15], [69,40,74,43], [29,9,34,12], [48,10,54,12], [73,10,77,12], [35,50,37,51], [83,50,85,51], [22,37,27,43], [95,40,106,45], [18,51,21,54], [31,52,34,52], [62,52,65,52]],
+                    spawns: [[21.5,0.5], [23.5,54.5], [0.5,12.5], [109.5,12.5], [98,54.5], [89.5,0.5], [27,0.5]],
+                    fires: [[262,104],[1492,122],[1614,652],[318,828]],
+                    lamps: [[346,42],[440,280],[1434,280],[1452,42],[438,735],[1452,735]], start: [60, 34] } },
 };
-const MAP_ORDER = ['city', 'suburbs', 'industrial', 'lab', 'race'];
+const MAP_ORDER = ['city', 'suburbs', 'industrial', 'lab', 'race', 'horror'];
+// events (blackouts, Bona, the menu) flip cfg.dark at runtime; this is what each map really is, recorded before anything touches it
+for (const id in MAPS) MAPS[id].baseDark = !!MAPS[id].dark;
 
 /* in-run supply cart — paid with coins collected during the run */
 const CART = {

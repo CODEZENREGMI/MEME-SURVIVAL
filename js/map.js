@@ -10,8 +10,10 @@ const THEMES = {
   suburbs:    { road: ['#46474d', '#3e3f45', '#4e4f56'], walk: ['#8a8478', '#736e63', '#96907f'], grass: ['#4a8a3a', '#3f7a31', '#5a9e48'], bldg: ['#4a2a22', '#8a4636', '#9d5340', '#6a3428'], hedge: ['#1f3d1c', '#2a5226'], mini: ['#46474d', '#8a8478', '#4a8a3a', '#8a4636', '#1f3d1c'] },
   race:       { road: ['#33353c', '#2c2e34', '#3b3d45'], walk: ['#8a8d96', '#767983', '#979aa3'], grass: ['#4a9a3c', '#3f8a33', '#5aac4a'], bldg: ['#2b2e36', '#5a5f6b', '#6b7080', '#3a3e48'], hedge: ['#1a1c22', '#3a3d45'], mini: ['#33353c', '#8a8d96', '#4a9a3c', '#5a5f6b', '#1a1c22'] },
   lab:        { road: ['#c4cad3', '#b2b8c2', '#d0d6de'], walk: ['#a9aeb8', '#959aa4', '#b8bdc7'], grass: ['#2f3542', '#272c38', '#3a4150'], bldg: ['#3a3f4a', '#eef0f3', '#d8dce3', '#c3c8d0'], hedge: ['#2fd8ff', '#8af0ff'], mini: ['#d5dae1', '#a9aeb8', '#2f3542', '#f2f4f7', '#2fd8ff'] },
+  horror:     null,   // painted map: set to the city palette below, only used before the image loads
   industrial: { road: ['#4c4f55', '#44474d', '#54575e'], walk: ['#5c5f66', '#4c4f56', '#686b73'], grass: ['#5a4e3e', '#4e4335', '#665946'], bldg: ['#1f2530', '#333c4c', '#46536a', '#6a7890'], hedge: ['#1f3d1c', '#2a5226'], mini: ['#4c4f55', '#5c5f66', '#5a4e3e', '#4a5670', '#1f3d1c'] },
 };
+THEMES.horror = THEMES.city;
 
 class GameMap {
   constructor(id = 'city') {
@@ -22,9 +24,9 @@ class GameMap {
     this.solid = new Uint8Array(this.w * this.h);
     this.props = []; this.spawns = []; this.fires = []; this.marks = [];
     this.hRoads = []; this.vRoads = [];
-    this.rng = mulberry32({ city: 1337, suburbs: 4242, industrial: 9001, lab: 777, race: 2468 }[id]);
+    this.rng = mulberry32({ city: 1337, suburbs: 4242, industrial: 9001, lab: 777, race: 2468, horror: 6666 }[id]);
     this.playerStart = { x: 40 * this.ts, y: 25 * this.ts };
-    ({ city: this.genCity, suburbs: this.genSuburbs, industrial: this.genIndustrial, lab: this.genLab, race: this.genRace })[id].call(this);
+    ({ city: this.genCity, suburbs: this.genSuburbs, industrial: this.genIndustrial, lab: this.genLab, race: this.genRace, horror: this.genImage })[id].call(this);
     this.render();
     this.decals = document.createElement('canvas'); this.decals.width = this.pw; this.decals.height = this.ph;
     this.dctx = this.decals.getContext('2d');
@@ -97,6 +99,17 @@ class GameMap {
   }
 
   /* ---------------------------------------------------------- URBAN CITY */
+  /* painted maps: the picture is the ground; this builds the collision, spawns, fires and lamps from the authored layout */
+  genImage() {
+    const L = this.cfg.layout, box = (r, fn) => { for (let y = r[1]; y <= r[3]; y++) for (let x = r[0]; x <= r[2]; x++) fn(x, y); };
+    this.solid.fill(1); this.tiles.fill(T_BLDG);
+    L.walk.forEach(r => box(r, (x, y) => { this.setSolid(x, y, 0); this.set(x, y, T_ROAD); }));
+    L.block.forEach(r => box(r, (x, y) => { this.setSolid(x, y, 1); this.set(x, y, T_BLDG); }));
+    this.spawns = L.spawns.map(([x, y]) => ({ x: x * this.ts, y: y * this.ts }));
+    this.fires = L.fires.map(([x, y]) => ({ x, y }));
+    L.lamps.forEach(([x, y]) => this.props.push({ type: 'lamp', x, y, painted: true }));   // data for the lighting only — the image already shows them
+    this.playerStart = { x: L.start[0] * this.ts, y: L.start[1] * this.ts };
+  }
   genCity() {
     const W = this.w, H = this.h;
     this.tiles.fill(T_GRASS);
@@ -298,6 +311,7 @@ class GameMap {
 
   /* ---------------------------------------------------------- render */
   render() {
+    if (this.cfg.image) return this.renderImage();
     const c = document.createElement('canvas'); c.width = this.pw; c.height = this.ph;
     const x = c.getContext('2d'); const ts = this.ts; const R = mulberry32(42); const T = this.theme;
     for (let ty = 0; ty < this.h; ty++) for (let tx = 0; tx < this.w; tx++) {
@@ -448,6 +462,18 @@ class GameMap {
     const c = this.dctx; c.fillStyle = color;
     for (let i = 0; i < 5; i++) { const a = Math.random() * 7, d = Math.random() * size; c.beginPath(); c.arc(x + Math.cos(a) * d, y + Math.sin(a) * d, 1 + Math.random() * size * 0.5, 0, 7); c.fill(); }
   }
+  renderImage() {
+    const c = document.createElement('canvas'); c.width = this.pw; c.height = this.ph; this.canvas = c;
+    const x = c.getContext('2d'); x.fillStyle = '#0b0d12'; x.fillRect(0, 0, c.width, c.height);   // until the picture arrives
+    const ver = ((document.querySelector('script[src*="map.js"]') || {}).src || '').split('?v=')[1] || '';
+    const img = new Image();
+    img.onload = () => {
+      x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, this.pw, this.ph);
+      this.image = img; this._mini = null;
+      if (window.ui && window.ui.renderMapPreviews) window.ui.renderMapPreviews();   // the map-select card can show it now
+    };
+    img.src = ver ? this.cfg.image + '?v=' + ver : this.cfg.image;
+  }
   draw(ctx, camX, camY, vw, vh) {
     ctx.drawImage(this.canvas, camX, camY, vw, vh, 0, 0, vw, vh);
     ctx.drawImage(this.decals, camX, camY, vw, vh, 0, 0, vw, vh);
@@ -472,9 +498,12 @@ class GameMap {
     const c = canvas.getContext('2d'); c.imageSmoothingEnabled = false;
     if (!this._mini) {
       const m = document.createElement('canvas'); m.width = this.w; m.height = this.h; const mc = m.getContext('2d');
+      if (this.image) { mc.imageSmoothingEnabled = true; mc.drawImage(this.image, 0, 0, this.w, this.h); this._mini = m; }
+      else {
       for (let ty = 0; ty < this.h; ty++) for (let tx = 0; tx < this.w; tx++) { mc.fillStyle = this.theme.mini[this.t(tx, ty)]; mc.fillRect(tx, ty, 1, 1); }
       this.props.forEach(p => { if (p.type === 'tree') { mc.fillStyle = '#2f6b2a'; mc.fillRect(Math.floor(p.x / this.ts), Math.floor(p.y / this.ts), 1, 1); } if (p.type === 'tank') { mc.fillStyle = '#2fd8ff'; mc.fillRect(Math.floor(p.x / this.ts), Math.floor(p.y / this.ts), 1, 1); } });
       this._mini = m;
+      }
     }
     const s = Math.min(canvas.width / this.w, canvas.height / this.h), ox = (canvas.width - this.w * s) / 2, oy = (canvas.height - this.h * s) / 2;
     c.fillStyle = 'rgba(10,12,18,0.85)'; c.fillRect(0, 0, canvas.width, canvas.height);

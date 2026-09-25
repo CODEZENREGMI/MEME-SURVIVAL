@@ -58,7 +58,7 @@ class Game {
   menuLeave() {
     if (!this.menuNight) return;
     this.menuNight = false; this._menuSetup = null;
-    if (!this.event && !this.bonaDark && !this.dread) { this.map.cfg.dark = !!MAPS[this.map.id].dark; this.map.lamps.forEach(l => { l.broken = !!this.map.cfg.dark; }); }   // hand the map back to whatever it normally is
+    if (!this.event && !this.bonaDark && !this.dread) { this.map.cfg.dark = !!this.map.cfg.baseDark; this.map.lamps.forEach(l => { l.broken = !!this.map.cfg.dark; }); }   // hand the map back to whatever it normally is
     this.zombies = [];
   }
   /* a handful of shufflers wandering through frame, purely for atmosphere */
@@ -303,7 +303,7 @@ class Game {
   /* ------------------------------------------------------------ events */
   onZombieDeath(z) {
     this.kills[z.type]++; this.score += z.cfg.score; Audio8.play('zdie'); this.player.onBeastKill();
-    if (z.bk && z.bk.bona) { this.bonaGone(); this.shake(14); this.whiteFlash = 0.4; Audio8.play('roar'); Audio8.play('explode'); this.floatText(z.x, z.y - 60, 'BONA FALLS', '#ffb060'); }
+    if (z.bk && z.bk.bona) { this.bonaGone(z); this.shake(14); this.whiteFlash = 0.4; Audio8.play('roar'); Audio8.play('explode'); this.floatText(z.x, z.y - 60, 'BONA FALLS', '#ffb060'); }
     if ((z.sunk || 0) > 0.4) { // drowned: it slips under with a last gasp of bubbles — no blood, and an exploder's fuse just fizzles
       this.sinkers.push({ z, t: 0, dur: z.cfg.boss ? 1.4 : 0.9 });
       for (let i = 0; i < (z.cfg.boss ? 26 : 12); i++) this.particles.push(new Particle(z.x + (Math.random() - 0.5) * 12 * z.scale, z.y, (Math.random() - 0.5) * 16, -10 - Math.random() * 20, 0.7 + Math.random() * 0.6, Math.random() < 0.5 ? '#e6f3ff' : '#9cc8f2', 2 + (Math.random() < 0.3 ? 1 : 0), 'smoke'));
@@ -527,7 +527,13 @@ class Game {
     this.ui.showBanner('TUNG TUNG TUNG SAHUR', 'The log has come. Bring earplugs.'); this.floatText(z.x, z.y - 80, 'TUNG', '#ffb060');
     for (let i = 0; i < 24; i++) { const a = i / 24 * TAU; this.particles.push(new Particle(z.x, z.y, Math.cos(a) * 100, Math.sin(a) * 50 - 40, 0.7, i % 2 ? '#8a5a30' : '#e0863a', 3, 'blood')); }
   }
-  bonaGone() { if (!this.bonaDark) return; this.bonaDark = false; if (!this.event) { this.map.cfg.dark = false; this.map.lamps.forEach(l => l.broken = false); Audio8.stopMusic(); Audio8.startMusic(false); } }
+  /* a Bona is gone (killed or captured): the lights come back only once no Bona is left alive, and not if the map is dark on its own or another blackout is running */
+  bonaGone(leaving) {
+    if (!this.bonaDark) return;
+    if (this.zombies.some(o => o !== leaving && !o.dead && o.bk && o.bk.bona)) return;
+    this.bonaDark = false;
+    if (!this.event && !this.dread) { this.map.cfg.dark = !!this.map.cfg.baseDark; this.map.lamps.forEach(l => l.broken = !!this.map.cfg.dark); Audio8.stopMusic(); Audio8.startMusic(this.map.cfg.dark); }
+  }
   floatText(x, y, text, color) { this.particles.push(new Particle(x, y, 0, -28, 0.9, color, 0, 'text', String(text))); }
 
   /* ------------------------------------------------------------ input */
@@ -739,6 +745,7 @@ class Game {
   convertBoss(z) {
     if (z.dead) return; z.dead = true; z.captured = 0;
     this.zombies = this.zombies.filter(o => o !== z); this.boss = this.zombies.find(o => o.cfg.boss && !o.dead) || null;
+    if (z.bk && z.bk.bona) this.bonaGone(z);   // dragging Bona off to your side still brings the lights back
     const ally = new AllyBoss(this, this.player, z); this.clones.push(ally);
     this.armScare(); // dragging the dread-wave boss off still lets the thing through
     this.darkFlash = 0.35; this.shake(9); Audio8.play('roar'); Audio8.play('scream');
