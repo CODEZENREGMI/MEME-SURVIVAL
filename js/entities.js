@@ -403,7 +403,7 @@ class Player {
     const vr = this.char.viral, g = this.game; if (!vr) return false;
     if (this.viralT > 0) return false;
     if (this.viralCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `VIRAL IN ${Math.ceil(this.viralCd)}s`, '#9aa3b5'); return false; }
-    this.viralT = vr.duration; if (vr.sound) Audio8.playTrack(vr.sound, vr.soundLen, { once: true, loud: true }); Audio8.play('click'); g.shake(2); g.whiteFlash = 0.18; g.lights.push({ x: this.x, y: this.y, r: 150, life: 0.35, max: 0.35 });
+    this.viralT = vr.duration; if (vr.sound) { Audio8.stopHandle(this.viralLoop); this.viralLoop = Audio8.playClip(vr.sound, 1, { loop: true }); }   // on repeat until the show's over Audio8.play('click'); g.shake(2); g.whiteFlash = 0.18; g.lights.push({ x: this.x, y: this.y, r: 150, life: 0.35, max: 0.35 });
     for (let i = 0; i < 20; i++) { const a = i / 20 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 90, Math.sin(a) * 90, 0.4, i % 2 ? '#8af0ff' : '#f4f2ea', 2, 'dot')); }
     g.showAbilityBanner('GOING VIRAL', `${vr.duration}s · everyone stops to record · they take double damage`);
     return true;
@@ -1031,7 +1031,7 @@ class Player {
       for (const z of g.zombies) { if (z.dead || z.web > 0 || z.webImmune > 0) continue; if (dist(z.x, z.y, this.x, this.y) < vr.radius + z.r) { z.web = z.cfg.boss ? vr.bossFreeze : vr.freeze; z.kx = z.ky = 0; g.floatText(z.x, z.y - 12 * z.scale, 'RECORDING', '#8af0ff'); if (Math.random() < 0.3) Audio8.play('click'); } }
       for (const t of g.turrets) { if (t.dead || t.web > 0 || (t.webImmune || 0) > 0) continue; if (dist(t.x, t.y, this.x, this.y) < vr.radius + t.r) { t.web = vr.freeze; g.floatText(t.x, t.y - 20, 'RECORDING', '#8af0ff'); } }
       if (Math.random() < 0.3) g.particles.push(new Particle(this.x + (Math.random() - 0.5) * vr.radius * 1.5, this.y + (Math.random() - 0.5) * vr.radius * 1.5, (Math.random() - 0.5) * 8, -26, 1, Math.random() < 0.5 ? '#8af0ff' : '#f4f2ea', 2, 'text', '!'));
-      if (this.viralT <= 0) { this.viralT = 0; this.viralCd = vr.cooldown; g.floatText(this.x, this.y - 18, 'SHOW OVER', '#9aa3b5'); Audio8.play('reloaded'); } }
+      if (this.viralT <= 0) { this.viralT = 0; this.viralCd = vr.cooldown; Audio8.stopHandle(this.viralLoop, 0.5); this.viralLoop = null; g.floatText(this.x, this.y - 18, 'SHOW OVER', '#9aa3b5'); Audio8.play('reloaded'); } }
     else if (this.viralCd > 0) { this.viralCd -= dt; if (this.viralCd <= 0) { this.viralCd = 0; this.game.floatText(this.x, this.y - 18, 'VIRAL READY', '#8af0ff'); Audio8.play('xp'); } }
     if (this.tapriTime > 0) { const tp = this.char.tapri, g = this.game; this.tapriTime -= dt;
       for (const z of g.zombies) { if (z.dead || z.web > 0 || z.webImmune > 0) continue; if (dist(z.x, z.y, this.x, this.y) < tp.radius + z.r) { z.web = z.cfg.boss ? tp.bossWeb : tp.web; z.kx = z.ky = 0; g.floatText(z.x, z.y - 12 * z.scale, 'WEBBED', '#f4f2ea'); if (Math.random() < 0.5) Audio8.play('flame'); } }
