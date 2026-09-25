@@ -172,6 +172,10 @@ and link previews read:
   `favicon-32/48/96.png`, `apple-touch-icon.png`, `icon-round-192/512.png`) — Google shows it next to the site in results —
   and is the `logo` in the `Organization` JSON-LD.
 - `robots.txt` + `sitemap.xml` at the root; `manifest.webmanifest` for install/home-screen.
+- **`/faq`** (`faq.html`, served clean by `cleanUrls`) answers 7 search questions (what is Meme Survival, best zombie survival
+  game, free/download, controls, characters, maps & bosses, saves & devices) with matching `FAQPage` JSON-LD. It's generated
+  so the visible answers and the structured data can't drift apart: edit the Q&A list in `tools/build_faq.py` and run
+  `python3 tools/build_faq.py` rather than hand-editing one side. The title screen links to it (top-right **FAQ**) and it's in `sitemap.xml`.
 - **`/play`** (`www.memesurvival.com/play`) is a Vercel rewrite to the same page; `js/main.js` sees the path and opens
   character select straight away (use `?play` on a local server). Its canonical still points at the homepage, so
   Google doesn't count it as a duplicate. `/play/` redirects to `/play`.
