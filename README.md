@@ -173,5 +173,7 @@ and link previews read:
   and is the `logo` in the `Organization` JSON-LD.
 - `robots.txt` + `sitemap.xml` at the root; `manifest.webmanifest` for install/home-screen.
 - `vercel.json` 301s `meme-survival.vercel.app` to the real domain; the canonical tag covers the GitHub Pages copy.
+- Google Search Console owns `https://www.memesurvival.com/` through the `google-site-verification` meta tag in
+  `index.html`. **Don't remove it**, or the site loses verification. The sitemap is submitted there.
 - If the title or description changes, update `og:title`/`og:description`/`twitter:*` and the JSON-LD to match, and bump
   `<lastmod>` in `sitemap.xml` after a big update.
