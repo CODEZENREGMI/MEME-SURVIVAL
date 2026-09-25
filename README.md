@@ -172,6 +172,9 @@ and link previews read:
   `favicon-32/48/96.png`, `apple-touch-icon.png`, `icon-round-192/512.png`) — Google shows it next to the site in results —
   and is the `logo` in the `Organization` JSON-LD.
 - `robots.txt` + `sitemap.xml` at the root; `manifest.webmanifest` for install/home-screen.
+- **`/play`** (`www.memesurvival.com/play`) is a Vercel rewrite to the same page; `js/main.js` sees the path and opens
+  character select straight away (use `?play` on a local server). Its canonical still points at the homepage, so
+  Google doesn't count it as a duplicate. `/play/` redirects to `/play`.
 - `vercel.json` 301s `meme-survival.vercel.app` to the real domain; the canonical tag covers the GitHub Pages copy.
 - Google Search Console owns `https://www.memesurvival.com/` through the `google-site-verification` meta tag in
   `index.html`. **Don't remove it**, or the site loses verification. The sitemap is submitted there.
