@@ -122,7 +122,7 @@ js/main.js      bootstrap
 
 ### Horror House (painted map)
 
-The whole map is one hand-painted image (`assets/img/horror_map.webp`, 1760×880 = 110×55 tiles): a blood-soaked
+The whole map is one hand-painted image (`assets/img/horror_map.png`, 1760×880 = 110×55 tiles) — converted to pixel art so it matches the other maps: compression speckle filtered out, edges sharpened, then flattened to a 160-colour palette with no dithering and saved lossless: a blood-soaked
 night plaza with four tree planters, crates, abandoned cop cars, burning wrecks on the corners and street lamps.
 Collision is authored by hand as tile rectangles in `MAPS.horror.layout` — `walk` carves out the roads, sidewalks
 and plaza, `block` puts back the planters, crates, parked cars, the flipped car and the wrecks — so you and the
