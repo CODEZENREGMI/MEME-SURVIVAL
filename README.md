@@ -122,13 +122,16 @@ js/main.js      bootstrap
 
 ### Horror House (painted map)
 
-The whole map is one hand-painted image (`assets/img/horror_map.png`, 1760×880 = 110×55 tiles) — converted to pixel art so it matches the other maps: compression speckle filtered out, edges sharpened, then flattened to a 160-colour palette with no dithering and saved lossless: a blood-soaked
-night plaza with four tree planters, crates, abandoned cop cars, burning wrecks on the corners and street lamps.
+The whole map is one hand-painted image (`assets/img/horror_map.webp`, 1760×880 = 110×55 tiles, lossless) of a
+blood-soaked plaza at night: four tree planters, crates, abandoned cop cars, burning wrecks on the corners and
+street lamps. It's colour-graded for horror — shadows and midtones sunk and pulled toward a cold blue-teal, colour
+drained from everything except lamplight and fire (which stay warm and bright as the only real light), blood kept
+red, and a vignette closing in on the edges.
 Collision is authored by hand as tile rectangles in `MAPS.horror.layout` — `walk` carves out the roads, sidewalks
-and plaza, `block` puts back the planters, crates, parked cars, the flipped car and the wrecks — so you and the
-zombies path around exactly what's in the picture. The layout also places 7 edge spawns, 4 animated fire emitters
-over the painted fires, and 6 lamps (used for lighting during blackouts). The map-select card and minimap are the
-painting itself. Any map can do this: give it `image` + `layout` and `GameMap.genImage()` builds it.
+and plaza, `block` puts back the planters, crates, parked cars, the flipped car, the barrier and the wrecks — so
+you and the zombies path around exactly what's in the picture. The layout also places 7 edge spawns, 3 animated
+fire emitters over the painted fires, and 6 lamps (used for lighting during blackouts). The map-select card and
+minimap are the painting itself. Any map can do this: give it `image` + `layout` and `GameMap.genImage()` builds it.
 
 ## Title screen
 
