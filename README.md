@@ -153,7 +153,12 @@ Starting a run hands the map back to whatever you actually chose.
 
 ## Image-based characters
 
-A character can point `spriteImg` / `portraitImg` at a PNG in `assets/img/`. `Sprites.loadImageArt()` swaps it into the sprite cache over the pixel-art placeholder when it loads, rebuilds the tint and flash variants from it, and repaints the character card. Cry XD is the first one.
+A character can point `spriteImg` / `portraitImg` at a PNG in `assets/img/`. `Sprites.loadImageArt()` swaps it into the sprite cache over the pixel-art placeholder when it loads, rebuilds the tint and flash variants from it, and repaints the character card. Cry XD was the first one.
+
+Frogepepe uses it too: the Feels Good Man face redrawn as pixel art rather than pasted in. The 60×60 portrait is the meme
+snapped to a fixed 8-colour palette, with the outlines kept and the pupil shine placed by hand. The 16×16 sprite is
+hand-placed: heavy lids over the whites, pupils tucked under them, the brown lips and the blue shirt. His FROG OUT
+transformation still uses the pixel-map frog in `js/sprites.js`.
 
 ## Development
 
