@@ -114,7 +114,7 @@ class Game {
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0; this.heartsBought = 0;
-    if (this.event) this.endEvent(true); this.bonaGone(); this.endDread(); this.hideJumpscare(); this.event = null; this.eventFlicker = 0;
+    if (this.event) this.endEvent(true); this.bonaGone(); this.endDread(); this.hideJumpscare(); Audio8.stopAllLoops(); this.event = null; this.eventFlicker = 0;
     this.siege = !!this.map.cfg.house; this.house = null; this.turrets = []; this.siegeTimer = 0;
     if (this.siege) this.setupHouse(1);
     this.map.dctx.clearRect(0, 0, this.map.pw, this.map.ph);
@@ -129,9 +129,9 @@ class Game {
     this.startWave(1);
   }
   toMenu() { if (this.event) this.endEvent(true); this.state = 'menu'; this._menuSetup = null; Audio8.stopMusic(); Audio8.stopTrack(); this.reset(); this.menuScene(); this.ui.setState('menu'); }
-  pause() { if (this.state === 'playing' || this.state === 'wavebreak') { this.prevState = this.state; this.state = 'paused'; this.ui.setState('paused'); } }
-  openShop() { if (this.state !== 'playing' && this.state !== 'wavebreak') return; this.prevState = this.state; this.state = 'shop'; this.input.mouseDown = false; this.ui.showShop(); Audio8.play('swap'); }
-  closeShop() { if (this.state !== 'shop') return; this.state = this.prevState || 'playing'; this.ui.hideShop(); }
+  pause() { if (this.state === 'playing' || this.state === 'wavebreak') { this.prevState = this.state; this.state = 'paused'; this.ui.setState('paused'); Audio8.muteLoops(true); } }
+  openShop() { if (this.state !== 'playing' && this.state !== 'wavebreak') return; this.prevState = this.state; this.state = 'shop'; Audio8.muteLoops(true); this.input.mouseDown = false; this.ui.showShop(); Audio8.play('swap'); }
+  closeShop() { if (this.state !== 'shop') return; this.state = this.prevState || 'playing'; this.ui.hideShop(); Audio8.muteLoops(false); }
   toggleShop() { this.state === 'shop' ? this.closeShop() : this.openShop(); }
   /* buy something from the supply cart; returns true on success */
   heartCost() { return CART.heart + (this.heartsBought || 0) * (CART.heartStep || 0); }
@@ -148,7 +148,7 @@ class Game {
     this.floatText(p.x, p.y - 18, `-${cost}`, '#f5c518');
     return true;
   }
-  resume() { if (this.state === 'paused') { this.state = this.prevState || 'playing'; this.ui.setState('playing'); Audio8.resume(); } }
+  resume() { if (this.state === 'paused') { this.state = this.prevState || 'playing'; this.ui.setState('playing'); Audio8.resume(); Audio8.muteLoops(false); } }
 
   /* ------------------------------------------------------------ waves */
   startWave(n) {
@@ -292,7 +292,7 @@ class Game {
     this.ui.hideLevelUp(); this.state = 'wavebreak'; this.breakTimer = 3; this.ui.setState('playing');
   }
   gameOver() {
-    this.state = 'gameover'; this.hideJumpscare(); Audio8.play('gameover'); Audio8.stopMusic(); Audio8.stopTrack(); this.shake(10);
+    this.state = 'gameover'; this.hideJumpscare(); Audio8.stopAllLoops(); Audio8.play('gameover'); Audio8.stopMusic(); Audio8.stopTrack(); this.shake(10);
     this.blood(this.player.x, this.player.y, 30, '#b3221a'); this.map.splat(this.player.x, this.player.y, 14, '#7a1810');
     const isNew = !this.admin && this.score > (this.save.highScore || 0);
     if (!this.admin) { this.save.highScore = Math.max(this.save.highScore || 0, this.score); this.save.bestWave = Math.max(this.save.bestWave || 0, this.wave); this.save.runs = (this.save.runs || 0) + 1; this.ui.saveGame(); }
@@ -569,6 +569,7 @@ class Game {
     const dt = Math.min(0.05, (t - this.last) / 1000 || 0); this.last = t;
     if (window.innerWidth !== this._lastW || window.innerHeight !== this._lastH) this.resize();
     this._fpsAcc += dt; this._fpsN++; if (this._fpsAcc >= 0.5) { this.fps = Math.round(this._fpsN / this._fpsAcc); this._fpsAcc = 0; this._fpsN = 0; }
+    Audio8.muteLoops(this.state !== 'playing' && this.state !== 'wavebreak');   // paused / cart / level-up: the ability is frozen, so is its sound
     try { // one bad frame must never freeze the whole game
       if (this.state === 'playing' || this.state === 'wavebreak' || this.state === 'gameover') this.update(dt);
       else if (this.state === 'menu') this.updateAmbient(dt);

@@ -308,8 +308,9 @@ class Player {
     const fl = this.char.cry, g = this.game; if (!fl) return false;
     if (this.cryT > 0 || this.floodR > 0) return false;
     if (this.cryCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `CRY IN ${Math.ceil(this.cryCd)}s`, '#9aa3b5'); return false; }
-    this.cryT = fl.duration; this.floodR = 0; this.sob = (fl.soundLen || 1.2) + 0.6;   // the real crying plays first; the small sobs only start after it
-    if (fl.sound) Audio8.playClip(fl.sound, 1); else Audio8.play('scream');
+    this.cryT = fl.duration; this.floodR = 0; this.sob = 1.2;
+    if (fl.sound) { Audio8.stopHandle(this.cryLoop); this.cryLoop = Audio8.playClip(fl.sound, 1, { loop: true }); }   // his crying, on repeat for as long as the flood lasts
+    else Audio8.play('scream');
     Audio8.noise(1.4, 0.4, 650); g.shake(3);
     for (let i = 0; i < 30; i++) { const a = i / 30 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 110, Math.sin(a) * 110 - 30, 0.55, i % 2 ? '#4f9be6' : '#dcecfb', 3, 'blood')); }
     g.showAbilityBanner('CRY FLOOD', `${fl.duration}s · the tears flood the street · keep shooting`);
@@ -1006,8 +1007,8 @@ class Player {
         for (let i = 0; i < 3; i++) { const side = Math.random() < 0.5 ? -1 : 1;   // tears pouring from both eyes
           g.particles.push(new Particle(this.x + side * 3, this.y - 6, side * (20 + Math.random() * 50), -30 - Math.random() * 30, 0.5 + Math.random() * 0.3, Math.random() < 0.7 ? '#4f9be6' : '#9cc8f2', 2, 'blood')); }
         if (Math.random() < 0.25) { const a = Math.random() * TAU, r = Math.random() * this.floodR; g.map.splat(this.x + Math.cos(a) * r, this.y + Math.sin(a) * r, 6 + Math.random() * 8, '#34495a'); }   // the street stays wet
-        this.sob -= dt; if (this.sob <= 0) { this.sob = 1.3 + Math.random() * 0.5; Audio8.play('moan'); Audio8.noise(0.6, 0.18, 500); }
-        if (this.cryT <= 0) { this.cryT = 0; this.cryCd = fl.cooldown; g.floatText(this.x, this.y - 18, '*sniff*', '#9cc8f2'); }
+        if (!fl.sound) { this.sob -= dt; if (this.sob <= 0) { this.sob = 1.3 + Math.random() * 0.5; Audio8.play('moan'); Audio8.noise(0.6, 0.18, 500); } }   // synth sobs only when there's no real clip
+        if (this.cryT <= 0) { this.cryT = 0; this.cryCd = fl.cooldown; Audio8.stopHandle(this.cryLoop, 0.5); this.cryLoop = null; g.floatText(this.x, this.y - 18, '*sniff*', '#9cc8f2'); }
       } else if (this.floodR > 0) this.floodR = Math.max(0, this.floodR - fl.radius / fl.drain * dt);   // the water drains away
       else if (this.cryCd > 0) { this.cryCd -= dt; if (this.cryCd <= 0) { this.cryCd = 0; g.floatText(this.x, this.y - 18, 'READY TO CRY', '#9cc8f2'); Audio8.play('xp'); } } }
     if (this.char.shark) { const sk = this.char.shark; this.biteCd -= dt; this.chomp -= dt;

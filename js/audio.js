@@ -86,19 +86,47 @@ const Audio8 = {
       .then(buf => { rec.buf = buf; })
       .catch(() => { try { const a = new window.Audio(url); a.preload = 'auto'; a.load(); rec.el = a; } catch (e) { } }); // fall back to a preloaded <audio>
   },
-  playClip(url, vol = 1) {
-    const rec = this._clips[url];
+  _loops: new Set(),
+  playClip(url, vol = 1, opts) {
+    const loop = !!(opts && opts.loop), rec = this._clips[url];
     if (rec && rec.buf && this.ctx) {
       try {
         this.resume();
-        const src = this.ctx.createBufferSource(); src.buffer = rec.buf;
+        const src = this.ctx.createBufferSource(); src.buffer = rec.buf; src.loop = loop;
         const g = this.ctx.createGain(); g.gain.value = vol;
-        src.connect(g); g.connect(this.ctx.destination); src.start(); // straight to the output: a scare isn't an SFX you mix down
-        this._clipSrc = src; return true;
+        src.connect(g); g.connect(this.ctx.destination); src.start(); // straight to the output: these aren't SFX you mix down
+        const h = { src, g, vol };
+        if (loop) this._loops.add(h); else this._clipSrc = src;
+        return h;
       } catch (e) { }
+    }
+    if (loop) { // not decoded yet: a looping <audio> element does the same job
+      try { const a = new window.Audio(url); a.loop = true; a.volume = vol; a.play().catch(() => {}); const h = { el: a, vol }; this._loops.add(h); return h; } catch (e) { return null; }
     }
     if (rec && rec.el) { try { const a = rec.el; a.currentTime = 0; a.volume = vol; a.play().catch(() => {}); return true; } catch (e) { } }
     this.playTrack(url, 0, { once: true, loud: true }); return false; // last resort: the streaming path
+  },
+  /* stop one looping clip, optionally fading it out */
+  stopHandle(h, fade = 0) {
+    if (!h) return; this._loops.delete(h);
+    try {
+      if (h.src) {
+        if (fade && this.ctx) { const t = this.ctx.currentTime; h.g.gain.cancelScheduledValues(t); h.g.gain.setValueAtTime(h.g.gain.value, t); h.g.gain.linearRampToValueAtTime(0, t + fade); h.src.stop(t + fade + 0.02); }
+        else h.src.stop();
+      }
+      if (h.el) {
+        if (fade) { let v = h.el.volume; const iv = setInterval(() => { v -= 0.1; if (v <= 0) { clearInterval(iv); h.el.pause(); } else h.el.volume = v; }, fade * 100); }
+        else h.el.pause();
+      }
+    } catch (e) { }
+  },
+  stopAllLoops() { for (const h of [...this._loops]) this.stopHandle(h); },
+  /* silence loops while the game is paused (the ability timer is frozen too), bring them back after */
+  muteLoops(on) {
+    if (this._loopsMuted === on) return; this._loopsMuted = on;
+    for (const h of this._loops) {
+      try { if (h.g && this.ctx) { h.g.gain.cancelScheduledValues(this.ctx.currentTime); h.g.gain.value = on ? 0 : h.vol; } if (h.el) h.el.volume = on ? 0 : h.vol; } catch (e) { }
+    }
   },
   stopClip() { try { if (this._clipSrc) { this._clipSrc.stop(); this._clipSrc = null; } } catch (e) { this._clipSrc = null; } },
   /* play an mp3 track (character theme); ducks the ambient drone while it runs */
