@@ -23,17 +23,65 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/img/icon-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=158">
+<link rel="stylesheet" href="css/style.css?v=159">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"VideoGame","name":"Meme Survival","url":"https://www.memesurvival.com/",
- "description":"Play Meme Survival free online: a top-down pixel-art zombie shooter with 18 meme survivors, wild abilities, bosses every 10 waves and 6 maps. No download.",
- "image":"https://www.memesurvival.com/assets/img/og-image.jpg","genre":["Shooter","Survival","Action","Arcade"],
- "gamePlatform":"Web browser","applicationCategory":"Game","operatingSystem":"Any","playMode":"SinglePlayer","inLanguage":"en",
- "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+{
+ "@context": "https://schema.org",
+ "@graph": [
+  {
+   "@type": "WebSite",
+   "@id": "https://www.memesurvival.com/#website",
+   "name": "Meme Survival",
+   "alternateName": "memesurvival.com",
+   "url": "https://www.memesurvival.com/",
+   "publisher": {
+    "@id": "https://www.memesurvival.com/#org"
+   }
+  },
+  {
+   "@type": "Organization",
+   "@id": "https://www.memesurvival.com/#org",
+   "name": "Meme Survival",
+   "url": "https://www.memesurvival.com/",
+   "logo": "https://www.memesurvival.com/assets/img/logo.png"
+  },
+  {
+   "@type": "VideoGame",
+   "name": "Meme Survival",
+   "url": "https://www.memesurvival.com/",
+   "description": "Play Meme Survival free online: a top-down pixel-art zombie shooter with 18 meme survivors, wild abilities, bosses every 10 waves and 6 maps. No download.",
+   "image": "https://www.memesurvival.com/assets/img/og-image.jpg",
+   "genre": [
+    "Shooter",
+    "Survival",
+    "Action",
+    "Arcade"
+   ],
+   "gamePlatform": "Web browser",
+   "applicationCategory": "Game",
+   "operatingSystem": "Any",
+   "playMode": "SinglePlayer",
+   "inLanguage": "en",
+   "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+   },
+   "@id": "https://www.memesurvival.com/#game",
+   "publisher": {
+    "@id": "https://www.memesurvival.com/#org"
+   },
+   "logo": "https://www.memesurvival.com/assets/img/logo.png"
+  }
+ ]
+}
 </script>
 </head>
 <body>
@@ -181,13 +229,13 @@
   <div id="jumpscare"><img id="jumpscareImg" alt=""></div>
 </div>
 
-<script src="js/sprites.js?v=158"></script>
-<script src="js/config.js?v=158"></script>
-<script src="js/audio.js?v=158"></script>
-<script src="js/map.js?v=158"></script>
-<script src="js/entities.js?v=158"></script>
-<script src="js/game.js?v=158"></script>
-<script src="js/ui.js?v=158"></script>
-<script src="js/main.js?v=158"></script>
+<script src="js/sprites.js?v=159"></script>
+<script src="js/config.js?v=159"></script>
+<script src="js/audio.js?v=159"></script>
+<script src="js/map.js?v=159"></script>
+<script src="js/entities.js?v=159"></script>
+<script src="js/game.js?v=159"></script>
+<script src="js/ui.js?v=159"></script>
+<script src="js/main.js?v=159"></script>
 </body>
 </html>

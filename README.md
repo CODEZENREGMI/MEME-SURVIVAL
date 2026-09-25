@@ -168,6 +168,9 @@ and link previews read:
 
 - `index.html` head: title, description, canonical URL, Open Graph / Twitter card tags (`assets/img/og-image.jpg`,
   1200×630), favicons, and `VideoGame` JSON-LD structured data. The logo is the page's `<h1>`.
+- The game logo (`assets/img/logo.png`, from the Doge/Pepe key art) is the favicon at every size (`favicon.ico`,
+  `favicon-32/48/96.png`, `apple-touch-icon.png`, `icon-192/512.png`) — Google shows it next to the site in results —
+  and is the `logo` in the `Organization` JSON-LD.
 - `robots.txt` + `sitemap.xml` at the root; `manifest.webmanifest` for install/home-screen.
 - `vercel.json` 301s `meme-survival.vercel.app` to the real domain; the canonical tag covers the GitHub Pages copy.
 - If the title or description changes, update `og:title`/`og:description`/`twitter:*` and the JSON-LD to match, and bump
