@@ -358,6 +358,23 @@ class Game {
   }
   showAbilityBanner(name, sub) { this.ui.showBanner(name, sub); }
 
+  /* ---- Cry XD's flood: a pool of tears around him, ripples rolling out, foam at the edge ---- */
+  drawFlood(ctx) {
+    const p = this.player; if (!p || !(p.floodR > 0)) return;
+    const R = p.floodR, t = this.time;
+    const g = ctx.createRadialGradient(p.x, p.y, 4, p.x, p.y, R);
+    g.addColorStop(0, 'rgba(70,150,230,0.42)'); g.addColorStop(0.75, 'rgba(60,135,215,0.5)'); g.addColorStop(1, 'rgba(120,185,245,0.62)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, R, 0, TAU); ctx.fill();
+    ctx.lineWidth = 1.5;
+    for (let i = 0; i < 3; i++) { const k = ((t * 0.55 + i / 3) % 1), rr = R * k;   // ripples rolling outward
+      ctx.strokeStyle = `rgba(210,235,255,${0.45 * (1 - k)})`; ctx.beginPath(); ctx.arc(p.x, p.y, rr, 0, TAU); ctx.stroke(); }
+    ctx.strokeStyle = 'rgba(235,245,255,0.85)'; ctx.lineWidth = 3; ctx.beginPath();   // foam along the edge
+    for (let a = 0; a <= TAU + 0.01; a += 0.12) { const w = R + Math.sin(a * 7 + t * 5) * 2.5, x = p.x + Math.cos(a) * w, y = p.y + Math.sin(a) * w; a ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    for (let i = 0; i < 10; i++) { const a = i * 2.4 + t * 0.4, rr = R * (0.25 + 0.6 * ((i * 0.37 + t * 0.1) % 1)); if (Math.sin(t * 6 + i) > 0.6) ctx.fillRect(Math.round(p.x + Math.cos(a) * rr), Math.round(p.y + Math.sin(a) * rr), 2, 1); }   // glints
+  }
+
   /* ---- Jonny's milk quake: a white flood rolling out from the punch, leaving the ground soaked ---- */
   milkWave(x, y, radius, dur) {
     this.milk.push({ x, y, r: 10, max: radius, t: 0, dur, splat: 0 });
@@ -628,6 +645,7 @@ class Game {
     ctx.save(); ctx.translate(-cx, -cy);
     if (this.siege) this.drawHouse(ctx);
     if (this.map.cars.length) this.drawCars(ctx);
+    this.drawFlood(ctx);
     this.drawMilk(ctx);
     this.drawLures(ctx);
     this.pickups.forEach(k => inView(k) && k.draw(ctx));
@@ -843,6 +861,7 @@ class Game {
     this.bullets.forEach(b => { if (b.flame) radial(b.x, b.y, 16, 0.5); if (b.lava) radial(b.x, b.y, 40, 0.9, 0.1); });
     this.lures.forEach(L => L.landed && radial(L.x, L.y, 46, 0.7, 0.12));
     this.milk.forEach(M => radial(M.x, M.y, M.r + 20, 0.9, 0.3));
+    if (this.player && this.player.floodR > 0) radial(this.player.x, this.player.y, this.player.floodR + 18, 0.75, 0.3);
     this.ebullets.forEach(b => radial(b.x, b.y, b.flame ? 16 : 10, 0.6));
     this.pickups.forEach(k => { if (k.type === 'crate' && Math.sin(t * 6) > 0) radial(k.x, k.y, 22, 0.8); });
     this.lights.forEach(l => radial(l.x, l.y, l.r, l.life / l.max));

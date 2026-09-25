@@ -84,6 +84,7 @@ class Player {
     this.frogState = 'human'; this.frogT = 0; this.frogTime = 0; this.frogCd = 0; this.hop = null; this.hopCd = 0; this.tongue = null; this.tongueCd = 0; this.armyCd = 0; this.armyTime = 0;
     this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0; this.viralT = 0; this.viralCd = 0; this.moneyT = 0; this.moneyCd = 0; this.throwCd = 0; this.slamT = 0; this.slamCd2 = 0;
     this.frenzyT = 0; this.frenzyCd = 0; this.biteCd = 0; this.lunge = null; this.chomp = 0;
+    this.cryT = 0; this.cryCd = 0; this.floodR = 0; this.sob = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -301,6 +302,17 @@ class Player {
       return true;
     }
     return false;
+  }
+  /* ---- Cry XD: CRY FLOOD — he breaks down; the tears flood the street around him ---- */
+  useCry() {
+    const fl = this.char.cry, g = this.game; if (!fl) return false;
+    if (this.cryT > 0 || this.floodR > 0) return false;
+    if (this.cryCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `CRY IN ${Math.ceil(this.cryCd)}s`, '#9aa3b5'); return false; }
+    this.cryT = fl.duration; this.floodR = 0; this.sob = 1.2;
+    Audio8.play('scream'); Audio8.noise(1.4, 0.4, 650); g.shake(3);
+    for (let i = 0; i < 30; i++) { const a = i / 30 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 110, Math.sin(a) * 110 - 30, 0.55, i % 2 ? '#4f9be6' : '#dcecfb', 3, 'blood')); }
+    g.showAbilityBanner('CRY FLOOD', `${fl.duration}s · the tears flood the street · keep shooting`);
+    return true;
   }
   /* ---- Sharkjutta: FEEDING FRENZY — 12 s of jaws. Lunge, bite, swallow, heal. ---- */
   get frenzy() { return this.frenzyT > 0; }
@@ -576,7 +588,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.cry) return this.useCry(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -716,6 +728,8 @@ class Player {
       if (this.formCd > 0) return { name: tf.name, state: 'cd', frac: 1 - this.formCd / tf.cooldown, sub: `RECHARGING ${Math.ceil(this.formCd)}s` };
       return { name: tf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' };
     }
+    const cf = this.char.cry;
+    if (cf) { if (this.cryT > 0) return { name: cf.name, state: 'active', frac: this.cryT / cf.duration, sub: `${Math.ceil(this.cryT)}s · THE DAM BROKE` }; if (this.floodR > 0) return { name: cf.name, state: 'busy', frac: 0, sub: 'DRAINING...' }; if (this.cryCd > 0) return { name: cf.name, state: 'cd', frac: 1 - this.cryCd / cf.cooldown, sub: `RECHARGING ${Math.ceil(this.cryCd)}s` }; return { name: cf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const sk = this.char.shark;
     if (sk) { if (this.frenzyT > 0) return { name: sk.name, state: 'active', frac: this.frenzyT / sk.duration, sub: `${Math.ceil(this.frenzyT)}s · LMB BITE` }; if (this.frenzyCd > 0) return { name: sk.name, state: 'cd', frac: 1 - this.frenzyCd / sk.cooldown, sub: `RECHARGING ${Math.ceil(this.frenzyCd)}s` }; return { name: sk.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const sl = this.char.slam;
@@ -985,6 +999,16 @@ class Player {
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x);
     this.flip = Math.cos(this.angle) < 0;
     this.fireTimer -= dt; this.invuln -= dt; this.hurtFlash -= dt; this.recoil *= Math.pow(0.001, dt); this.sinceHurt += dt;
+    if (this.char.cry) { const fl = this.char.cry, g = this.game;
+      if (this.cryT > 0) {
+        this.cryT -= dt; this.floodR = Math.min(fl.radius, this.floodR + fl.radius / fl.grow * dt);
+        for (let i = 0; i < 3; i++) { const side = Math.random() < 0.5 ? -1 : 1;   // tears pouring from both eyes
+          g.particles.push(new Particle(this.x + side * 3, this.y - 6, side * (20 + Math.random() * 50), -30 - Math.random() * 30, 0.5 + Math.random() * 0.3, Math.random() < 0.7 ? '#4f9be6' : '#9cc8f2', 2, 'blood')); }
+        if (Math.random() < 0.25) { const a = Math.random() * TAU, r = Math.random() * this.floodR; g.map.splat(this.x + Math.cos(a) * r, this.y + Math.sin(a) * r, 6 + Math.random() * 8, '#34495a'); }   // the street stays wet
+        this.sob -= dt; if (this.sob <= 0) { this.sob = 1.3 + Math.random() * 0.5; Audio8.play('moan'); Audio8.noise(0.6, 0.18, 500); }
+        if (this.cryT <= 0) { this.cryT = 0; this.cryCd = fl.cooldown; g.floatText(this.x, this.y - 18, '*sniff*', '#9cc8f2'); }
+      } else if (this.floodR > 0) this.floodR = Math.max(0, this.floodR - fl.radius / fl.drain * dt);   // the water drains away
+      else if (this.cryCd > 0) { this.cryCd -= dt; if (this.cryCd <= 0) { this.cryCd = 0; g.floatText(this.x, this.y - 18, 'READY TO CRY', '#9cc8f2'); Audio8.play('xp'); } } }
     if (this.char.shark) { const sk = this.char.shark; this.biteCd -= dt; this.chomp -= dt;
       if (this.lunge) { const L = this.lunge; L.t += dt; const k = Math.min(1, L.t / L.dur);
         const q = this.game.map.resolve(L.sx + (L.tx - L.sx) * k, L.sy + (L.ty - L.sy) * k, this.r); this.x = q.x; this.y = q.y;
@@ -1494,6 +1518,20 @@ class Zombie {
     if (fd) { ux = fd.x; uy = fd.y; }
     if (steer) { ux = steer.x; uy = steer.y; }
     if (this.avoid > 0) { this.avoid -= dt; const px = -uy * this.avoidDir, py = ux * this.avoidDir; ux = px; uy = py; }
+    if (P.floodR > 0 && P.char.cry) { // Cry XD's flood: slow, swept outward, drowning
+      const fl = P.char.cry, fdx = this.x - P.x, fdy = this.y - P.y, fd = Math.hypot(fdx, fdy) || 1;
+      if (fd < P.floodR + this.r) {                              // in the water: the current holds it back
+        const boss = !!this.cfg.boss, push = boss ? fl.bossPush : fl.push;
+        sp *= boss ? fl.bossSlow : fl.slow;
+        this.kx = fdx / fd * push; this.ky = fdy / fd * push;
+        if (!boss) this.attackCd = Math.max(this.attackCd, 0.3);   // floundering, can't get a bite in
+      }
+      if (fd < P.floodR + this.r + 16) {                         // the drowning reaches a little past the current, so anything pinned at the edge keeps going under
+        this.soak = (this.soak || 0) + dt;
+        if (this.soak >= 0.25) { this.soak = 0; this.takeDamage((fl.dps + this.maxHp * fl.pct) * 0.25 * P.damageMult, Math.atan2(fdy, fdx), undefined, 0, true); if (this.dead) return; }
+        if (Math.random() < 0.15) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 10, this.y + 4, (Math.random() - 0.5) * 40, -30 - Math.random() * 30, 0.4, '#9cc8f2', 2, 'blood'));
+      }
+    }
     let mx = ux * sp + sx * 6 + this.kx, my = uy * sp + sy * 6 + this.ky;
     this.kx *= Math.pow(0.0005, dt); this.ky *= Math.pow(0.0005, dt);
     const ox = this.x, oy = this.y, mr = Math.min(this.r, 7);
