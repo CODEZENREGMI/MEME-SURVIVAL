@@ -9,6 +9,9 @@ button{font-family:inherit;cursor:pointer}
 canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 
 #stage{position:fixed;inset:0;background:#000;overflow:hidden}
+/* it's a game, not a document: double-clicks and drags shouldn't highlight the logo or menus */
+#stage{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#stage input,#stage textarea{-webkit-user-select:text;user-select:text}
 #game{display:block;cursor:crosshair;position:absolute;left:0;top:0;width:100vw;height:100vh}
 
 /* ---------- overlays ---------- */
