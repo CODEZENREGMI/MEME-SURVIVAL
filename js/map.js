@@ -50,7 +50,7 @@ class GameMap {
   fill(x0, y0, x1, y1, v) { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) this.set(x, y, v); }
   isSolid(tx, ty) { if (tx < 0 || ty < 0 || tx >= this.w || ty >= this.h) return true; return this.solid[ty * this.w + tx] === 1; }
   setSolid(tx, ty, v = 1) { if (tx >= 0 && ty >= 0 && tx < this.w && ty < this.h) this.solid[ty * this.w + tx] = v; }
-  block(x0, y0, x1, y1, type = T_BLDG) { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (this.t(x, y) !== T_ROAD || type === T_HEDGE) { this.set(x, y, type); this.setSolid(x, y); } }
+  block(x0, y0, x1, y1, type = T_BLDG, force = false) { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (force || this.t(x, y) !== T_ROAD || type === T_HEDGE) { this.set(x, y, type); this.setSolid(x, y); } }   // force: build on paved ground too
   add(type, tx, ty, opts = {}) {
     const p = Object.assign({ type, x: tx * this.ts + this.ts / 2, y: ty * this.ts + this.ts / 2, solid: true, tw: 1, th: 1, scale: 1 }, opts);
     if (p.tw > 1 || p.th > 1) { if (opts.x == null) p.x = (tx + p.tw / 2) * this.ts; if (opts.y == null) p.y = (ty + p.th / 2) * this.ts; }
@@ -178,12 +178,13 @@ class GameMap {
     // gravel patches
     this.fill(4, 4, 20, 10, T_GRASS); this.fill(60, 40, 76, 46, T_GRASS); this.fill(4, 40, 14, 46, T_GRASS); this.fill(64, 4, 76, 9, T_GRASS);
     // perimeter walls with 4 gates
-    this.block(0, 0, W - 1, 2); this.block(0, H - 3, W - 1, H - 1); this.block(0, 0, 2, H - 1); this.block(W - 3, 0, W - 1, H - 1);
+    // the whole yard is paved, so these build over the paving (block() otherwise leaves road tiles alone — that left this map with no walls or warehouses at all)
+    this.block(0, 0, W - 1, 2, T_BLDG, true); this.block(0, H - 3, W - 1, H - 1, T_BLDG, true); this.block(0, 0, 2, H - 1, T_BLDG, true); this.block(W - 3, 0, W - 1, H - 1, T_BLDG, true);
     const gate = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { this.set(x, y, T_ROAD); this.setSolid(x, y, 0); } };
     gate(38, 0, 41, 2); gate(38, H - 3, 41, H - 1); gate(0, 23, 2, 26); gate(W - 3, 23, W - 1, 26);
     this.spawns.push({ x: 40 * 16, y: 1.5 * 16 }, { x: 40 * 16, y: (H - 1.5) * 16 }, { x: 1.5 * 16, y: 25 * 16 }, { x: (W - 1.5) * 16, y: 25 * 16 });
     // warehouses
-    [[8, 12, 24, 19], [56, 12, 72, 19], [8, 30, 24, 37], [56, 30, 72, 37], [30, 4, 50, 8], [30, 41, 50, 45], [28, 20, 33, 29], [46, 20, 51, 29]].forEach(b => this.block(...b));
+    [[8, 12, 24, 19], [56, 12, 72, 19], [8, 30, 24, 37], [56, 30, 72, 37], [30, 4, 50, 8], [30, 41, 50, 45], [28, 20, 33, 29], [46, 20, 51, 29]].forEach(b => this.block(...b, T_BLDG, true));
     // walkways / painted lanes around the centre
     this.fill(34, 18, 45, 18, T_WALK); this.fill(34, 31, 45, 31, T_WALK); this.fill(34, 18, 34, 31, T_WALK); this.fill(45, 18, 45, 31, T_WALK);
     // containers
@@ -379,10 +380,76 @@ class GameMap {
       if (m.type === 'parking') { x.fillStyle = '#b8b8b0'; for (let i = 0; i < m.n; i++) x.fillRect((m.x + i * 4) * ts, m.y * ts, 2, 24); }
       if (m.type === 'hazard') { for (let i = 0; i < m.w * ts; i += 6) { x.fillStyle = (i / 6) % 2 ? '#e0b830' : '#1b1c22'; x.fillRect(m.x * ts + i, m.y * ts + 6, 6, 4); } }
     });
+    if (this.id === 'industrial') this.decorIndustrial(x);   // lanes, loading bays, roofs, grime — painted under the props
     this.props.forEach(p => { if (!p.taken) Sprites.draw(x, p.type, p.x, p.y, { scale: p.scale }); });
     x.fillStyle = 'rgba(0,0,0,0.12)';
     if (this.id !== 'lab') for (let i = 0; i < 60; i++) { const px = R() * this.pw, py = R() * this.ph; if (this.t(Math.floor(px / ts), Math.floor(py / ts)) === T_ROAD) { x.beginPath(); x.arc(px, py, 6 + R() * 14, 0, 7); x.fill(); } }
     this.canvas = c;
+  }
+
+  /* Industrial Zone set dressing: a concrete perimeter wall with razor wire, striped gate posts, painted lanes, warehouse
+     roofs with skylights / vents / AC units, roll-up doors over hazard-striped loading bays, oil, cracks, drain grates, and
+     the steam vents and junction boxes that come alive in game.js. Its own seeded RNG, so the rest of the map is untouched. */
+  decorIndustrial(x) {
+    const ts = this.ts, W = this.w, H = this.h, R = mulberry32(9002);
+    const isB = (tx, ty) => this.t(tx, ty) === T_BLDG;
+    const perim = (tx, ty) => tx <= 2 || ty <= 2 || tx >= W - 3 || ty >= H - 3;
+    // --- grime on the concrete first: oil stains, cracks, drains
+    for (let i = 0; i < 46; i++) { const px = R() * this.pw, py = R() * this.ph; if (this.t(Math.floor(px / ts), Math.floor(py / ts)) !== T_ROAD) continue;
+      x.fillStyle = `rgba(10,10,14,${0.18 + R() * 0.18})`; x.beginPath(); x.ellipse(px, py, 5 + R() * 10, 3 + R() * 6, R() * 3, 0, 7); x.fill();
+      x.fillStyle = 'rgba(80,70,110,0.12)'; x.beginPath(); x.ellipse(px - 2, py - 1, 3 + R() * 3, 1.5, R() * 3, 0, 7); x.fill(); }   // a rainbow sheen on the oil
+    x.strokeStyle = 'rgba(20,20,24,0.55)'; x.lineWidth = 1;
+    for (let i = 0; i < 34; i++) { let px = R() * this.pw, py = R() * this.ph; if (this.t(Math.floor(px / ts), Math.floor(py / ts)) !== T_ROAD) continue;
+      x.beginPath(); x.moveTo(px, py); for (let k = 0; k < 4; k++) { px += (R() - 0.5) * 18; py += (R() - 0.5) * 18; x.lineTo(px, py); } x.stroke(); }
+    this.vents = [];
+    for (let i = 0; i < 40 && this.vents.length < 6; i++) { const tx = 4 + Math.floor(R() * (W - 8)), ty = 4 + Math.floor(R() * (H - 8)); if (this.t(tx, ty) !== T_ROAD || !this.free(tx, ty)) continue;
+      const px = tx * ts + 3, py = ty * ts + 4; x.fillStyle = '#26282e'; x.fillRect(px, py, 10, 8); x.fillStyle = '#4a4d55'; for (let k = 1; k < 10; k += 2) x.fillRect(px + k, py + 1, 1, 6); x.strokeStyle = '#5c5f66'; x.strokeRect(px + 0.5, py + 0.5, 9, 7);
+      this.vents.push({ x: px + 5, y: py + 4, t: R() * 4 }); }
+    // --- lanes: dashed yellow centre lines out to the gates, solid edge lines
+    x.fillStyle = '#c9a227';
+    for (let px = 3 * ts; px < 27 * ts; px += 20) x.fillRect(px, 25 * ts - 1, 10, 2);
+    for (let px = 53 * ts; px < 77 * ts; px += 20) x.fillRect(px, 25 * ts - 1, 10, 2);
+    for (let py = 3 * ts; py < 17 * ts; py += 20) x.fillRect(40 * ts - 1, py, 2, 10);
+    for (let py = 33 * ts; py < 47 * ts; py += 20) x.fillRect(40 * ts - 1, py, 2, 10);
+    x.fillStyle = 'rgba(220,220,210,0.35)';
+    [[3, 22, 27], [3, 28, 27], [53, 22, 77], [53, 28, 77]].forEach(([a, row, b]) => x.fillRect(a * ts, row * ts, (b - a) * ts, 1));
+    // --- the perimeter wall: concrete capping and razor wire, not a roof
+    for (let ty = 0; ty < H; ty++) for (let tx = 0; tx < W; tx++) { if (!isB(tx, ty) || !perim(tx, ty)) continue; const px = tx * ts, py = ty * ts;
+      x.fillStyle = '#34373e'; x.fillRect(px, py, ts, ts); x.fillStyle = '#3d4048'; x.fillRect(px + 1, py + 1, ts - 2, ts - 2);
+      x.fillStyle = '#2a2c32'; if ((tx + ty) % 2 === 0) x.fillRect(px + 7, py, 1, ts);
+      x.fillStyle = '#8a8e96'; for (let k = 2; k < ts; k += 5) x.fillRect(px + k, py + 7, 2, 1); }   // coils of wire along the top
+    x.fillStyle = '#6b6f77';
+    for (let tx = 0; tx < W; tx++) { if (isB(tx, 2) && !isB(tx, 3)) x.fillRect(tx * ts, 3 * ts - 2, ts, 2); if (isB(tx, H - 3) && !isB(tx, H - 4)) x.fillRect(tx * ts, (H - 3) * ts, ts, 2); }
+    for (let ty = 0; ty < H; ty++) { if (isB(2, ty) && !isB(3, ty)) x.fillRect(3 * ts - 2, ty * ts, 2, ts); if (isB(W - 3, ty) && !isB(W - 4, ty)) x.fillRect((W - 3) * ts, ty * ts, 2, ts); }
+    const post = (px, py, w, h) => { for (let k = 0; k < Math.max(w, h); k += 4) { x.fillStyle = (k / 4) % 2 ? '#e0b830' : '#1b1c22'; if (w > h) x.fillRect(px + k, py, 4, h); else x.fillRect(px, py + k, w, 4); } };
+    post(37 * ts, 0, 4, 3 * ts); post(42 * ts - 4, 0, 4, 3 * ts); post(37 * ts, (H - 3) * ts, 4, 3 * ts); post(42 * ts - 4, (H - 3) * ts, 4, 3 * ts);
+    post(0, 22 * ts, 3 * ts, 4); post(0, 27 * ts - 4, 3 * ts, 4); post((W - 3) * ts, 22 * ts, 3 * ts, 4); post((W - 3) * ts, 27 * ts - 4, 3 * ts, 4);
+    // --- warehouses: roof furniture, then doors and loading bays on the lane side
+    const sheds = [[8, 12, 24, 19, 's'], [56, 12, 72, 19, 's'], [8, 30, 24, 37, 'n'], [56, 30, 72, 37, 'n'], [30, 4, 50, 8, 's'], [30, 41, 50, 45, 'n'], [28, 20, 33, 29, 'e'], [46, 20, 51, 29, 'w']];
+    this.junctions = [];
+    sheds.forEach(([x0, y0, x1, y1, face]) => {
+      const L = x0 * ts, T = y0 * ts, Wd = (x1 - x0 + 1) * ts, Ht = (y1 - y0 + 1) * ts, cx = L + Wd / 2, cy = T + Ht / 2;
+      x.fillStyle = 'rgba(0,0,0,0.25)'; if (Wd > Ht) x.fillRect(L + 4, cy - 1, Wd - 8, 2); else x.fillRect(cx - 1, T + 4, 2, Ht - 8);   // roof ridge
+      for (let k = 0; k < 4; k++) { const sx = Wd > Ht ? L + 16 + k * (Wd - 32) / 3 : cx - 5, sy = Wd > Ht ? cy - 12 : T + 16 + k * (Ht - 32) / 3;   // skylights
+        if (Wd > Ht ? sx + 10 > L + Wd - 8 : sy + 10 > T + Ht - 8) continue; x.fillStyle = 'rgba(150,190,220,0.35)'; x.fillRect(sx, sy, 10, 6); x.fillStyle = 'rgba(220,240,255,0.35)'; x.fillRect(sx + 1, sy + 1, 4, 1); }
+      for (let k = 0; k < 2; k++) { const ux = L + 10 + R() * (Wd - 30), uy = T + 8 + R() * (Ht - 22);   // AC unit with a fan, a vent stack
+        x.fillStyle = '#5d6674'; x.fillRect(ux, uy, 12, 10); x.fillStyle = '#2a2e35'; x.beginPath(); x.arc(ux + 6, uy + 5, 3.5, 0, 7); x.fill(); x.fillStyle = '#8b95a3'; x.fillRect(ux + 5, uy + 2, 2, 6); x.fillRect(ux + 3, uy + 4, 6, 2);
+        x.fillStyle = '#23262c'; x.fillRect(ux + 16, uy + 2, 5, 5); x.fillStyle = '#6a7380'; x.fillRect(ux + 17, uy + 3, 3, 3); }
+      // roll-up doors on the lane side, hazard stripes and bay lines on the ground in front of them
+      const doors = Math.max(1, Math.floor((face === 's' || face === 'n' ? Wd : Ht) / 64));
+      for (let k = 0; k < doors; k++) {
+        const along = (k + 0.5) / doors;
+        if (face === 's' || face === 'n') { const dx = L + along * Wd - 12, dy = face === 's' ? T + Ht - 6 : T; x.fillStyle = '#2b2e35'; x.fillRect(dx, dy, 24, 6); x.fillStyle = '#4b505a'; for (let r = 1; r < 6; r += 2) x.fillRect(dx + 1, dy + r, 22, 1);
+          const gy = face === 's' ? T + Ht + 1 : T - 5; for (let i = 0; i < 24; i += 4) { x.fillStyle = (i / 4) % 2 ? '#e0b830' : '#1b1c22'; x.fillRect(dx + i, gy, 4, 4); }
+          x.fillStyle = 'rgba(220,220,210,0.3)'; const by = face === 's' ? T + Ht + 5 : T - 5 - 22; x.fillRect(dx - 2, by, 1, 22); x.fillRect(dx + 25, by, 1, 22); }
+        else { const dy = T + along * Ht - 12, dx = face === 'e' ? L + Wd - 6 : L; x.fillStyle = '#2b2e35'; x.fillRect(dx, dy, 6, 24); x.fillStyle = '#4b505a'; for (let r = 1; r < 6; r += 2) x.fillRect(dx + r, dy + 1, 1, 22);
+          const gx = face === 'e' ? L + Wd + 1 : L - 5; for (let i = 0; i < 24; i += 4) { x.fillStyle = (i / 4) % 2 ? '#e0b830' : '#1b1c22'; x.fillRect(gx, dy + i, 4, 4); } }
+      }
+      // a junction box on one wall — some of them still spark
+      const jx = face === 's' || face === 'n' ? L + 6 : (face === 'e' ? L + Wd + 1 : L - 9), jy = face === 's' ? T + Ht + 1 : face === 'n' ? T - 9 : T + 6;
+      x.fillStyle = '#4a4f58'; x.fillRect(jx, jy, 8, 8); x.fillStyle = '#e0b830'; x.beginPath(); x.moveTo(jx + 4, jy + 1); x.lineTo(jx + 7, jy + 6); x.lineTo(jx + 1, jy + 6); x.closePath(); x.fill(); x.fillStyle = '#1b1c22'; x.fillRect(jx + 3.5, jy + 3, 1, 2);
+      if (R() < 0.6) this.junctions.push({ x: jx + 4, y: jy + 4, t: 1 + R() * 5 });
+    });
   }
 
   /* ---------------------------------------------------------- collision */

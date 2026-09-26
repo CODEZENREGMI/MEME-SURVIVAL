@@ -440,6 +440,24 @@ class Game {
     this.lures.push({ sx: x, sy: y, x, y, tx, ty, t: 0, h: 0, fly: Math.max(0.25, Math.min(0.55, dist(x, y, tx, ty) / 800)), life: B.life, max: B.life, r: B.radius, landed: false, notes: [] });
     Audio8.play('swap');
   }
+  /* Industrial Zone ambience: steam breathing out of the drains, and dead junction boxes that spit sparks into the dark */
+  industrialFx(dt) {
+    const m = this.map, p = this.player;
+    for (const v of m.vents || []) {
+      v.t -= dt;
+      const puffing = v.t < 0 && v.t > -1.6;   // it breathes: a long hiss every few seconds, a faint wisp in between
+      if (Math.random() < (puffing ? 0.55 : 0.05)) this.particles.push(new Particle(v.x + (Math.random() - 0.5) * 6, v.y, (Math.random() - 0.5) * 8, -18 - Math.random() * (puffing ? 26 : 8), 1.2 + Math.random() * 0.8, Math.random() < 0.5 ? '#9aa0a8' : '#c4c8ce', puffing ? 4 : 3, 'smoke'));
+      if (v.t < -1.6) v.t = 3 + Math.random() * 4;
+    }
+    for (const j of m.junctions || []) {
+      j.t -= dt; if (j.t > 0) continue;
+      j.t = 1.5 + Math.random() * 5;
+      const n = 6 + Math.floor(Math.random() * 8);
+      for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4, sp = 40 + Math.random() * 90; this.particles.push(new Particle(j.x, j.y, Math.cos(a) * sp, Math.sin(a) * sp, 0.25 + Math.random() * 0.3, Math.random() < 0.5 ? '#fff4c0' : '#ffd23a', 1.5, 'fire')); }
+      this.lights.push({ x: j.x, y: j.y, r: 60 + Math.random() * 40, life: 0.12, max: 0.12 });   // a blue-white flash that lights the corner for an instant
+      if (p && Math.hypot(p.x - j.x, p.y - j.y) < 260) { Audio8.noise(0.08, 0.08, 4200); if (Math.random() < 0.5) Audio8.play('flicker'); }
+    }
+  }
   /* Doge's AIRSTRIKE: a flare on the target, beeps, a jet on its run, and a line of bombs rolling through */
   updateStrikes(dt) {
     for (const s of this.strikes) {
@@ -775,6 +793,7 @@ class Game {
     this.clones.forEach(c => c.update(dt)); this.clones = this.clones.filter(c => !c.dead);
     this.updateLures(dt);
     this.updateStrikes(dt);
+    if (this.map.id === 'industrial') this.industrialFx(dt);
     this.updateMilk(dt);
     this.updateSinkers(dt);
     for (const b of this.bullets) {

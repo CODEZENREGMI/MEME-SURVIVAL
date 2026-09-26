@@ -202,6 +202,17 @@ title-screen menu links point at memesurvival.com in a new tab. Website-only ima
 re-upload after each update. On itch: tick **This file will be played in the browser**, viewport **1280 × 720**,
 **Fullscreen button** on.
 
+## Industrial Zone
+
+The yard is fully paved, and `block()` deliberately leaves road tiles alone (so other maps' buildings never cover their
+streets) — which meant the perimeter wall and all eight warehouses were silently never built. `genIndustrial` now builds
+them with `force`. `decorIndustrial()` paints the set dressing onto the map canvas with its own seeded RNG (so the
+layout and prop placement are unchanged): a concrete perimeter wall with razor wire, striped gate posts, dashed lane
+lines to the gates, corrugated roofs with skylights, AC units and vent stacks, roll-up doors over hazard-striped loading
+bays, oil stains with a sheen, cracks, and drain grates. `game.industrialFx()` brings two of those to life: the drains
+breathe steam (a long hiss every few seconds), and dead junction boxes spit sparks and flash light into the dark, with a
+crackle when you're near.
+
 ## Burning
 
 Anything that sets a zombie alight (flamethrower, Bezuko's katana, lava stones, Doge's incendiary rounds) uses the same

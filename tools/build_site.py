@@ -74,6 +74,7 @@ QA = [
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
  ("2026-09-26", [
+   "<strong>Industrial Zone rebuilt.</strong> Its perimeter wall and all eight warehouses were missing — the yard was one flat open lot. They're back, with loading bays, lane markings, rooftop gear, steam vents and junction boxes that spark in the dark.",
    "<strong>New survivor: Doge.</strong> Much soldier, very tactical: a Shiba Inu in a plate carrier and the coolest shades on the battlefield. AIRSTRIKE calls in a jet that carpet-bombs wherever he points, and MACHINE GUN hands him a huge minigun firing incendiary rounds with unlimited ammo.",
    "<strong>Urban City has a pool.</strong> It's murky, something glides underneath, and stepping in is a mistake.",
    "<strong>The Research Lab floor has a hole in it.</strong> Something down there blinks. On certain waves, it does more than blink.",
