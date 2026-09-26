@@ -256,7 +256,7 @@ const CHARACTERS = {
             portraitImg: 'assets/img/giga_portrait.png',   // the runway meme redrawn in pixels; the sprite is hand-placed in js/sprites.js
             desc: 'Flat-top head, eyes glowing like hot coals, a pastel cardigan, a silk bow, a pink tutu and calves carved from granite. He came to the apocalypse dressed for the runway. PIROUETTE (Space): he spins for 10 s and a ring of blades slices every zombie around him, flinging them outward. He can still walk while he spins, but no gun, and takes 40% less damage. 20 s recharge.',
             pal: { K: '#1a1210', N: '#8a5234', n: '#63391f', h: '#b0714a', O: '#fff0d8', o: '#ff7a2a', T: '#efe6da', C: '#a9cbd6', c: '#7fa3b0', V: '#efe3c4', v: '#c9b98f', P: '#eeb3bd', p: '#c98894', S: '#f4f2ee', s: '#cfcac4' },
-            spin: { name: 'PIROUETTE', duration: 10, cooldown: 20, radius: 40, tick: 0.15, damage: 24, bossDamage: 12, knock: 1.6, armor: 0.6, speed: 0.9 } },
+            spin: { name: 'PIROUETTE', duration: 10, cooldown: 20, radius: 60, tick: 0.15, damage: 24, bossDamage: 12, knock: 1.6, armor: 0.6, speed: 0.9 } },
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg', 'giga'];
 
