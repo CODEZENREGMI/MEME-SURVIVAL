@@ -23,6 +23,7 @@ html = re.sub(r'<link rel="(?:icon|apple-touch-icon|manifest)"[^>]*>\n', '', htm
 html = re.sub(r'<link rel="preload" href="/(assets/[^"]+)"', r'<link rel="preload" href="\1"', html)   # preloads: relative
 html = re.sub(r'<a href="/(characters|bosses|maps|faq|updates)">',
               lambda m: f'<a href="{SITE}{m.group(1)}" target="_blank" rel="noopener">', html)  # menu: out to the site
+html = re.sub(r'<a href="https://memesurvival\.itch\.io/[^"]*"[^>]*>ITCH\.IO</a>', '', html)   # no link to itch from inside itch
 leftover = re.findall(r'(?:href|src)="/[^"]*"', html)
 assert not leftover, f'root paths left in index.html: {leftover}'
 open(os.path.join(OUT, 'index.html'), 'w').write(html)

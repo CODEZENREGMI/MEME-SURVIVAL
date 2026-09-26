@@ -173,6 +173,11 @@ transformation still uses the pixel-map frog in `js/sprites.js`.
 
 ## itch.io build
 
+Published at **https://memesurvival.itch.io/meme-survival**. The site links to it (ITCH.IO in the title-screen menu, and
+every site page's footer) and lists it as `sameAs` on the `Organization` and `VideoGame` JSON-LD, so Google treats both
+as the same game.
+
+
 `python3 tools/build_itch.py` writes `dist/meme-survival-itch.zip` (git-ignored) for itch.io's "played in the browser"
 upload. itch serves the game from a zip inside an iframe on its own domain and in a sub-folder, so the script copies
 the game and rewrites `index.html`: root-relative preloads become relative, favicon/manifest links are dropped, and the

@@ -231,7 +231,7 @@ def page(slug, title, desc, h1, lede, body, ld=(), og_type='article'):
       <a class="play px" href="/play">PLAY MEME SURVIVAL</a>
     </div>
   </main>
-  <footer><nav class="nav px" aria-label="Site">{nav}</nav><a href="/">memesurvival.com</a> · the free meme zombie survival game you play in your browser</footer>
+  <footer><nav class="nav px" aria-label="Site">{nav}</nav><a href="/">memesurvival.com</a> · the free meme zombie survival game you play in your browser · also on <a href="https://memesurvival.itch.io/meme-survival" target="_blank" rel="noopener">itch.io</a></footer>
 </div>
 </body>
 </html>
