@@ -702,7 +702,7 @@ class Game {
       if (key === 'Escape') { if (this.ui.closeModals()) return; if (this.state === 'shop') { this.closeShop(); return; } if (this.state === 'playing' || this.state === 'wavebreak') this.pause(); else if (this.state === 'paused') this.resume(); }
       if (key === 't') k.t = true;
       if (key === 'b' || key === 'Tab') { if (this.state === 'shop' || this.state === 'playing' || this.state === 'wavebreak') { e.preventDefault(); this.toggleShop(); } }
-      if (key === 'f') { if (e.shiftKey || !((this.player.char.pull || this.player.char.wife) && (this.state === 'playing' || this.state === 'wavebreak'))) this.ui.toggleFullscreen(); else k.f = true; } // F = WEB PULL for Spider Mad; Shift+F always = fullscreen
+      if (key === 'f') { if (e.shiftKey || !((this.player.char.pull || this.player.char.wife || this.player.char.mg) && (this.state === 'playing' || this.state === 'wavebreak'))) this.ui.toggleFullscreen(); else k.f = true; } // F = WEB PULL for Spider Mad; Shift+F always = fullscreen
       if (this.state === 'playing' || this.state === 'wavebreak') {
         if (key >= '1' && key <= '9') { const id = this.player.weaponOrder[key - 1]; if (id) this.player.switchTo(id); }
         if (key === 'q') this.player.cycle(1);
@@ -719,7 +719,7 @@ class Game {
       const r = this.cartRect; if (r && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= r.x && this.input.mouseX <= r.x + r.w && this.input.mouseY >= r.y && this.input.mouseY <= r.y + r.h) { this.openShop(); return; }
       const ar = this.abilityRect; if (ar && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= ar.x && this.input.mouseX <= ar.x + ar.w && this.input.mouseY >= ar.y && this.input.mouseY <= ar.y + ar.h) { this.player.useAbility(); return; }
       const cr = this.carRect; if (cr && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= cr.x && this.input.mouseX <= cr.x + cr.w && this.input.mouseY >= cr.y && this.input.mouseY <= cr.y + cr.h) { this.player.toggleCar(); return; }
-      const tr2 = this.transformRect2; if (tr2 && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr2.x && this.input.mouseX <= tr2.x + tr2.w && this.input.mouseY >= tr2.y && this.input.mouseY <= tr2.y + tr2.h) { if (this.player.char.wife) this.player.useWife(); else if (this.player.char.frog) this.player.useFrogArmy(); else if (this.player.char.symbiote) this.player.useCapture(); else this.player.usePull(); return; }
+      const tr2 = this.transformRect2; if (tr2 && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr2.x && this.input.mouseX <= tr2.x + tr2.w && this.input.mouseY >= tr2.y && this.input.mouseY <= tr2.y + tr2.h) { if (this.player.char.wife) this.player.useWife(); else if (this.player.char.mg) this.player.useMachineGun(); else if (this.player.char.frog) this.player.useFrogArmy(); else if (this.player.char.symbiote) this.player.useCapture(); else this.player.usePull(); return; }
       const tr = this.transformRect; if (tr && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr.x && this.input.mouseX <= tr.x + tr.w && this.input.mouseY >= tr.y && this.input.mouseY <= tr.y + tr.h) { this.player.useCharAbility(); return; }
       this.input.mouseDown = true; });
     window.addEventListener('mouseup', e => { if (e.button === 2) this.input.rightDown = false; else this.input.mouseDown = false; });
@@ -1121,7 +1121,8 @@ class Game {
     const remain = this.zombies.length + this.toSpawn; ctx.fillStyle = '#c9cfdb'; ctx.fillText(this.siege ? `☠ ${this.zombies.length} · ∞` : `☠ ${remain}`, this.vw - 112, 50);
     // weapon (bottom-left)
     box(8, this.vh - 34, 130, 26);
-    if (p.spinT > 0) { ctx.fillStyle = '#eeb3bd'; ctx.fillText('PIROUETTE', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD GLIDE · SLICE THEM', 116), 14, this.vh - 16); }
+    if (p.mgT > 0) { ctx.fillStyle = '#ffd23a'; ctx.fillText('MACHINE GUN', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(`UNLIMITED AMMO · HOLD LMB`, 116), 14, this.vh - 16); }
+    else if (p.spinT > 0) { ctx.fillStyle = '#eeb3bd'; ctx.fillText('PIROUETTE', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD GLIDE · SLICE THEM', 116), 14, this.vh - 16); }
     else if (p.rollT > 0) { ctx.fillStyle = '#f4d9b0'; ctx.fillText('EGG ROLL', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD STEER · CRUSH THEM', 116), 14, this.vh - 16); }
     else if (p.frenzy) { ctx.fillStyle = '#8af0ff'; ctx.fillText('JAWS', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LUNGE · EAT TO HEAL', 116), 14, this.vh - 16); }
     else if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, this.vh - 16); }
@@ -1184,7 +1185,7 @@ class Game {
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? '#ffb02a' : '#ffe08a') : active ? '#ff8a2a' : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
       ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = ready ? '#ffb02a' : active ? '#fff' : '#9aa3b5';
       ctx.fillText(ab.name, ax + 6, ay + 5);
-      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife ? 'F' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
+      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife || p.char.mg ? 'F' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
       ctx.font = F;
     }
     // xp bar (bottom-centre)
