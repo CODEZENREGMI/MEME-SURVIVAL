@@ -258,8 +258,12 @@ const CHARACTERS = {
             desc: 'Flat-top head, eyes glowing like hot coals, a pastel cardigan, a silk bow, a pink tutu and calves carved from granite. He came to the apocalypse dressed for the runway. PIROUETTE (Space): he spins for 10 s and a ring of blades slices every zombie around him, flinging them outward. He can still walk while he spins, but no gun, and takes 40% less damage. 20 s recharge.',
             pal: { K: '#1a1210', N: '#8a5234', n: '#63391f', h: '#b0714a', O: '#fff0d8', o: '#ff7a2a', T: '#efe6da', C: '#a9cbd6', c: '#7fa3b0', V: '#efe3c4', v: '#c9b98f', P: '#eeb3bd', p: '#c98894', S: '#f4f2ee', s: '#cfcac4' },
             spin: { name: 'PIROUETTE', duration: 10, cooldown: 20, sound: 'assets/audio/giga_spin.mp3', radius: 60, tick: 0.15, damage: 24, bossDamage: 12, knock: 1.6, armor: 0.6, speed: 0.9 } },
+  doge:     { name: 'Doge', tag: 'Meme · soldier', hp: 100, speed: 1.0, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'doge', portrait: 'doge',
+            portraitImg: 'assets/img/doge_portrait.png',   // the Doge soldier redrawn in pixels (shades hand-placed); the sprite is hand-placed in js/sprites.js
+            desc: 'Much soldier. Very tactical. Wow. A Shiba Inu in a camo plate carrier and the coolest shades on the battlefield, radio on his shoulder, calm as ever while the city burns. Balanced all-rounder.',
+            pal: { K: '#1a1410', O: '#d98a3c', o: '#a8622a', C: '#f1e2c4', c: '#d9c39c', S: '#050505', W: '#f5f5f5', V: '#a8946c', v: '#6e6048', M: '#4a4a3e', m: '#8c8a78', R: '#2a2e38' } },
 };
-const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg', 'giga'];
+const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg', 'giga', 'doge'];
 
 /* maps */
 const MAPS = {

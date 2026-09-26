@@ -34,7 +34,7 @@ QA = [
   "<p>It depends on what you want. If you're after a big PC or console game, fans usually point to classics like <em>Left 4 Dead 2</em>, "
   "<em>Project Zomboid</em>, <em>7 Days to Die</em> and <em>Dying Light</em>, but they cost money, take a big download and a good machine.</p>"
   "<p>If you want a zombie survival game you can play <strong>right now, for free, with no download</strong>, Meme Survival is built for exactly that. "
-  "It loads in seconds in your browser, a run takes minutes, and 20 meme survivors with wild abilities keep it fun to replay. "
+  "It loads in seconds in your browser, a run takes minutes, and 21 meme survivors with wild abilities keep it fun to replay. "
   "The best way to decide is to try it: <a href=\"/play\">play Meme Survival now</a>.</p>"),
  ("Is Meme Survival free? Do I need to download it?", "free-no-download",
   "<p>Yes, Meme Survival is <strong>completely free</strong>. There's nothing to download or install and you don't need an account. "
@@ -49,7 +49,7 @@ QA = [
   "<li><kbd>Space</kbd>: use your survivor's special ability</li>"
   "<li><kbd>Esc</kbd>: pause, <kbd>F</kbd>: fullscreen</li></ul>"),
  ("What characters can I play in Meme Survival?", "characters",
-  "<p>There are <strong>20 survivors</strong>, each with their own stats, and most with a special ability. A few favourites:</p>"
+  "<p>There are <strong>21 survivors</strong>, each with their own stats, and most with a special ability. A few favourites:</p>"
   "<ul><li><strong>Cry XD</strong>: cries a flood. Zombies in the water can't shoot, slow down and drown.</li>"
   "<li><strong>Frogepepe</strong>: transforms into a frog and spawns an army of small frog clones.</li>"
   "<li><strong>Sharkjutta</strong>: an apex predator that eats zombies whole.</li>"
@@ -73,6 +73,10 @@ QA = [
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
  ("2026-09-26", [
+   "<strong>New survivor: Doge.</strong> Much soldier, very tactical: a Shiba Inu in a plate carrier and the coolest shades on the battlefield.",
+   "<strong>Urban City has a pool.</strong> It's murky, something glides underneath, and stepping in is a mistake.",
+   "<strong>The Research Lab floor has a hole in it.</strong> Something down there blinks. On certain waves, it does more than blink.",
+   "Sharkjutta redrawn: the shark in blue running shoes, side-on, exactly like the meme.",
    "<strong>New survivor: Giga Ballerina.</strong> PIROUETTE spins him on the spot while a ring of blades slices every zombie around him, to his own song.",
    "<strong>New survivor: BlackEgg.</strong> EGG ROLL tucks him into a rolling egg that crushes zombies flat, steered with WASD, to a dubstep saw.",
    "Runner's RUSH now has its own soundtrack for the whole rush.",
