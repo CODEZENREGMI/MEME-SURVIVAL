@@ -83,7 +83,16 @@ your beam hits them; only their glowing eyes give them away.
   and five fast zombies). Unassigned milestones (60 …) reuse an earlier one. Two bosses
   from wave 25, three from wave 40. The wave doesn't end until the boss is dead.
 
-  **Research Lab — the hole.** A pit is torn into the floor of the bench room (`LAB_HOLE` in `js/config.js`,
+  **Scare spots** (`SCARE_SPOTS` in `js/config.js`) are places on a map that something jumps out of. Each fires at
+  most once per wave (only on its listed `waves`, if it has them), through the same jumpscare as wave 5 but in colour,
+  with its own face, scream, brightness and contrast; face and scream are loaded when a wave it can fire on starts.
+
+  **Urban City — the pool.** A backyard pool sits between the two buildings below the plaza: stone coping, murky water
+  going darker toward the deep end, slow caustics, a ladder, and a long pale shape sliding underneath. Wading slows you
+  to 60% and splashes, with rings round your legs. Step in on any wave (once per wave) and the fish comes up
+  (`assets/img/pool_face.webp`, `assets/audio/pool_scream.m4a`: the first 2.6 s of the clip, turned down and faded).
+
+  **Research Lab — the hole.** A pit is torn into the floor of the bench room (the `hole` spot,
   between the third pair of lab benches): a broken tile lip, cracks running out into the floor, the shaft's far wall
   fading into black, a breath of mist, and every ~7 s two pale eyes blink open down there. It's always there, but only
   on waves **1, 7, 10, 20, 25, 67, 99, 120 and 170** (`LAB_HOLE.waves`) does stepping into it do anything: once in each

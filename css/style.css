@@ -244,7 +244,7 @@ img.coin{width:14px;height:14px;vertical-align:-2px;margin-right:2px;image-rende
 .js-face{width:min(100vh,100vw);height:min(100vh,100vw);transform-origin:center}
 .js-face img{position:absolute;inset:0;width:100%;height:100%;max-width:none;image-rendering:auto}
 #jumpscareImg{filter:contrast(1.55) brightness(1.2) saturate(0)}
-#jumpscare.color #jumpscareImg{filter:contrast(1.4) brightness(1.45) saturate(1.2)}
+#jumpscare.color #jumpscareImg{filter:contrast(var(--js-contrast,1.4)) brightness(var(--js-bright,1.45)) saturate(1.2)}   /* per scare: a dark face gets lifted, a pale one doesn't */
 .js-ghost{mix-blend-mode:screen;opacity:0}
 .js-r{filter:contrast(1.6) grayscale(1) sepia(1) saturate(12) hue-rotate(-45deg) brightness(.9)}
 .js-c{filter:contrast(1.6) grayscale(1) sepia(1) saturate(9) hue-rotate(150deg) brightness(.8)}

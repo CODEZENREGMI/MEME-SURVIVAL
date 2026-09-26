@@ -113,7 +113,7 @@ class Player {
   get wstate() { return this.weapons[this.current]; }
   get damageMult() { return (1 + 0.15 * this.upgrades.damage) * this.char.damage; }
   get fireMult() { return (1 + 0.12 * this.upgrades.firerate) * this.char.firerate; }
-  get speed() { return this.baseSpeed * (1 + 0.08 * this.upgrades.speed) * (this.beast ? this.tf.speed : 1) * (this.venom ? this.sb.speed : 1) * (this.frog ? this.fr.speed : 1) * (this.demon ? this.dm.speed : 1) * (this.frenzy ? this.char.shark.speed : 1) * (this.rushing ? this.char.rush.speed : 1) * (this.spinT > 0 ? this.char.spin.speed : 1); }
+  get speed() { return this.baseSpeed * (1 + 0.08 * this.upgrades.speed) * (this.beast ? this.tf.speed : 1) * (this.venom ? this.sb.speed : 1) * (this.frog ? this.fr.speed : 1) * (this.demon ? this.dm.speed : 1) * (this.frenzy ? this.char.shark.speed : 1) * (this.rushing ? this.char.rush.speed : 1) * (this.spinT > 0 ? this.char.spin.speed : 1) * (this.wading ? this.wading.wade : 1); }
 
   get tf() { return this.char.transform; }
   get rushing() { return this.rush > 0; }

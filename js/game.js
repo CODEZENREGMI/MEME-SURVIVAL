@@ -115,7 +115,7 @@ class Game {
   reset() {
     this.map = this.getMap(this.loadout.map); this.resize();
     this.player = new Player(this, this.map.playerStart.x, this.map.playerStart.y, this.loadout.char, this.loadout.weapons);
-    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = []; this.holeScared = new Set();
+    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = []; this.scared = new Set();
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0; this.heartsBought = 0;
@@ -158,7 +158,7 @@ class Game {
   /* ------------------------------------------------------------ waves */
   startWave(n) {
     this.wave = n; this.toSpawn = waveCount(n); this.spawnTimer = 1.2;
-    if (LAB_HOLE.waves.includes(n) && this.loadout.map === LAB_HOLE.map) this.preloadHole();
+    this.preloadScares(n);
     this.spawnInterval = clamp(1.3 - n * 0.045, 0.3, 1.3);
     this.bossPending = bossCount(n); this.bossKind = pickBossKind(n);
     const tierNames = this.map.cfg.dark
@@ -519,7 +519,7 @@ class Game {
     if (!el || !img) return;
     this.preloadScareImg();   // normally already done when the wave started
     document.querySelectorAll('#jumpscare img').forEach(im => { if (im.getAttribute('src') !== s.img) im.src = s.img; });   // whose face it is this time (already decoded)
-    el.classList.toggle('color', !!s.color);
+    el.classList.toggle('color', !!s.color); el.style.setProperty('--js-bright', s.bright || 1.45); el.style.setProperty('--js-contrast', s.contrast || 1.4);
     clearTimeout(this._jsTimer); clearTimeout(this._jsRush);
     this.whiteFlash = 0; this.darkFlash = 0;
     Audio8.stopMusic(); Audio8.stopTrack();
@@ -542,21 +542,38 @@ class Game {
     el.classList.remove('on', 'glimpse'); void el.offsetWidth; el.classList.add('glimpse');
     this._jsRush = setTimeout(rush, s.glimpse * 1000);
   }
-  /* the lab hole: its face and scream are loaded when a scare wave starts, so the scare can't stall */
-  preloadHole() {
-    Audio8.preloadClip(LAB_HOLE.sound);
-    if (!this._holeImg) { const im = new Image(); im.src = LAB_HOLE.img; if (im.decode) im.decode().catch(() => {}); this._holeImg = im; }
+  /* scare spots: the face and scream are loaded when a wave they can fire on starts, so the scare can't stall */
+  preloadScares(n) {
+    this._scareImgs = this._scareImgs || {};
+    for (const s of SCARE_SPOTS) {
+      if (s.map !== this.loadout.map || (s.waves && !s.waves.includes(n))) continue;
+      Audio8.preloadClip(s.sound);
+      if (!this._scareImgs[s.id]) { const im = new Image(); im.src = s.img; if (im.decode) im.decode().catch(() => {}); this._scareImgs[s.id] = im; }
+    }
   }
-  checkHole(p) {
-    const H = LAB_HOLE;
-    if (this.holeScared.has(this.wave) || this.loadout.map !== H.map || !H.waves.includes(this.wave) || this.state !== 'playing' || p.dead) return;
-    if (Math.hypot(p.x - H.x, (p.y - H.y) * H.rx / H.ry) > H.trigger) return;
-    this.holeScared.add(this.wave); this.shake(12); Audio8.noise(0.4, 0.4, 160);   // the floor gives, something grabs
-    this.jumpscare(H);
+  inSpot(s, x, y, grow = 0) {
+    if (s.kind === 'hole') return Math.hypot(x - s.x, (y - s.y) * s.rx / s.ry) <= s.trigger + grow;
+    const k = s.inset - grow; return x > s.x + k && x < s.x + s.w - k && y > s.y + k && y < s.y + s.h - k;
+  }
+  checkScares(p) {
+    p.wading = null;
+    for (const s of SCARE_SPOTS) {
+      if (s.map !== this.loadout.map || p.dead) continue;
+      if (s.kind === 'pool' && this.inSpot(s, p.x, p.y + 4, s.inset)) {   // wading: slower, and it splashes
+        p.wading = s;
+        if (p.moving && Math.random() < 0.45) this.particles.push(new Particle(p.x + (Math.random() - 0.5) * 10, p.y + 6, (Math.random() - 0.5) * 40, -25 - Math.random() * 30, 0.35, Math.random() < 0.5 ? '#bfe6ef' : '#5fb4c8', 2, 'dot'));
+      }
+      if (this.state !== 'playing' || (s.waves && !s.waves.includes(this.wave))) continue;
+      const key = s.id + ':' + this.wave;
+      if (this.scared.has(key) || !this.inSpot(s, p.x, p.y)) continue;
+      this.scared.add(key); this.shake(12); Audio8.noise(0.4, 0.4, 160);   // the floor gives / the water heaves, and something grabs
+      if (s.kind === 'pool') for (let i = 0; i < 24; i++) { const a = Math.random() * TAU; this.particles.push(new Particle(p.x, p.y + 4, Math.cos(a) * 90, Math.sin(a) * 50 - 60, 0.6, i % 2 ? '#bfe6ef' : '#2b7d90', 3, 'dot')); }
+      this.jumpscare(s);
+    }
   }
   /* a pit in the lab floor: broken tile edge, blackness going down forever, a breath of mist, and now and then two eyes */
-  drawHole(ctx) {
-    const H = LAB_HOLE, t = this.time, x = H.x, y = H.y;
+  drawHole(ctx, H) {
+    const t = this.time, x = H.x, y = H.y;
     const edge = (k, j) => { ctx.beginPath(); for (let i = 0; i <= 26; i++) { const a = i / 26 * TAU, n = 1 + j * (Math.sin(a * 5 + 1.3) * 0.5 + Math.sin(a * 9 + 4.1) * 0.35); ctx.lineTo(x + Math.cos(a) * H.rx * k * n, y + Math.sin(a) * H.ry * k * n); } ctx.closePath(); };
     ctx.save();
     ctx.strokeStyle = 'rgba(20,22,28,0.55)'; ctx.lineWidth = 1;   // cracks running out into the floor
@@ -578,7 +595,34 @@ class Game {
     if (c > 6.2 && c < 7.0 && Math.sin(c * 40) > -0.6) { ctx.fillStyle = 'rgba(232,220,190,0.85)'; ctx.fillRect(Math.round(x - 4), Math.round(y + 1), 2, 1); ctx.fillRect(Math.round(x + 2), Math.round(y + 1), 2, 1); }
     ctx.fillStyle = '#8a909a'; [[-1.02, -0.2], [0.95, 0.5], [0.3, 1.08], [-0.6, -1.0]].forEach(([u, v]) => ctx.fillRect(Math.round(x + u * H.rx * 1.25), Math.round(y + v * H.ry * 1.2), 2, 2));   // loose chunks of tile
     ctx.restore();
+  }  /* a backyard pool at night: stone coping, murky water, slow caustics, a ladder, and a long pale shape sliding underneath */
+  drawPool(ctx, P) {
+    const t = this.time, { x, y, w, h } = P, r = 8, p = this.player;
+    const rr = (X, Y, W, H, R) => { ctx.beginPath(); ctx.moveTo(X + R, Y); ctx.arcTo(X + W, Y, X + W, Y + H, R); ctx.arcTo(X + W, Y + H, X, Y + H, R); ctx.arcTo(X, Y + H, X, Y, R); ctx.arcTo(X, Y, X + W, Y, R); ctx.closePath(); };
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; rr(x - 3, y - 1, w + 9, h + 8, r + 3); ctx.fill();                                   // shadow on the grass
+    ctx.fillStyle = '#b8b2a4'; rr(x - 4, y - 4, w + 8, h + 8, r + 3); ctx.fill();                                           // stone coping
+    ctx.strokeStyle = '#6e6a60'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(110,106,96,0.5)'; for (let i = 8; i < w; i += 12) { ctx.fillRect(x + i, y - 4, 1, 3); ctx.fillRect(x + i, y + h + 1, 1, 3); }   // slab joints
+    ctx.fillStyle = '#2b6f7e'; rr(x, y, w, h, r); ctx.fill();                                                                  // tiled lip
+    rr(x + 2, y + 2, w - 4, h - 4, r - 2); ctx.clip();
+    const g = ctx.createLinearGradient(x, y, x + w, y + h); g.addColorStop(0, '#1c6878'); g.addColorStop(0.5, '#0e4150'); g.addColorStop(1, '#051a22');
+    ctx.fillStyle = g; ctx.fillRect(x, y, w, h);                                                                               // shallow end to deep end
+    const fx = x + w * (0.2 + 0.6 * (Math.sin(t * 0.21) * 0.5 + 0.5)), fy = y + h * (0.5 + 0.22 * Math.sin(t * 0.33)), fa = Math.atan2(0.22 * 0.33 * Math.cos(t * 0.33) * h, 0.6 * 0.21 * 0.5 * Math.cos(t * 0.21) * w);
+    ctx.globalAlpha = 0.28 + 0.12 * Math.sin(t * 0.5);                                                                       // the thing that lives in it
+    ctx.fillStyle = '#01080b'; ctx.beginPath(); ctx.ellipse(fx, fy, 15, 4, fa, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(fx - Math.cos(fa) * 14, fy - Math.sin(fa) * 14); ctx.lineTo(fx - Math.cos(fa) * 22 - Math.sin(fa) * 4, fy - Math.sin(fa) * 22 + Math.cos(fa) * 4); ctx.lineTo(fx - Math.cos(fa) * 22 + Math.sin(fa) * 4, fy - Math.sin(fa) * 22 - Math.cos(fa) * 4); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(150,215,230,0.16)'; ctx.lineWidth = 1;                                                          // caustics
+    for (let i = 0; i < 6; i++) { ctx.beginPath(); for (let xx = x; xx <= x + w; xx += 4) { const yy = y + (i + 0.5) * h / 6 + Math.sin(xx * 0.12 + t * 1.5 + i * 1.7) * 1.8; xx === x ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy); } ctx.stroke(); }
+    ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.moveTo(x + w * 0.1, y); ctx.lineTo(x + w * 0.3, y); ctx.lineTo(x + w * 0.1, y + h); ctx.lineTo(x - w * 0.1, y + h); ctx.closePath(); ctx.fill();   // a sheen
+    if (p && p.wading === P) for (let k = 0; k < 2; k++) { const f = (t * 1.4 + k * 0.5) % 1, R = 4 + f * 14; ctx.strokeStyle = `rgba(200,235,245,${0.6 * (1 - f)})`; ctx.beginPath(); ctx.ellipse(p.x, p.y + 6, R, R * 0.45, 0, 0, TAU); ctx.stroke(); }   // rings round his legs
+    ctx.restore();
+    ctx.strokeStyle = '#d6dbe2'; ctx.lineWidth = 1.5; ctx.beginPath();                                                         // the ladder
+    ctx.moveTo(x + 10, y - 6); ctx.lineTo(x + 10, y + 9); ctx.moveTo(x + 17, y - 6); ctx.lineTo(x + 17, y + 9);
+    ctx.moveTo(x + 10, y + 1); ctx.lineTo(x + 17, y + 1); ctx.moveTo(x + 10, y + 6); ctx.lineTo(x + 17, y + 6); ctx.stroke();
   }
+
   hideJumpscare() { const el = document.getElementById('jumpscare'); if (el) el.classList.remove('on', 'glimpse'); clearTimeout(this._jsTimer); clearTimeout(this._jsRush); Audio8.stopClip(); }
   /* Bona rises: the lights go out until it's dead */
   bonaArrive(z) {
@@ -671,7 +715,7 @@ class Game {
     this.time += dt;
     const p = this.player, inp = this.input;
     inp.worldX = this.cam.x + inp.mouseX; inp.worldY = this.cam.y + inp.mouseY;
-    if (this.state !== 'gameover') { p.update(dt, inp); this.checkHole(p); }
+    if (this.state !== 'gameover') { p.update(dt, inp); this.checkScares(p); }
     if (this.state === 'wavebreak') { this.breakTimer -= dt; if (this.breakTimer <= 0) { this.state = 'playing'; this.startWave(this.wave + 1); } }
     if (this.state === 'playing') this.spawnTick(dt);
     this.map.computeFlow(p.x, p.y);
@@ -741,7 +785,7 @@ class Game {
     const glowP = p => p.type === 'fire' || p.type === 'dot' || p.type === 'text';
     // ---- world layer (gets darkened) ----
     ctx.save(); ctx.translate(-cx, -cy);
-    if (this.map.cfg === MAPS[LAB_HOLE.map]) this.drawHole(ctx);   // on the floor, under everything
+    for (const sp of SCARE_SPOTS) if (this.map.cfg === MAPS[sp.map]) sp.kind === 'hole' ? this.drawHole(ctx, sp) : this.drawPool(ctx, sp);   // on the floor, under everything
     if (this.siege) this.drawHouse(ctx);
     if (this.map.cars.length) this.drawCars(ctx);
     this.drawFlood(ctx);
