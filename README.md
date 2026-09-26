@@ -171,6 +171,15 @@ transformation still uses the pixel-map frog in `js/sprites.js`.
 - `./bump.sh` bumps the `?v=` cache tag on every script and stylesheet in `index.html`. Run it after any change to `js/` or `css/` so nobody gets a half-stale build.
 - The game auto-pauses when the window loses focus mid-run.
 
+## itch.io build
+
+`python3 tools/build_itch.py` writes `dist/meme-survival-itch.zip` (git-ignored) for itch.io's "played in the browser"
+upload. itch serves the game from a zip inside an iframe on its own domain and in a sub-folder, so the script copies
+the game and rewrites `index.html`: root-relative preloads become relative, favicon/manifest links are dropped, and the
+title-screen menu links point at memesurvival.com in a new tab. Website-only images are left out. Re-run it and
+re-upload after each update. On itch: tick **This file will be played in the browser**, viewport **1280 × 720**,
+**Fullscreen button** on.
+
 ## Loading: a still first, then it comes alive
 
 The first visit never shows a black screen:
