@@ -252,8 +252,12 @@ const CHARACTERS = {
             desc: 'An egg with a face, eyes calmly closed, chin resting in his white gloves. Nothing rattles him, not even the end of the world. EGG ROLL (Space): he tucks in and rolls for 20 s to a dubstep saw — WASD steers, he keeps his momentum, bounces off walls and crushes every zombie in his path flat. Bosses take a heavy hit and knock him back. Takes 60% less damage while rolling, no gun. 25 s recharge.',
             pal: { K: '#1c120e', H: '#b98468', E: '#8e5c45', e: '#6a4130', D: '#2b1a13', M: '#5b3527', m: '#a3705a', W: '#ece7e3', w: '#b5ada9', S: '#3b2419', s: '#d8d2ce' },
             roll: { name: 'EGG ROLL', duration: 20, cooldown: 25, sound: 'assets/audio/blackegg_roll.mp3', speed: 2.2, accel: 4, coast: 0.45, bounce: 0.65, crushSpeed: 45, reach: 9, bossDamage: 70, bossHitCd: 0.6, armor: 0.4 } },
+  giga:     { name: 'Giga Ballerina', tag: 'Meme', hp: 100, speed: 1.0, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'giga', portrait: 'giga',
+            portraitImg: 'assets/img/giga_portrait.png',   // the runway meme redrawn in pixels; the sprite is hand-placed in js/sprites.js
+            desc: 'Flat-top head, eyes glowing like hot coals, a pastel cardigan, a silk bow, a pink tutu and calves carved from granite. He came to the apocalypse dressed for the runway. Balanced all-rounder.',
+            pal: { K: '#1a1210', N: '#8a5234', n: '#63391f', h: '#b0714a', O: '#fff0d8', o: '#ff7a2a', T: '#efe6da', C: '#a9cbd6', c: '#7fa3b0', V: '#efe3c4', v: '#c9b98f', P: '#eeb3bd', p: '#c98894', S: '#f4f2ee', s: '#cfcac4' } },
 };
-const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg'];
+const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg', 'giga'];
 
 /* maps */
 const MAPS = {
