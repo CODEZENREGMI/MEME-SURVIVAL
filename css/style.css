@@ -74,10 +74,11 @@ html:not(.ready) #ov-title .btn{opacity:.55;pointer-events:none}
 .ico{flex:0 0 auto;display:block;height:24px;width:auto}
 .play-btn .ico{height:22px}
 .score-line{font-size:16px;color:#eceef2;letter-spacing:.03em;margin-top:18px;text-shadow:0 2px 0 #000,0 0 8px rgba(0,0,0,.9)}
-/* FAQ link, top-right of the title screen */
-.title-faq{position:absolute;top:16px;right:18px;font-family:var(--pixel);font-size:11px;letter-spacing:1px;color:#eceef2;text-decoration:none;
-  padding:9px 12px;border:1.5px solid #c9ced8;border-radius:3px;background:rgba(14,17,24,.8);text-shadow:0 2px 0 #000}
-.title-faq:hover{border-color:#ff3322;box-shadow:0 0 12px rgba(255,40,20,.6)}
+/* site menu, top-right of the title screen */
+.title-nav{position:absolute;top:16px;right:18px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 36px)}
+.title-nav a{font-family:var(--pixel);font-size:10px;letter-spacing:1px;color:#eceef2;text-decoration:none;padding:8px 10px;
+  border:1.5px solid #c9ced8;border-radius:3px;background:rgba(14,17,24,.8);text-shadow:0 2px 0 #000}
+.title-nav a:hover{border-color:#ff3322;box-shadow:0 0 12px rgba(255,40,20,.6)}
 /* controls strip along the bottom, every key in its own cap */
 .keybar{position:absolute;left:0;right:0;bottom:22px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
   gap:8px 30px;padding:0 16px;font-size:13px;color:#e3e6ec;text-shadow:0 2px 3px rgba(0,0,0,.95)}

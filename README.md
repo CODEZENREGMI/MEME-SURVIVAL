@@ -197,16 +197,20 @@ lets browsers keep `js/` and `css/` for a year because every release changes the
 The live site is **https://www.memesurvival.com/** (the bare domain 308-redirects there). Everything search engines
 and link previews read:
 
-- `index.html` head: title, description, canonical URL, Open Graph / Twitter card tags (`assets/img/og-image.jpg`,
+- `index.html` head: title ("Meme Survival Game — …", matching the search), description, canonical URL, Open Graph / Twitter card tags (`assets/img/og-image.jpg`,
   1200×630), favicons, and `VideoGame` JSON-LD structured data. The logo is the page's `<h1>`.
 - The game logo (`assets/img/logo-round.png`, from the Doge/Pepe key art) is the favicon at every size (`favicon.ico`,
   `favicon-32/48/96.png`, `apple-touch-icon.png`, `icon-round-192/512.png`) — Google shows it next to the site in results —
   and is the `logo` in the `Organization` JSON-LD.
 - `robots.txt` + `sitemap.xml` at the root; `manifest.webmanifest` for install/home-screen.
-- **`/faq`** (`faq.html`, served clean by `cleanUrls`) answers 7 search questions (what is Meme Survival, best zombie survival
-  game, free/download, controls, characters, maps & bosses, saves & devices) with matching `FAQPage` JSON-LD. It's generated
-  so the visible answers and the structured data can't drift apart: edit the Q&A list in `tools/build_faq.py` and run
-  `python3 tools/build_faq.py` rather than hand-editing one side. The title screen links to it (top-right **FAQ**) and it's in `sitemap.xml`.
+- **Site pages** — `/characters`, `/bosses`, `/maps`, `/faq` and `/updates` (static `*.html`, served clean by `cleanUrls`)
+  give Google real text for "meme survival game" and long-tail searches (every character, boss and map by name). They
+  are **generated** by `python3 tools/build_site.py`, which reads the character, boss and map facts live from
+  `js/config.js`, so re-run it after adding or changing a character, boss or map. The FAQ answers (`QA`, with matching
+  `FAQPage` JSON-LD) and the changelog (`UPDATES`) are edited in that script, never in the HTML. Each page has its own
+  title/description, canonical, `ItemList` + `BreadcrumbList` JSON-LD, and the shared menu; the title screen links
+  to them (top-right menu) and they're all in `sitemap.xml`. Pictures are in `assets/img/site/`: portraits, boss
+  sprites and map previews exported from the game's own renderer (new characters need their portrait exported there too).
 - **`/play`** (`www.memesurvival.com/play`) is a Vercel rewrite to the same page; `js/main.js` sees the path and opens
   character select straight away (use `?play` on a local server). Its canonical still points at the homepage, so
   Google doesn't count it as a duplicate. `/play/` redirects to `/play`.

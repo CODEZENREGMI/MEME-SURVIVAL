@@ -2,10 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.memesurvival.com/</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-09-26</lastmod>
+  </url>
+  <url>
+    <loc>https://www.memesurvival.com/characters</loc>
+    <lastmod>2026-09-26</lastmod>
+  </url>
+  <url>
+    <loc>https://www.memesurvival.com/bosses</loc>
+    <lastmod>2026-09-26</lastmod>
+  </url>
+  <url>
+    <loc>https://www.memesurvival.com/maps</loc>
+    <lastmod>2026-09-26</lastmod>
   </url>
   <url>
     <loc>https://www.memesurvival.com/faq</loc>
-    <lastmod>2026-09-25</lastmod>
+    <lastmod>2026-09-26</lastmod>
+  </url>
+  <url>
+    <loc>https://www.memesurvival.com/updates</loc>
+    <lastmod>2026-09-26</lastmod>
   </url>
 </urlset>

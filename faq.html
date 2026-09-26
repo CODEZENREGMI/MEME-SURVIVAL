@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meme Survival FAQ: What Is It, How to Play, Characters &amp; Bosses</title>
-<meta name="description" content="Answers about Meme Survival, the free browser zombie shooter: what it is, the best zombie survival game to play, controls, the 20 meme characters, maps and bosses.">
+<meta name="description" content="Answers about Meme Survival, the free browser zombie game: what it is, the best zombie survival game, controls, the 20 characters, maps and bosses.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="canonical" href="https://www.memesurvival.com/faq">
 <meta name="theme-color" content="#0b0d12">
@@ -12,13 +12,13 @@
 <meta property="og:site_name" content="Meme Survival">
 <meta property="og:url" content="https://www.memesurvival.com/faq">
 <meta property="og:title" content="Meme Survival FAQ: What Is It, How to Play, Characters &amp; Bosses">
-<meta property="og:description" content="Answers about Meme Survival, the free browser zombie shooter: what it is, the best zombie survival game to play, controls, the 20 meme characters, maps and bosses.">
+<meta property="og:description" content="Answers about Meme Survival, the free browser zombie game: what it is, the best zombie survival game, controls, the 20 characters, maps and bosses.">
 <meta property="og:image" content="https://www.memesurvival.com/assets/img/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Meme Survival FAQ: What Is It, How to Play, Characters &amp; Bosses">
-<meta name="twitter:description" content="Answers about Meme Survival, the free browser zombie shooter: what it is, the best zombie survival game to play, controls, the 20 meme characters, maps and bosses.">
+<meta name="twitter:description" content="Answers about Meme Survival, the free browser zombie game: what it is, the best zombie survival game, controls, the 20 characters, maps and bosses.">
 <meta name="twitter:image" content="https://www.memesurvival.com/assets/img/og-image.jpg">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -31,31 +31,51 @@
 @font-face{font-family:'Press Start 2P';font-weight:400;font-display:swap;src:url(/assets/fonts/press-start-2p.woff2) format('woff2')}
 @font-face{font-family:'IBM Plex Mono';font-weight:400;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-400.woff2) format('woff2')}
 @font-face{font-family:'IBM Plex Mono';font-weight:700;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-700.woff2) format('woff2')}
-:root{--bg:#0b0d12;--panel:#151a25;--line:#2b3345;--text:#e8e6dc;--muted:#a3abbc;--red:#e0301e;--link:#ff7a5c}
+:root{--bg:#0b0d12;--panel:rgba(21,26,37,.88);--line:#2b3345;--text:#e8e6dc;--muted:#a3abbc;--red:#e0301e;--link:#ff7a5c}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{background:var(--bg) url(/assets/img/horror_menu.webp) center top/cover fixed;color:var(--text);font:16px/1.7 'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace}
 body::before{content:"";position:fixed;inset:0;background:linear-gradient(rgba(8,10,16,.86),rgba(8,10,16,.94));z-index:-1}
 a{color:var(--link)}
-.wrap{max-width:820px;margin:0 auto;padding:28px 16px 64px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:28px}
-.home{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-family:'Press Start 2P',monospace;font-size:12px;letter-spacing:1px}
+.px{font-family:'Press Start 2P',monospace;letter-spacing:1px}
+.wrap{max-width:1000px;margin:0 auto;padding:22px 16px 64px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+.home{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-size:12px}
 .home img{width:40px;height:40px}
-.play{display:inline-flex;align-items:center;gap:10px;font-family:'Press Start 2P',monospace;font-size:13px;letter-spacing:1px;color:#fff;text-decoration:none;
-  background:linear-gradient(#26303f,#171d28);border:2px solid #dfe2e8;padding:12px 18px;border-radius:2px;position:relative;box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--red),0 0 18px rgba(255,40,20,.55)}
+.nav{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:10px}
+.nav a{color:var(--muted);text-decoration:none;padding:6px 2px;border-bottom:2px solid transparent}
+.nav a:hover,.nav a[aria-current]{color:#fff;border-bottom-color:var(--red)}
+.play{display:inline-flex;align-items:center;gap:10px;font-size:13px;color:#fff;text-decoration:none;background:linear-gradient(#26303f,#171d28);border:2px solid #dfe2e8;padding:12px 18px;border-radius:2px;box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--red),0 0 18px rgba(255,40,20,.55)}
 .play:hover{background:linear-gradient(#324057,#1e2635)}
 .play::before{content:"";border-left:10px solid #fff;border-top:6px solid transparent;border-bottom:6px solid transparent}
-.hero{text-align:center;margin-bottom:34px}
-.hero img{width:min(260px,62vw);height:auto;filter:drop-shadow(0 8px 24px rgba(0,0,0,.6))}
-h1{font-family:'Press Start 2P',monospace;font-size:clamp(18px,4vw,28px);line-height:1.5;margin:18px 0 12px;color:#fff;text-shadow:3px 3px 0 #000}
+.hero{text-align:center;margin-bottom:30px}
+.hero img{width:min(200px,50vw);height:auto;filter:drop-shadow(0 8px 24px rgba(0,0,0,.6))}
+h1{font-size:clamp(17px,3.6vw,26px);line-height:1.5;margin:16px 0 12px;color:#fff;text-shadow:3px 3px 0 #000}
 h1 span{color:var(--red)}
-.lede{color:var(--muted);max-width:620px;margin:0 auto}
-nav.toc{background:rgba(21,26,37,.85);border:1px solid var(--line);border-radius:4px;padding:16px 20px;margin-bottom:28px}
-nav.toc strong{font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:1px;color:var(--muted)}
-nav.toc ol{margin:10px 0 0 20px}
-nav.toc li{margin:4px 0}
-.qa{background:rgba(21,26,37,.85);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:4px;padding:20px 22px;margin-bottom:18px;scroll-margin-top:16px}
-.qa h2{font-family:'Press Start 2P',monospace;font-size:clamp(12px,2.4vw,15px);line-height:1.6;color:#fff;margin-bottom:12px}
+.lede{color:var(--muted);max-width:680px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:18px 20px;margin-bottom:16px;scroll-margin-top:16px}
+.panel h2,.card h2{font-size:clamp(12px,2.2vw,15px);line-height:1.6;color:#fff;margin-bottom:10px}
+.toc{columns:2 220px;margin:10px 0 0 20px}
+.toc li{margin:3px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--red);border-radius:4px;padding:18px;scroll-margin-top:16px}
+.card .top{display:flex;gap:14px;align-items:center;margin-bottom:10px}
+.card .top img{width:96px;height:96px;flex:0 0 96px;image-rendering:pixelated;background:#0e1118;border:1px solid var(--line);border-radius:3px}
+.card .top h2{margin:0}
+.tag{display:inline-block;font-size:8px;color:#ffd86b;margin-top:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
+.chip{font-size:8px;color:#fff;background:#3a1512;border:1px solid var(--red);padding:5px 7px;border-radius:2px}
+.stats{color:var(--muted);font-size:13px;margin-top:8px}
+.card p{font-size:14px}
+.wide img{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:3px;margin-bottom:12px}
+.card.boss .top img{width:128px;height:128px;flex:0 0 128px;background:transparent;border:0}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:9px;color:var(--muted);font-weight:400}
+.log h2{font-size:12px;color:#ffd86b}
+.log ul{margin:8px 0 0 20px}
+.log li{margin:6px 0;font-size:14px}
+.qa{border-left:4px solid var(--red)}
 .qa p+p{margin-top:10px}
 .qa ul{margin:10px 0 0 20px}
 .qa li{margin:5px 0}
@@ -63,7 +83,8 @@ kbd{font:600 12px/1 'IBM Plex Mono',monospace;background:#0e1118;border:1.5px so
 .cta{text-align:center;margin-top:34px}
 .cta p{color:var(--muted);margin-bottom:18px}
 footer{text-align:center;color:var(--muted);font-size:13px;margin-top:40px}
-@media (max-width:520px){header{flex-direction:column}.qa{padding:16px}}
+footer .nav{justify-content:center;margin-bottom:10px}
+@media (max-width:640px){header{flex-direction:column}.card .top img{width:80px;height:80px;flex-basis:80px}}
 </style>
 <script type="application/ld+json">
 {
@@ -160,61 +181,30 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:40px}
 <body>
 <div class="wrap">
   <header>
-    <a class="home" href="/"><img src="/assets/img/logo-round-320.webp" alt="" width="40" height="40">MEME SURVIVAL</a>
-    <a class="play" href="/play">PLAY NOW</a>
+    <a class="home px" href="/"><img src="/assets/img/logo-round-320.webp" alt="" width="40" height="40">MEME SURVIVAL</a>
+    <nav class="nav px" aria-label="Site"><a href="/characters">CHARACTERS</a><a href="/bosses">BOSSES</a><a href="/maps">MAPS</a><a href="/faq" aria-current="page">FAQ</a><a href="/updates">UPDATES</a></nav>
+    <a class="play px" href="/play">PLAY NOW</a>
   </header>
   <main>
     <div class="hero">
       <img src="/assets/img/logo-round-320.webp" alt="Meme Survival logo" width="320" height="320">
-      <h1>Meme Survival <span>FAQ</span></h1>
+      <h1 class="px">Meme Survival <span>FAQ</span></h1>
       <p class="lede">Everything you want to know about Meme Survival, the free zombie survival shooter you play in your browser.</p>
     </div>
-    <nav class="toc" aria-label="Questions">
-      <strong>QUESTIONS</strong>
-      <ol>
-      <li><a href="#what-is-meme-survival">What is Meme Survival?</a></li>
-      <li><a href="#best-zombie-survival-game">What is the best zombie survival game?</a></li>
-      <li><a href="#free-no-download">Is Meme Survival free? Do I need to download it?</a></li>
-      <li><a href="#how-to-play-controls">How do you play Meme Survival? What are the controls?</a></li>
-      <li><a href="#characters">What characters can I play in Meme Survival?</a></li>
-      <li><a href="#maps-and-bosses">What maps and bosses are in Meme Survival?</a></li>
-      <li><a href="#saves-and-devices">Does Meme Survival save my progress? Can I play on my phone?</a></li>
-      </ol>
-    </nav>
-    <section class="qa" id="what-is-meme-survival">
-      <h2>What is Meme Survival?</h2>
-      <p><strong>Meme Survival</strong> is a free top-down pixel-art zombie survival shooter that you play right in your browser. You pick a survivor from a cast of meme characters, choose three weapons and a map, then hold out against endless waves of zombies that get faster, tougher and stranger the longer you last, with a boss waiting every 10 waves.</p><p>Every survivor has a special ability, from flooding the street with tears to summoning an army of frog clones, so each run plays differently. Your goal is simple: survive as many waves as you can and beat your high score.</p>
-    </section>
-    <section class="qa" id="best-zombie-survival-game">
-      <h2>What is the best zombie survival game?</h2>
-      <p>It depends on what you want. If you're after a big PC or console game, fans usually point to classics like <em>Left 4 Dead 2</em>, <em>Project Zomboid</em>, <em>7 Days to Die</em> and <em>Dying Light</em>, but they cost money, take a big download and a good machine.</p><p>If you want a zombie survival game you can play <strong>right now, for free, with no download</strong>, Meme Survival is built for exactly that. It loads in seconds in your browser, a run takes minutes, and 20 meme survivors with wild abilities keep it fun to replay. The best way to decide is to try it: <a href="/play">play Meme Survival now</a>.</p>
-    </section>
-    <section class="qa" id="free-no-download">
-      <h2>Is Meme Survival free? Do I need to download it?</h2>
-      <p>Yes, Meme Survival is <strong>completely free</strong>. There's nothing to download or install and you don't need an account. Open <a href="/">memesurvival.com</a> in Chrome, Edge, Firefox or Safari on a computer and start playing.</p>
-    </section>
-    <section class="qa" id="how-to-play-controls">
-      <h2>How do you play Meme Survival? What are the controls?</h2>
-      <p>Pick a survivor, choose three weapons (the pistol is always there as a backup) and pick a map. Then survive: zombies come in waves, and between waves you can spend the coins you earn in the shop.</p><ul><li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>: move</li><li><strong>Mouse</strong>: aim, <strong>click</strong> to shoot</li><li><kbd>R</kbd>: reload</li><li><kbd>1</kbd>–<kbd>5</kbd> or the scroll wheel: swap weapons</li><li><kbd>Space</kbd>: use your survivor's special ability</li><li><kbd>Esc</kbd>: pause, <kbd>F</kbd>: fullscreen</li></ul>
-    </section>
-    <section class="qa" id="characters">
-      <h2>What characters can I play in Meme Survival?</h2>
-      <p>There are <strong>20 survivors</strong>, each with their own stats, and most with a special ability. A few favourites:</p><ul><li><strong>Cry XD</strong>: cries a flood. Zombies in the water can't shoot, slow down and drown.</li><li><strong>Frogepepe</strong>: transforms into a frog and spawns an army of small frog clones.</li><li><strong>Sharkjutta</strong>: an apex predator that eats zombies whole.</li><li><strong>Sonny Jeans</strong>: doctor, plumber and pilot who punches the ground and sends a milk quake through the horde.</li><li><strong>Eggreck</strong>: turns invisible and calls in his wife as a shield.</li><li><strong>BlackEgg</strong>: tucks into a rolling egg and crushes every zombie in his path flat.</li><li><strong>Giga Ballerina</strong>: spins in a pirouette while a ring of blades slices every zombie around him.</li><li><strong>Bezuko</strong>, <strong>Spider Mad</strong>, <strong>Genom</strong>, <strong>Videoman</strong> and more, plus classic soldiers like the Rookie, Runner, Heavy and Medic.</li></ul>
-    </section>
-    <section class="qa" id="maps-and-bosses">
-      <h2>What maps and bosses are in Meme Survival?</h2>
-      <p>There are <strong>6 maps</strong>: Urban City, Suburbs, Industrial Zone, Research Lab, Race City and the hand-painted <strong>Horror House</strong>.</p><p>Every 10 waves a boss arrives: <strong>Warlord</strong> at wave 10, <strong>Ravager</strong> at 20, <strong>Bona</strong> at 30, <strong>Kraken</strong> at 40 and <strong>Tung Tung Sahur</strong> at 50. And watch out for wave 5, when the lights go out.</p>
-    </section>
-    <section class="qa" id="saves-and-devices">
-      <h2>Does Meme Survival save my progress? Can I play on my phone?</h2>
-      <p>Your high score, best wave, loadout and settings are saved automatically in your browser on the device you play on. Clearing your browser data resets them.</p><p>Meme Survival is made for <strong>computers with a keyboard and mouse</strong>. It can open on a phone or tablet, but there are no touch controls, so for the real experience play it on a laptop or desktop.</p>
-    </section>
+    <nav class="panel" aria-label="QUESTIONS"><strong class="px" style="font-size:10px;color:var(--muted)">QUESTIONS</strong><ol class="toc"><li><a href="#what-is-meme-survival">What is Meme Survival?</a></li><li><a href="#best-zombie-survival-game">What is the best zombie survival game?</a></li><li><a href="#free-no-download">Is Meme Survival free? Do I need to download it?</a></li><li><a href="#how-to-play-controls">How do you play Meme Survival? What are the controls?</a></li><li><a href="#characters">What characters can I play in Meme Survival?</a></li><li><a href="#maps-and-bosses">What maps and bosses are in Meme Survival?</a></li><li><a href="#saves-and-devices">Does Meme Survival save my progress? Can I play on my phone?</a></li></ol></nav>
+    <section class="panel qa" id="what-is-meme-survival"><h2 class="px">What is Meme Survival?</h2><p><strong>Meme Survival</strong> is a free top-down pixel-art zombie survival shooter that you play right in your browser. You pick a survivor from a cast of meme characters, choose three weapons and a map, then hold out against endless waves of zombies that get faster, tougher and stranger the longer you last, with a boss waiting every 10 waves.</p><p>Every survivor has a special ability, from flooding the street with tears to summoning an army of frog clones, so each run plays differently. Your goal is simple: survive as many waves as you can and beat your high score.</p></section>
+    <section class="panel qa" id="best-zombie-survival-game"><h2 class="px">What is the best zombie survival game?</h2><p>It depends on what you want. If you're after a big PC or console game, fans usually point to classics like <em>Left 4 Dead 2</em>, <em>Project Zomboid</em>, <em>7 Days to Die</em> and <em>Dying Light</em>, but they cost money, take a big download and a good machine.</p><p>If you want a zombie survival game you can play <strong>right now, for free, with no download</strong>, Meme Survival is built for exactly that. It loads in seconds in your browser, a run takes minutes, and 20 meme survivors with wild abilities keep it fun to replay. The best way to decide is to try it: <a href="/play">play Meme Survival now</a>.</p></section>
+    <section class="panel qa" id="free-no-download"><h2 class="px">Is Meme Survival free? Do I need to download it?</h2><p>Yes, Meme Survival is <strong>completely free</strong>. There's nothing to download or install and you don't need an account. Open <a href="/">memesurvival.com</a> in Chrome, Edge, Firefox or Safari on a computer and start playing.</p></section>
+    <section class="panel qa" id="how-to-play-controls"><h2 class="px">How do you play Meme Survival? What are the controls?</h2><p>Pick a survivor, choose three weapons (the pistol is always there as a backup) and pick a map. Then survive: zombies come in waves, and between waves you can spend the coins you earn in the shop.</p><ul><li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>: move</li><li><strong>Mouse</strong>: aim, <strong>click</strong> to shoot</li><li><kbd>R</kbd>: reload</li><li><kbd>1</kbd>–<kbd>5</kbd> or the scroll wheel: swap weapons</li><li><kbd>Space</kbd>: use your survivor's special ability</li><li><kbd>Esc</kbd>: pause, <kbd>F</kbd>: fullscreen</li></ul></section>
+    <section class="panel qa" id="characters"><h2 class="px">What characters can I play in Meme Survival?</h2><p>There are <strong>20 survivors</strong>, each with their own stats, and most with a special ability. A few favourites:</p><ul><li><strong>Cry XD</strong>: cries a flood. Zombies in the water can't shoot, slow down and drown.</li><li><strong>Frogepepe</strong>: transforms into a frog and spawns an army of small frog clones.</li><li><strong>Sharkjutta</strong>: an apex predator that eats zombies whole.</li><li><strong>Sonny Jeans</strong>: doctor, plumber and pilot who punches the ground and sends a milk quake through the horde.</li><li><strong>Eggreck</strong>: turns invisible and calls in his wife as a shield.</li><li><strong>BlackEgg</strong>: tucks into a rolling egg and crushes every zombie in his path flat.</li><li><strong>Giga Ballerina</strong>: spins in a pirouette while a ring of blades slices every zombie around him.</li><li><strong>Bezuko</strong>, <strong>Spider Mad</strong>, <strong>Genom</strong>, <strong>Videoman</strong> and more, plus classic soldiers like the Rookie, Runner, Heavy and Medic.</li></ul></section>
+    <section class="panel qa" id="maps-and-bosses"><h2 class="px">What maps and bosses are in Meme Survival?</h2><p>There are <strong>6 maps</strong>: Urban City, Suburbs, Industrial Zone, Research Lab, Race City and the hand-painted <strong>Horror House</strong>.</p><p>Every 10 waves a boss arrives: <strong>Warlord</strong> at wave 10, <strong>Ravager</strong> at 20, <strong>Bona</strong> at 30, <strong>Kraken</strong> at 40 and <strong>Tung Tung Sahur</strong> at 50. And watch out for wave 5, when the lights go out.</p></section>
+    <section class="panel qa" id="saves-and-devices"><h2 class="px">Does Meme Survival save my progress? Can I play on my phone?</h2><p>Your high score, best wave, loadout and settings are saved automatically in your browser on the device you play on. Clearing your browser data resets them.</p><p>Meme Survival is made for <strong>computers with a keyboard and mouse</strong>. It can open on a phone or tablet, but there are no touch controls, so for the real experience play it on a laptop or desktop.</p></section>
     <div class="cta">
       <p>Enough reading. The horde is waiting.</p>
-      <a class="play" href="/play">PLAY MEME SURVIVAL</a>
+      <a class="play px" href="/play">PLAY MEME SURVIVAL</a>
     </div>
   </main>
-  <footer><a href="/">memesurvival.com</a> · Free browser zombie survival shooter</footer>
+  <footer><nav class="nav px" aria-label="Site"><a href="/characters">CHARACTERS</a><a href="/bosses">BOSSES</a><a href="/maps">MAPS</a><a href="/faq" aria-current="page">FAQ</a><a href="/updates">UPDATES</a></nav><a href="/">memesurvival.com</a> · the free meme zombie survival game you play in your browser</footer>
 </div>
 </body>
 </html>
