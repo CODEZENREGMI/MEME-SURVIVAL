@@ -86,7 +86,7 @@ class Player {
     this.frenzyT = 0; this.frenzyCd = 0; this.biteCd = 0; this.lunge = null; this.chomp = 0;
     this.cryT = 0; this.cryCd = 0; this.floodR = 0; this.sob = 0;
     this.rollT = 0; this.rollCd = 0; this.rollVx = 0; this.rollVy = 0; this.spin = 0; this.rumble = 0; this.rollHits = new WeakMap(); this.rollLoop = null;
-    this.spinT = 0; this.spinCd = 0; this.spinTick = 0; this.spinA = 0; this.whoosh = 0;
+    this.spinT = 0; this.spinCd = 0; this.spinTick = 0; this.spinA = 0; this.whoosh = 0; this.spinLoop = null;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -325,6 +325,7 @@ class Player {
     if (this.spinCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `SPIN IN ${Math.ceil(this.spinCd)}s`, '#9aa3b5'); return false; }
     this.spinT = sp.duration; this.spinTick = 0; this.spinA = 0; this.reloading = false;
     Audio8.noise(0.35, 0.3, 2400); Audio8.tone(420, 0.3, 'triangle', 0.18, 500); g.shake(3);
+    if (sp.sound) { Audio8.stopHandle(this.spinLoop); this.spinLoop = Audio8.playClip(sp.sound, 1, { loop: true }); }   // his song, for as long as he dances
     for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 10, this.y + Math.sin(a) * 10, Math.cos(a) * 90, Math.sin(a) * 90, 0.4, i % 2 ? '#eeb3bd' : '#fff0d8', 2, 'dot')); }
     g.showAbilityBanner('PIROUETTE', `${sp.duration}s · WASD to glide · slice them all`);
     return true;
@@ -1099,9 +1100,9 @@ class Player {
     if (this.char.spin) { const sn = this.char.spin;
       if (this.spinT > 0) { this.spinT -= dt; this.spinA += dt * 17;   // ~2.7 turns a second
         this.spinTick -= dt; if (this.spinTick <= 0) { this.spinTick = sn.tick; this.spinSlice(); }
-        this.whoosh -= dt; if (this.whoosh <= 0) { this.whoosh = 0.37; Audio8.noise(0.16, 0.09, 1600 + Math.random() * 600); }   // a whoosh each turn
+        this.whoosh -= dt; if (!sn.sound && this.whoosh <= 0) { this.whoosh = 0.37; Audio8.noise(0.16, 0.09, 1600 + Math.random() * 600); }   // a whoosh each turn
         if (Math.random() < 0.5) { const a = this.spinA + Math.random() * 0.6; this.game.particles.push(new Particle(this.x + Math.cos(a) * sn.radius, this.y + Math.sin(a) * sn.radius * 0.8, -Math.sin(a) * 40, Math.cos(a) * 40, 0.3, Math.random() < 0.5 ? '#eeb3bd' : '#fff0d8', 1.5, 'dot')); }
-        if (this.spinT <= 0) { this.spinT = 0; this.spinCd = sn.cooldown; this.game.floatText(this.x, this.y - 18, 'CURTSY', '#eeb3bd'); Audio8.play('reloaded'); } }
+        if (this.spinT <= 0) { this.spinT = 0; this.spinCd = sn.cooldown; Audio8.stopHandle(this.spinLoop, 0.5); this.spinLoop = null; this.game.floatText(this.x, this.y - 18, 'CURTSY', '#eeb3bd'); Audio8.play('reloaded'); } }
       else if (this.spinCd > 0) { this.spinCd -= dt; if (this.spinCd <= 0) { this.spinCd = 0; this.game.floatText(this.x, this.y - 18, 'READY TO DANCE', '#eeb3bd'); Audio8.play('xp'); } } }
     if (this.char.roll) { const rl = this.char.roll;
       if (this.rollT > 0) { this.rollT -= dt;
