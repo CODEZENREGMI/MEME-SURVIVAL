@@ -173,7 +173,7 @@ transformation still uses the pixel-map frog in `js/sprites.js`.
 
 ## itch.io build
 
-Published at **https://memesurvival.itch.io/meme-survival**. The site links to it (ITCH.IO in the title-screen menu, and
+Published at **https://memesurvival.itch.io/meme-survival**. The site links to it (ITCH.IO inside the title screen's ☰ MENU, and
 every site page's footer) and lists it as `sameAs` on the `Organization` and `VideoGame` JSON-LD, so Google treats both
 as the same game.
 
@@ -223,7 +223,7 @@ and link previews read:
   `js/config.js`, so re-run it after adding or changing a character, boss or map. The FAQ answers (`QA`, with matching
   `FAQPage` JSON-LD) and the changelog (`UPDATES`) are edited in that script, never in the HTML. Each page has its own
   title/description, canonical, `ItemList` + `BreadcrumbList` JSON-LD, and the shared menu; the title screen links
-  to them (top-right menu) and they're all in `sitemap.xml`. Pictures are in `assets/img/site/`: portraits, boss
+  to them (top-right ☰ MENU, a `<details>` dropdown that works before the code loads; `main.js` closes it on an outside click or Esc) and they're all in `sitemap.xml`. Pictures are in `assets/img/site/`: portraits, boss
   sprites and map previews exported from the game's own renderer (new characters need their portrait exported there too).
 - **`/play`** (`www.memesurvival.com/play`) is a Vercel rewrite to the same page; `js/main.js` sees the path and opens
   character select straight away (use `?play` on a local server). Its canonical still points at the homepage, so

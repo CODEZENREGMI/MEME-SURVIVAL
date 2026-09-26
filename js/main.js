@@ -8,6 +8,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // memesurvival.com/play skips the title and opens character select (?play does the same on a local server)
   if (/^\/play\/?$/.test(location.pathname) || new URLSearchParams(location.search).has('play')) ui.openSetup();
   window.game = game; window.ui = ui;
+  const menu = document.querySelector('.title-menu');   // the title screen's MENU: click away or Esc closes it
+  if (menu) { document.addEventListener('click', e => { if (menu.open && !menu.contains(e.target)) menu.open = false; }); document.addEventListener('keydown', e => { if (e.key === 'Escape' && menu.open) menu.open = false; }, true); }
   document.documentElement.classList.add('ready');   // PLAY and SETTINGS work from here
   setTimeout(() => document.documentElement.classList.add('alive'), 6000);   // never leave the canvas hidden, whatever happens
 });

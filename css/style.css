@@ -74,11 +74,24 @@ html:not(.ready) #ov-title .btn{opacity:.55;pointer-events:none}
 .ico{flex:0 0 auto;display:block;height:24px;width:auto}
 .play-btn .ico{height:22px}
 .score-line{font-size:16px;color:#eceef2;letter-spacing:.03em;margin-top:18px;text-shadow:0 2px 0 #000,0 0 8px rgba(0,0,0,.9)}
-/* site menu, top-right of the title screen */
-.title-nav{position:absolute;top:16px;right:18px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:calc(100% - 36px)}
-.title-nav a{font-family:var(--pixel);font-size:10px;letter-spacing:1px;color:#eceef2;text-decoration:none;padding:8px 10px;
-  border:1.5px solid #c9ced8;border-radius:3px;background:rgba(14,17,24,.8);text-shadow:0 2px 0 #000}
-.title-nav a:hover{border-color:#ff3322;box-shadow:0 0 12px rgba(255,40,20,.6)}
+/* site menu, top-right of the title screen: one MENU button, the page links open under it */
+.title-menu{position:absolute;top:16px;right:18px;z-index:3}
+.title-menu summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:10px;font-family:var(--pixel);font-size:10px;letter-spacing:1px;
+  color:#eceef2;padding:9px 12px;border:1.5px solid #c9ced8;border-radius:3px;background:rgba(14,17,24,.8);text-shadow:0 2px 0 #000;user-select:none}
+.title-menu summary::-webkit-details-marker{display:none}
+.title-menu summary:focus-visible{outline:none}
+.title-menu summary:hover,.title-menu summary:focus-visible,.title-menu[open] summary{border-color:#ff3322;box-shadow:0 0 12px rgba(255,40,20,.6)}
+.burger{position:relative;width:12px;height:2px;background:currentColor;box-shadow:0 -4px 0 currentColor,0 4px 0 currentColor;margin:4px 0}
+.title-menu[open] .burger{background:transparent;box-shadow:none}
+.title-menu[open] .burger::before,.title-menu[open] .burger::after{content:"";position:absolute;left:0;top:0;width:12px;height:2px;background:currentColor;transform:rotate(45deg)}
+.title-menu[open] .burger::after{transform:rotate(-45deg)}
+.menu-panel{position:absolute;right:0;top:calc(100% + 8px);display:flex;flex-direction:column;gap:6px;min-width:180px;padding:10px;
+  background:rgba(10,12,18,.95);border:1.5px solid #c9ced8;border-radius:3px;box-shadow:0 12px 30px rgba(0,0,0,.65);animation:menuin .12s ease-out}
+@keyframes menuin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.menu-panel a{display:flex;justify-content:space-between;align-items:center;font-family:var(--pixel);font-size:10px;letter-spacing:1px;color:#eceef2;text-decoration:none;
+  padding:10px 12px;border:1.5px solid #3a4150;border-radius:2px;background:rgba(22,27,38,.9);text-shadow:0 2px 0 #000}
+.menu-panel a:hover,.menu-panel a:focus-visible{border-color:#ff3322;box-shadow:0 0 10px rgba(255,40,20,.5);outline:none}
+.menu-panel .ext{color:#ff7a5c;margin-left:10px}
 /* controls strip along the bottom, every key in its own cap */
 .keybar{position:absolute;left:0;right:0;bottom:22px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
   gap:8px 30px;padding:0 16px;font-size:13px;color:#e3e6ec;text-shadow:0 2px 3px rgba(0,0,0,.95)}
