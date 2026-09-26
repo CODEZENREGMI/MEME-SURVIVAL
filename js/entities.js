@@ -353,7 +353,7 @@ class Player {
     this.mgFire = mg.interval / this.fireMult; this.recoil = mg.kick; this.mgFlash = 0.06;
     this.mgCfg = this.mgCfg || Object.assign({}, WEAPONS.minigun, { damage: mg.damage, spread: mg.spread, speed: mg.speed, range: mg.range, kick: mg.kick });
     const mx = this.x + Math.cos(this.angle) * 22, my = this.y + 3 + Math.sin(this.angle) * 22;
-    const b = new Bullet(g, mx, my, this.angle + (Math.random() - 0.5) * mg.spread * 2, this.mgCfg, this.damageMult); b.hot = true; g.bullets.push(b);
+    const b = new Bullet(g, mx, my, this.angle + (Math.random() - 0.5) * mg.spread * 2, this.mgCfg, this.damageMult); b.fire = mg; g.bullets.push(b);   // incendiary
     g.muzzle(mx, my, this.angle, 2); g.lights.push({ x: mx, y: my, r: 70, life: 0.05, max: 0.05 });
     const ea = this.angle + (this.flip ? -1 : 1) * Math.PI / 2;   // brass flying out of the side
     g.particles.push(new Particle(this.x + Math.cos(this.angle) * 6, this.y + 2, Math.cos(ea) * (40 + Math.random() * 30), Math.sin(ea) * (40 + Math.random() * 30) - 30, 0.5, '#e0b040', 1.5, 'dot'));
@@ -2204,10 +2204,11 @@ class Bullet {
     }
     if (this.game.map.solidAt(nx, ny) || nx < 0 || ny < 0 || nx > this.game.map.pw || ny > this.game.map.ph) { this.impact(); return; }
     this.x = nx; this.y = ny;
+    if (this.fire && Math.random() < 0.35) this.game.particles.push(new Particle(this.x, this.y, (Math.random() - 0.5) * 16 - this.vx * 0.04, (Math.random() - 0.5) * 16 - this.vy * 0.04, 0.22, Math.random() < 0.5 ? '#ff7a1a' : '#ffb02a', 1.5, 'fire'));   // embers shed as it flies
     if (this.rocket) { this.smoke -= dt; if (this.smoke <= 0) { this.smoke = 0.02; this.game.particles.push(new Particle(this.x, this.y, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, 0.5, '#9a9a9a', 2, 'smoke')); } }
     if (dist(this.sx, this.sy, this.x, this.y) > this.range) { if (this.rocket) this.impact(); else this.dead = true; }
   }
-  impact() { this.dead = true; if (this.lava) { const g = this.game; g.explode(this.x, this.y, this.explosive, this.damage, true); for (const z of g.zombies) { if (!z.dead && dist(this.x, this.y, z.x, z.y) < this.explosive + 14 + z.r) z.burn = Math.max(z.burn, 3); } g.map.splat(this.x, this.y, 9, '#7a2408'); g.lights.push({ x: this.x, y: this.y, r: 120, life: 0.5, max: 0.5 }); for (let i = 0; i < 14; i++) { const a = Math.random() * TAU, sp = 40 + Math.random() * 80; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp - 40, 0.6 + Math.random() * 0.5, i % 3 ? '#ff7a1a' : '#3a1a10', 3, 'blood')); } return; } if (this.explosive) this.game.explode(this.x, this.y, this.explosive, this.damage, true); else if (this.venom) this.game.map.splat(this.x, this.y, 5, '#0a0a0e'); else if (!this.flame) this.game.spark(this.x, this.y, 3); }
+  impact() { this.dead = true; if (this.fire) for (let i = 0; i < 4; i++) this.game.particles.push(new Particle(this.x, this.y, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80, 0.25, i % 2 ? '#ff7a1a' : '#fff0a0', 1.5, 'fire')); if (this.lava) { const g = this.game; g.explode(this.x, this.y, this.explosive, this.damage, true); for (const z of g.zombies) { if (!z.dead && dist(this.x, this.y, z.x, z.y) < this.explosive + 14 + z.r) z.burn = Math.max(z.burn, 3); } g.map.splat(this.x, this.y, 9, '#7a2408'); g.lights.push({ x: this.x, y: this.y, r: 120, life: 0.5, max: 0.5 }); for (let i = 0; i < 14; i++) { const a = Math.random() * TAU, sp = 40 + Math.random() * 80; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp - 40, 0.6 + Math.random() * 0.5, i % 3 ? '#ff7a1a' : '#3a1a10', 3, 'blood')); } return; } if (this.explosive) this.game.explode(this.x, this.y, this.explosive, this.damage, true); else if (this.venom) this.game.map.splat(this.x, this.y, 5, '#0a0a0e'); else if (!this.flame) this.game.spark(this.x, this.y, 3); }
   draw(ctx) {
     if (this.lava) { // a glowing rock lobbed in an arc: shadow on the ground, the stone above it, embers trailing
       const t = Math.min(1, dist(this.sx, this.sy, this.x, this.y) / this.range), h = Math.sin(t * Math.PI) * 36, tt = this.game.time;
@@ -2223,6 +2224,15 @@ class Bullet {
     if (this.flame) { const t = dist(this.sx, this.sy, this.x, this.y) / this.range; const sz = 3 + t * 6; ctx.globalAlpha = 0.85 - t * 0.55; ctx.fillStyle = this.pink ? (t < 0.3 ? '#ffd0e8' : t < 0.6 ? '#ff5aa8' : '#c0206a') : t < 0.3 ? '#fff2a0' : t < 0.6 ? '#ffb02a' : '#e0451a'; ctx.fillRect(Math.round(this.x - sz / 2), Math.round(this.y - sz / 2), Math.ceil(sz), Math.ceil(sz)); ctx.globalAlpha = 1; return; }
     if (this.rocket) { Sprites.draw(ctx, 'gun_rocket', this.x, this.y, { angle: this.angle, scale: 0.5, ox: -4, oy: -2 }); ctx.fillStyle = '#ff6a2a'; ctx.beginPath(); ctx.arc(this.x - Math.cos(this.angle) * 5, this.y - Math.sin(this.angle) * 5, 2.5, 0, TAU); ctx.fill(); return; }
     if (this.giant) { ctx.fillStyle = 'rgba(255,200,60,0.35)'; ctx.beginPath(); ctx.arc(this.x, this.y, 7, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff3b0'; ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffb02a'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx * 0.03, this.y - this.vy * 0.03); ctx.stroke(); return; }
+    if (this.fire) { // incendiary round: glow, a red-orange flame streak tapering behind a white-hot core
+      const tx = this.x - this.vx * 0.035, ty = this.y - this.vy * 0.035, tt = this.game.time * 30 + this.sx;
+      const gl = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 8); gl.addColorStop(0, 'rgba(255,170,60,0.55)'); gl.addColorStop(1, 'rgba(255,90,20,0)'); ctx.fillStyle = gl; ctx.fillRect(this.x - 8, this.y - 8, 16, 16);
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(200,40,10,0.75)'; ctx.lineWidth = 4 + Math.sin(tt) * 0.8; ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(tx, ty); ctx.stroke();
+      ctx.strokeStyle = '#ff7a1a'; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx * 0.025, this.y - this.vy * 0.025); ctx.stroke();
+      ctx.strokeStyle = '#fff4b0'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx * 0.012, this.y - this.vy * 0.012); ctx.stroke();
+      ctx.lineCap = 'butt'; return;
+    }
     ctx.strokeStyle = this.hot ? '#ff8a2a' : this.big ? '#fff3b0' : '#f5c518'; ctx.lineWidth = this.hot ? 2.5 : this.big ? 2 : 1.5;
     ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx * 0.02, this.y - this.vy * 0.02); ctx.stroke();
   }

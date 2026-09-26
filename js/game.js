@@ -793,6 +793,10 @@ class Game {
           if (b.flame) { z.takeDamage(b.damage, b.angle, undefined, 0.15, true); z.burn = Math.max(z.burn, 2.5); if (b.pierce-- <= 0) b.dead = true; if (b.dead) break; continue; }
           if (b.venom) { z.takeDamage(b.damage, b.angle, undefined, 0.3, true); z.poison = Math.max(z.poison || 0, 3); for (let i = 0; i < 3; i++) this.particles.push(new Particle(b.x, b.y, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60 - 20, 0.35, i ? '#0a0a0e' : '#5fd35a', 2, 'blood')); if (b.pierce-- <= 0) b.dead = true; if (b.dead) break; continue; }
           z.takeDamage(b.damage, b.angle); Audio8.play('hit');
+          if (b.fire && !z.dead) { const F = b.fire;   // incendiary: it catches, and keeps burning
+            if (!z.cfg.boss) z.burn = Math.max(z.burn, F.burn);
+            else if (!(z.igniteCd > this.time)) { z.burn = Math.max(z.burn, F.bossBurn); z.igniteCd = this.time + F.bossIgniteCd; }   // bosses only catch now and then
+            for (let i = 0; i < 3; i++) this.particles.push(new Particle(b.x, b.y, (Math.random() - 0.5) * 70, -20 - Math.random() * 50, 0.35, i ? '#ff7a1a' : '#ffd23a', 2, 'fire')); }
           if (b.pierce-- <= 0) { b.dead = true; break; }
         }
       }
