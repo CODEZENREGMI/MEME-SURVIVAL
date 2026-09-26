@@ -165,7 +165,7 @@ const CHARACTERS = {
   runner: { name: 'Runner',   tag: 'Fast & fragile', hp: 75,  speed: 1.28, damage: 0.9,  firerate: 1.05, reload: 1.0, regen: 0,
             desc: 'Outruns anything. Can\'t take many hits. Ability: RUSH — 15 s of blazing speed, infinite ammo and max fire rate on any gun.',
             pal: { B: '#c8382a', b: '#8a1f18', D: '#e0b040', J: '#2a2d36' },
-            rush: { name: 'RUSH', duration: 15, cooldown: 45, speed: 1.8, interval: 0.06 } },
+            rush: { name: 'RUSH', duration: 15, cooldown: 45, sound: 'assets/audio/runner_rush.mp3', speed: 1.8, interval: 0.06 } },
   heavy:  { name: 'Heavy',    tag: 'Tough & slow',   hp: 160, speed: 0.82, damage: 1.15, firerate: 0.95, reload: 1.15, regen: 0,
             desc: 'Walking wall. Hits hard, moves like a tank. Ability: SQUAD — calls in 6 clones of himself for 20 s.',
             pal: { B: '#4a5d3a', b: '#2f3d25', D: '#1a1a1a', J: '#3b3b3b', S: '#d8a47a' },

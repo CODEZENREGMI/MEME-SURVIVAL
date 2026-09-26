@@ -19,7 +19,7 @@ then visit <http://localhost:8765>.
 | Survivor | Trait |
 |----------|-------|
 | Rookie | Balanced |
-| Runner | +28% speed, 75 HP. Ability **RUSH** (`Space`): 15 s of 1.8× speed, infinite ammo, no reloads, and every gun fires at minigun speed — even the Magnum and Rocket Launcher. 45 s recharge |
+| Runner | +28% speed, 75 HP. Ability **RUSH** (`Space`): his run sound (`assets/audio/runner_rush.mp3`) loops for the whole rush and fades out when it ends; 15 s of 1.8× speed, infinite ammo, no reloads, and every gun fires at minigun speed — even the Magnum and Rocket Launcher. 45 s recharge |
 | Heavy | 160 HP, +15% damage, slow. Ability **SQUAD** (`Space`): calls in 6 clones of himself for 20 s — they follow in formation, shoot zombies with SMGs, and zombies/bosses target them too. 35 s recharge |
 | Medic | Regenerates health, health packs heal double. Ability **MED FIELD** (`Space`): a green healing aura around him for 20 s, restoring 12 HP/s steadily (about a heart every 2 s); also heals clones inside it. 45 s recharge |
 | Canimal | A robot in disguise. Ability **ROLL OUT** (`Space`): transforms into an armoured red-and-blue truck for 25 s — WASD = the direction you want to go (the truck swings its nose toward it, brakes first if you reverse), momentum and drifting, ram zombies for speed-based damage, and two **M249 turrets** on the window sides that rotate 360° to follow your mouse and fire alternately with infinite ammo. 40% damage resistance, headlights on the horror map. 45 s recharge |

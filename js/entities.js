@@ -73,7 +73,7 @@ class Player {
     this.ability = { active: 0, cd: 0, weapon: null };   // weapon special (minigun OVERDRIVE)
     this.form = 'human'; this.morphT = 0; this.formTime = 0; this.formCd = 0; this.jump = null; this.height = 0; this.leapCd = 0; this.smashCd = 0; this.swipe = 0; this.swipeAngle = 0;
     this.beastAmmo = BEAST_GUN.mag; this.beastKills = 0; this.beastMuzzle = 0;
-    this.rush = 0; this.rushCd = 0; this.trail = [];
+    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null;
     this.squadTime = 0; this.squadCd = 0;
     this.fieldTime = 0; this.fieldCd = 0;
     this.car = null; this.carCd = 0;
@@ -124,6 +124,7 @@ class Player {
     if (this.rushCd > 0) { Audio8.play('empty'); this.game.floatText(this.x, this.y - 16, `RUSH IN ${Math.ceil(this.rushCd)}s`, '#9aa3b5'); return false; }
     this.rush = r.duration; this.reloading = false; this.wstate.mag = this.wcfg.mag;
     Audio8.play('levelup'); Audio8.play('weapon'); this.game.shake(5); this.game.whiteFlash = 0.15;
+    if (r.sound) { Audio8.stopHandle(this.rushLoop); this.rushLoop = Audio8.playClip(r.sound, 1, { loop: true }); }   // run!, on repeat until the rush wears off
     this.game.showAbilityBanner('RUSH', `${r.duration}s · run like hell · ∞ ammo · max fire rate on every gun`);
     for (let i = 0; i < 24; i++) { const a = i / 24 * TAU; this.game.particles.push(new Particle(this.x, this.y, Math.cos(a) * 140, Math.sin(a) * 140, 0.35, '#5ec2ff', 2, 'dot')); }
     return true;
@@ -1144,7 +1145,7 @@ class Player {
     if (this.squadTime > 0) { this.squadTime -= dt; if (this.squadTime <= 0) { this.squadTime = 0; this.squadCd = this.char.squad.cooldown; this.game.clones.forEach(c => c.vanish()); this.game.floatText(this.x, this.y - 18, 'SQUAD OUT', '#9aa3b5'); Audio8.play('reloaded'); } }
     else if (this.squadCd > 0) { this.squadCd -= dt; if (this.squadCd <= 0) { this.squadCd = 0; this.game.floatText(this.x, this.y - 18, 'SQUAD READY', '#8bd35a'); Audio8.play('xp'); } }
     if (this.rush > 0) { this.rush -= dt; this.trail.unshift({ x: this.x, y: this.y, flip: this.flip }); if (this.trail.length > 8) this.trail.pop(); if (this.moving && Math.random() < 0.7) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 8, this.y + 6, (Math.random() - 0.5) * 20, -10, 0.3, '#5ec2ff', 1.5, 'dot'));
-      if (this.rush <= 0) { this.rush = 0; this.rushCd = this.char.rush.cooldown; this.trail = []; this.game.floatText(this.x, this.y - 18, 'RUSH OVER', '#9aa3b5'); Audio8.play('reloaded'); } }
+      if (this.rush <= 0) { this.rush = 0; this.rushCd = this.char.rush.cooldown; this.trail = []; Audio8.stopHandle(this.rushLoop, 0.4); this.rushLoop = null; this.game.floatText(this.x, this.y - 18, 'RUSH OVER', '#9aa3b5'); Audio8.play('reloaded'); } }
     else if (this.rushCd > 0) { this.rushCd -= dt; if (this.rushCd <= 0) { this.rushCd = 0; this.game.floatText(this.x, this.y - 18, 'RUSH READY', '#5ec2ff'); Audio8.play('xp'); } }
     if (this.ability.active > 0) { this.ability.active -= dt; if (this.ability.active <= 0) { this.ability.active = 0; this.ability.cd = WEAPONS[this.ability.weapon].ability.cooldown; this.game.floatText(this.x, this.y - 18, 'OVERDRIVE OVER', '#9aa3b5'); Audio8.play('reloaded'); } }
     else if (this.ability.cd > 0) { this.ability.cd -= dt; if (this.ability.cd <= 0) { this.ability.cd = 0; if (this.wcfg.ability) { this.game.floatText(this.x, this.y - 18, this.wcfg.ability.name + ' READY', '#ffb02a'); Audio8.play('xp'); } } }
