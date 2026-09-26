@@ -247,8 +247,12 @@ const CHARACTERS = {
             pal: { K: '#16160f', W: '#f2f0e8', w: '#c9c7bd', B: '#2f7fd8', b: '#7ab2ea', M: '#241a18', R: '#8c3a34', C: '#2c3340', c: '#1c222c' },
             cry: { name: 'CRY FLOOD', duration: 20, cooldown: 20, radius: 135, grow: 0.8, drain: 0.7, sound: 'assets/audio/cry_flood.mp3', soundLen: 8.1,
                    slow: 0.3, bossSlow: 0.6, push: 46, bossPush: 12, dps: 14, pct: 0.02 } },   // regular zombies are held at the edge; bosses wade in
+  blackegg: { name: 'BlackEgg', tag: 'Meme', hp: 100, speed: 1.0, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'blackegg', portrait: 'blackegg',
+            portraitImg: 'assets/img/blackegg_portrait.png',   // the egg-man meme redrawn in pixels; the sprite is hand-placed in js/sprites.js
+            desc: 'An egg with a face, eyes calmly closed, chin resting in his white gloves. Nothing rattles him, not even the end of the world. Balanced all-rounder.',
+            pal: { K: '#1c120e', H: '#b98468', E: '#8e5c45', e: '#6a4130', D: '#2b1a13', M: '#5b3527', m: '#a3705a', W: '#ece7e3', w: '#b5ada9', S: '#3b2419', s: '#d8d2ce' } },
 };
-const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry'];
+const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg'];
 
 /* maps */
 const MAPS = {

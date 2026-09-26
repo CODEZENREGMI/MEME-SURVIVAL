@@ -12,7 +12,7 @@ QA = [
   "<p>It depends on what you want. If you're after a big PC or console game, fans usually point to classics like <em>Left 4 Dead 2</em>, "
   "<em>Project Zomboid</em>, <em>7 Days to Die</em> and <em>Dying Light</em>, but they cost money, take a big download and a good machine.</p>"
   "<p>If you want a zombie survival game you can play <strong>right now, for free, with no download</strong>, Meme Survival is built for exactly that. "
-  "It loads in seconds in your browser, a run takes minutes, and 18 meme survivors with wild abilities keep it fun to replay. "
+  "It loads in seconds in your browser, a run takes minutes, and 19 meme survivors with wild abilities keep it fun to replay. "
   "The best way to decide is to try it: <a href=\"/play\">play Meme Survival now</a>.</p>"),
  ("Is Meme Survival free? Do I need to download it?", "free-no-download",
   "<p>Yes, Meme Survival is <strong>completely free</strong>. There's nothing to download or install and you don't need an account. "
@@ -27,7 +27,7 @@ QA = [
   "<li><kbd>Space</kbd>: use your survivor's special ability</li>"
   "<li><kbd>Esc</kbd>: pause, <kbd>F</kbd>: fullscreen</li></ul>"),
  ("What characters can I play in Meme Survival?", "characters",
-  "<p>There are <strong>18 survivors</strong>, each with their own stats and a special ability. A few favourites:</p>"
+  "<p>There are <strong>19 survivors</strong>, each with their own stats, and most with a special ability. A few favourites:</p>"
   "<ul><li><strong>Cry XD</strong>: cries a flood. Zombies in the water can't shoot, slow down and drown.</li>"
   "<li><strong>Frogepepe</strong>: transforms into a frog and spawns an army of small frog clones.</li>"
   "<li><strong>Sharkjutta</strong>: an apex predator that eats zombies whole.</li>"
@@ -48,7 +48,7 @@ def text(h):
     t = re.sub(r'<li>', ' • ', h); t = re.sub(r'</p>\s*<p>', ' ', t); t = re.sub(r'<[^>]+>', '', t)
     return re.sub(r'\s+', ' ', html.unescape(t)).strip()
 title = "Meme Survival FAQ: What Is It, How to Play, Characters & Bosses"
-desc = "Answers about Meme Survival, the free browser zombie shooter: what it is, the best zombie survival game to play, controls, the 18 meme characters, maps and bosses."
+desc = "Answers about Meme Survival, the free browser zombie shooter: what it is, the best zombie survival game to play, controls, the 19 meme characters, maps and bosses."
 ld = {"@context": "https://schema.org", "@graph": [
   {"@type": "FAQPage", "@id": U + "faq#faq", "url": U + "faq", "name": title, "isPartOf": {"@id": U + "#website"},
    "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": text(a)}} for q, _, a in QA]},
