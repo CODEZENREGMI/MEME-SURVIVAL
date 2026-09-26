@@ -257,6 +257,14 @@ def toc_panel(label, links):
     return '    <nav class="panel" aria-label="{0}"><strong class="px" style="font-size:10px;color:var(--muted)">{0}</strong><ol class="toc">{1}</ol></nav>\n'.format(label, items)
 
 
+import hashlib
+
+
+def img(path):
+    """Site images are cached for a year, so each link carries a fingerprint of the file: a redrawn picture gets a new URL."""
+    return '/' + path + '?v=' + hashlib.sha1(open(path, 'rb').read()).hexdigest()[:8]
+
+
 pages = {}
 
 # ------------------------------------------------------------------ FAQ
@@ -277,10 +285,10 @@ for c in GAME['chars']:
     stats = 'HP {0} · Speed {1} · Damage {2} · Fire rate {3}'.format(c['hp'], mult(c['speed']), mult(c['damage']), mult(c['firerate']))
     cards.append(
         '    <article class="card" id="{id}">\n'
-        '      <div class="top"><img src="/assets/img/site/char_{id}.png" alt="{name}, pixel-art survivor from Meme Survival" width="96" height="96" loading="lazy">\n'
+        '      <div class="top"><img src="{src}" alt="{name}, pixel-art survivor from Meme Survival" width="96" height="96" loading="lazy">\n'
         '        <div><h2 class="px">{name}</h2><span class="tag px">{tag}</span></div></div>\n'
         '      {chips}\n      <p>{desc}</p>\n      <p class="stats">{stats}</p>\n'
-        '    </article>'.format(id=c['id'], name=E(c['name']), tag=E(c['tag']), chips=chips, desc=E(c['desc']), stats=stats))
+        '    </article>'.format(id=c['id'], src=img('assets/img/site/char_' + c['id'] + '.png'), name=E(c['name']), tag=E(c['tag']), chips=chips, desc=E(c['desc']), stats=stats))
 body = toc_panel(f'ALL {N} SURVIVORS', [(c['id'], c['name']) for c in GAME['chars']])
 body += '    <div class="grid">\n' + '\n'.join(cards) + '\n    </div>'
 t = f"Meme Survival Characters: All {N} Survivors and Their Abilities"
@@ -299,10 +307,10 @@ for w, k in ms:
     b = B[k]
     cards.append(
         '    <article class="card boss" id="{k}">\n'
-        '      <div class="top"><img src="/assets/img/site/boss_{k}.png" alt="{title}, the wave {w} boss in Meme Survival" width="128" height="128" loading="lazy">\n'
+        '      <div class="top"><img src="{src}" alt="{title}, the wave {w} boss in Meme Survival" width="128" height="128" loading="lazy">\n'
         '        <div><h2 class="px">{name}</h2><span class="tag px">WAVE {w} · {hp} HP</span></div></div>\n'
         '      <p>{desc}</p>\n'
-        '    </article>'.format(k=k, w=w, title=E(b['name'].title()), name=E(b['name']), hp=b['hp'], desc=E(b['desc'])))
+        '    </article>'.format(k=k, src=img('assets/img/site/boss_' + k + '.png'), w=w, title=E(b['name'].title()), name=E(b['name']), hp=b['hp'], desc=E(b['desc'])))
 rows = ''.join('<tr><td class="px" style="font-size:10px">{0}</td><td>wave {1}+</td><td>{2}</td></tr>'.format(E(b['name']), b['minWave'], E(b['desc']))
                for k, b in sorted(B.items(), key=lambda kv: kv[1]['minWave']) if not b['special'] and k not in milestone_ids)
 dw = GAME['dread']
@@ -328,9 +336,9 @@ for m in GAME['maps']:
     tag = '<span class="tag px">{0}</span>'.format(E(m['tag'])) if m['tag'] else ''
     cards.append(
         '    <article class="card wide" id="{id}">\n'
-        '      <img src="/assets/img/site/map_{id}.webp" alt="Overview of the {name} map in Meme Survival" width="640" height="320" loading="lazy">\n'
+        '      <img src="{src}" alt="Overview of the {name} map in Meme Survival" width="640" height="320" loading="lazy">\n'
         '      <h2 class="px">{name}</h2>{tag}\n      <p style="margin-top:8px">{desc}</p>\n'
-        '    </article>'.format(id=m['id'], name=E(m['name']), tag=tag, desc=E(m['desc'])))
+        '    </article>'.format(id=m['id'], src=img('assets/img/site/map_' + m['id'] + '.webp'), name=E(m['name']), tag=tag, desc=E(m['desc'])))
 M = len(GAME['maps'])
 body = '    <div class="grid">\n' + '\n'.join(cards) + '\n    </div>'
 t = f"Meme Survival Maps: All {M} Maps, Including Horror House"

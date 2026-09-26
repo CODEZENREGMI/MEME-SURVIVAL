@@ -237,8 +237,9 @@ const CHARACTERS = {
             pal: { K: '#14100c', S: '#edb894', s: '#a8836a', H: '#ffe0c0', W: '#f6f4ec', E: '#4a6a78', L: '#3173c9', l: '#204f92', B: '#1f5aa8', D: '#2b4a80', d: '#1d3560' },   // blue scrubs
             slam: { name: 'MILK QUAKE', cooldown: 10, windup: 0.4, radius: 330, damage: 70, stun: 3, bossStun: 1.2, wave: 0.7, sound: 'assets/audio/milk_quake.mp3' } },
   shark:   { name: 'Sharkjutta', tag: 'Apex predator', hp: 115, speed: 1.15, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'shark', portrait: 'shark_portrait',
+            portraitImg: 'assets/img/shark_portrait.png',   // the shark-in-sneakers meme redrawn in pixels; the sprite is hand-placed
             desc: 'A shark that grew legs and bought running shoes. FEEDING FRENZY (Space): for 12 s he drops the gun and hunts — LMB lunges forward and whatever is in his jaws is swallowed whole. Every zombie eaten heals him. 30 s recharge.',
-            pal: { K: '#12161a', G: '#5c6d79', g: '#3c4a54', W: '#d9dee3', T: '#f6f4ec', E: '#0d1013', B: '#1f9ada', b: '#1573a5', S: '#eef1f4' },
+            pal: { K: '#12161a', G: '#5c6d79', g: '#3c4a54', W: '#d9dee3', w: '#aab3ba', T: '#f6f4ec', E: '#0d1013', B: '#1f9ada', b: '#1573a5', S: '#eef1f4', s: '#b9c1c8' },
             shark: { name: 'FEEDING FRENZY', duration: 12, cooldown: 30, speed: 1.3, armor: 0.7,
                      bite: { cd: 0.42, lunge: 52, dur: 0.15, reach: 34, arc: 1.15, bossDamage: 240, heal: 8 } } },   // non-bosses go down the hatch whole
   cry:     { name: 'Cry XD', tag: 'Meme', hp: 100, speed: 1.0, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'cry', portrait: 'cry_portrait',
