@@ -468,8 +468,9 @@ class Game {
       }
       if (!s.roar && s.t >= c.delay - 0.7) { s.roar = true; Audio8.noise(1.6, 0.35, 700); Audio8.tone(110, 1.4, 'sawtooth', 0.12, -60); }   // the jet screaming in
       while (s.dropped < c.bombs && s.t >= c.delay + s.dropped * c.interval) {
-        const k = s.dropped - (c.bombs - 1) / 2, bx = s.x + Math.cos(s.a) * k * c.spacing + (Math.random() - 0.5) * 6, by = s.y + Math.sin(s.a) * k * c.spacing + (Math.random() - 0.5) * 6;
-        this.explode(bx, by, c.radius, c.damage * s.mult, true, undefined, true);
+        const k = s.dropped - (c.bombs - 1) / 2, side = (s.dropped % 2 ? 1 : -1) * (c.stagger || 0);   // zig-zag either side of the line, so strafing zombies can't just sidestep it
+        const bx = s.x + Math.cos(s.a) * k * c.spacing - Math.sin(s.a) * side + (Math.random() - 0.5) * 6, by = s.y + Math.sin(s.a) * k * c.spacing + Math.cos(s.a) * side + (Math.random() - 0.5) * 6;
+        this.explode(bx, by, c.radius, c.damage * s.mult * enemyHpScale(this.wave), true, undefined, true);   // scales with the wave, the same way zombie HP does
         this.map.splat(bx, by, 10, 'rgba(20,14,10,0.55)');
         s.dropped++;
       }
@@ -490,6 +491,7 @@ class Game {
       if (layer === 'ground') {
         if (live) { // the target: a pulsing ring, crosshairs, and the dashed line the bombs will walk along
           const pulse = 1 + Math.sin(t * 14) * 0.08, R = 18 * pulse, half = (c.bombs - 1) / 2 * c.spacing + 10;
+          const band = (c.stagger || 0) + c.radius * 0.6; ctx.fillStyle = 'rgba(255,58,42,0.08)'; ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.a); ctx.fillRect(-half, -band, half * 2, band * 2); ctx.restore();   // the strip that's about to be flattened
           ctx.strokeStyle = 'rgba(255,58,42,0.45)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.beginPath();
           ctx.moveTo(s.x - Math.cos(s.a) * half, s.y - Math.sin(s.a) * half); ctx.lineTo(s.x + Math.cos(s.a) * half, s.y + Math.sin(s.a) * half); ctx.stroke(); ctx.setLineDash([]);
           ctx.strokeStyle = 'rgba(255,58,42,0.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(s.x, s.y, R, 0, TAU); ctx.stroke();
