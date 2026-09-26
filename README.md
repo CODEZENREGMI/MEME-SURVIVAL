@@ -84,11 +84,14 @@ your beam hits them; only their glowing eyes give them away.
   from wave 25, three from wave 40. The wave doesn't end until the boss is dead.
 
   **Wave 5 — THE LIGHTS DIE.** On every map the power fails for the whole wave (flashlight only, lamps flickering,
-  the dark ambient track). When you kill the wave's last boss, the screen is taken over by a full-screen shaking
-  face with a scream (`assets/img/jumpscare.png` + `assets/audio/jumpscare.mp3`, ~2 s — the clip is fetched and
-  decoded into an AudioBuffer when the wave starts, so it fires on the exact frame the face appears, with a sub-bass
-  drop under it), then the lights come back
-  on wave 6. Respects `prefers-reduced-motion` (no shake). The face and the sound are both preloaded when the
+  the dark ambient track). When you kill the wave's last boss, it plays in two beats (`assets/img/jumpscare.png` +
+  `assets/audio/jumpscare.mp3`). **The glimpse** (`DREAD.glimpse`, 0.55 s): the music cuts, the lights stutter, a low
+  swell comes up, and the face appears tiny and flickering far off in the dark behind a veil of static. **The rush**:
+  it flies at the screen from that distance in ~0.13 s, overshooting past full size, and the scream lands on the same
+  frame (the clip is decoded into an AudioBuffer when the wave starts), with a sub-bass drop and a static burst. For the
+  2.1 s hold the face jolts violently (a decaying random shake), red and cyan ghost copies of it jitter out of sync,
+  TV static crawls over it, red flashes pulse at the edges, and it keeps creeping closer. When it vanishes the game
+  itself shakes and flickers. Then the lights come back on wave 6. Respects `prefers-reduced-motion` (no rush or shake). The face and the sound are both preloaded when the
   wave starts, and the scare fires whether the last boss is killed **or** captured by Genom. On any dark map the HUD panels switch to an opaque
   background with a bright border so hearts, ammo, the cart, the weapon box and the ability slots stay readable
   against pure black.

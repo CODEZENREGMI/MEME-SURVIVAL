@@ -205,13 +205,39 @@ img.coin{width:14px;height:14px;vertical-align:-2px;margin-right:2px;image-rende
 }
 
 
-/* ---- wave 5 jumpscare: the face fills the screen, shaking, then it's gone ---- */
+/* ---- wave 5 jumpscare: a glimpse of it far off in the dark, then it rushes the screen ---- */
 #jumpscare{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:#000;pointer-events:none;overflow:hidden}
-#jumpscare.on{display:flex;animation:jsflash .12s steps(2) 3}
-#jumpscare img{width:min(100vh,100vw);height:min(100vh,100vw);max-width:none;image-rendering:auto;filter:contrast(1.5) brightness(1.18) saturate(0);transform-origin:center;animation:jsin .13s cubic-bezier(.2,1.7,.4,1) both,jscreep 2.1s ease-out .13s both,jsshake .055s steps(2) infinite .13s}
+#jumpscare.glimpse,#jumpscare.on{display:flex}
+#jumpscare.glimpse{background:rgba(0,0,0,.88)}
+.js-jolt,.js-face{position:relative;display:flex;align-items:center;justify-content:center}
+.js-face{width:min(100vh,100vw);height:min(100vh,100vw);transform-origin:center}
+.js-face img{position:absolute;inset:0;width:100%;height:100%;max-width:none;image-rendering:auto}
+#jumpscareImg{filter:contrast(1.55) brightness(1.2) saturate(0)}
+.js-ghost{mix-blend-mode:screen;opacity:0}
+.js-r{filter:contrast(1.6) grayscale(1) sepia(1) saturate(12) hue-rotate(-45deg) brightness(.9)}
+.js-c{filter:contrast(1.6) grayscale(1) sepia(1) saturate(9) hue-rotate(150deg) brightness(.8)}
+.js-static,.js-red{position:absolute;inset:0;opacity:0}
+.js-static{background-size:192px 192px;mix-blend-mode:screen}
+.js-red{background:radial-gradient(ellipse at center,rgba(255,0,0,0) 35%,rgba(170,0,0,.85) 100%)}
 #jumpscare::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 28vh 12vh #000;pointer-events:none}
-@keyframes jsin{from{transform:scale(.22) rotate(-7deg);opacity:.15}to{transform:scale(1) rotate(0);opacity:1}}
-@keyframes jscreep{from{transform:scale(1)}to{transform:scale(1.22)}}
-@keyframes jsshake{0%{margin:0 0}25%{margin:-1.2vh 1.6vh}50%{margin:1.4vh -1.2vh}75%{margin:-1vh -1.6vh}100%{margin:1.2vh 1vh}}
-@keyframes jsflash{0%,100%{background:#000}50%{background:#3a0000}}
-@media (prefers-reduced-motion: reduce){#jumpscare img{animation:jsin .2s both}}
+/* 1. the glimpse: tiny, pale, far away, flickering in and out */
+#jumpscare.glimpse .js-face{transform:scale(.065);animation:jsglimpse .55s steps(1) both}
+#jumpscare.glimpse .js-static{opacity:.07;animation:jsnoise .12s steps(3) infinite}
+@keyframes jsglimpse{0%{opacity:0}12%{opacity:.5}20%{opacity:0}34%{opacity:.7}40%{opacity:.15}55%{opacity:.8}100%{opacity:.85}}
+/* 2. the rush: from the distance to past the screen in ~0.13 s, a hard overshoot, then it keeps creeping in */
+#jumpscare.on .js-face{animation:jsrush 2.1s both}
+#jumpscare.on .js-jolt{animation:jsjolt 2.1s linear both}
+#jumpscare.on .js-r{animation:jsghostr .09s steps(2) infinite}
+#jumpscare.on .js-c{animation:jsghostc .11s steps(2) infinite}
+#jumpscare.on .js-static{animation:jsnoise .1s steps(3) infinite,jsstatic 2.1s ease-out both}
+#jumpscare.on .js-red{animation:jsredflash 2.1s steps(1) both}
+#jumpscare.on{animation:jsflash .1s steps(2) 5}
+@keyframes jsrush{0%{transform:scale(.065);animation-timing-function:cubic-bezier(.85,0,1,1)}6%{transform:scale(1.42);animation-timing-function:ease-out}11%{transform:scale(1.02)}100%{transform:scale(1.3)}}
+@keyframes jsghostr{0%{opacity:.55;transform:translate(-2.4vh,.6vh)}100%{opacity:.35;transform:translate(1.4vh,-.8vh)}}
+@keyframes jsghostc{0%{opacity:.45;transform:translate(2.2vh,-.5vh)}100%{opacity:.3;transform:translate(-1.2vh,.9vh)}}
+@keyframes jsnoise{0%{background-position:0 0}33%{background-position:-61px 37px}66%{background-position:43px -71px}100%{background-position:-17px 23px}}
+@keyframes jsstatic{0%{opacity:.55}15%{opacity:.25}100%{opacity:.1}}
+@keyframes jsredflash{0%{opacity:1}4%{opacity:0}8%{opacity:.9}12%{opacity:.2}20%{opacity:.6}28%{opacity:.25}60%{opacity:.4}100%{opacity:.3}}
+@keyframes jsflash{0%,100%{background:#000}50%{background:#5a0000}}
+@keyframes jsjolt{0.0%{transform:translate(1.12vh,2.20vh) rotate(2.42deg)}2.5%{transform:translate(3.90vh,2.11vh) rotate(3.35deg)}5.0%{transform:translate(-4.01vh,-0.29vh) rotate(3.40deg)}7.5%{transform:translate(1.23vh,3.30vh) rotate(-2.87deg)}10.0%{transform:translate(-0.25vh,-2.01vh) rotate(0.31deg)}12.5%{transform:translate(0.57vh,-3.73vh) rotate(-1.95deg)}15.0%{transform:translate(-1.63vh,3.08vh) rotate(1.77deg)}17.5%{transform:translate(-2.42vh,2.11vh) rotate(-2.31deg)}20.0%{transform:translate(0.80vh,-2.56vh) rotate(-3.07deg)}22.5%{transform:translate(2.44vh,-1.91vh) rotate(-1.68deg)}25.0%{transform:translate(3.05vh,2.35vh) rotate(-1.20deg)}27.5%{transform:translate(2.79vh,0.24vh) rotate(0.97deg)}30.0%{transform:translate(-1.71vh,2.56vh) rotate(0.99deg)}32.5%{transform:translate(2.59vh,2.18vh) rotate(-1.00deg)}35.0%{transform:translate(-0.74vh,-1.77vh) rotate(-1.69deg)}37.5%{transform:translate(-2.20vh,-1.00vh) rotate(0.47deg)}40.0%{transform:translate(-2.39vh,0.86vh) rotate(-0.70deg)}42.5%{transform:translate(-0.87vh,1.46vh) rotate(-0.08deg)}45.0%{transform:translate(-0.80vh,-0.08vh) rotate(0.80deg)}47.5%{transform:translate(-1.82vh,1.95vh) rotate(-1.76deg)}50.0%{transform:translate(0.97vh,1.34vh) rotate(-1.68deg)}52.5%{transform:translate(1.05vh,-0.49vh) rotate(0.26deg)}55.0%{transform:translate(-1.69vh,-1.56vh) rotate(-0.99deg)}57.5%{transform:translate(1.47vh,-0.98vh) rotate(0.74deg)}60.0%{transform:translate(1.30vh,1.34vh) rotate(-0.42deg)}62.5%{transform:translate(-0.41vh,0.07vh) rotate(0.70deg)}65.0%{transform:translate(-1.03vh,0.65vh) rotate(0.70deg)}67.5%{transform:translate(0.88vh,-1.13vh) rotate(0.98deg)}70.0%{transform:translate(-0.92vh,-0.36vh) rotate(0.23deg)}72.5%{transform:translate(0.87vh,-0.33vh) rotate(0.79deg)}75.0%{transform:translate(0.09vh,-0.36vh) rotate(-0.31deg)}77.5%{transform:translate(-0.56vh,-0.73vh) rotate(-0.55deg)}80.0%{transform:translate(0.30vh,0.79vh) rotate(-0.48deg)}82.5%{transform:translate(-0.65vh,0.70vh) rotate(0.04deg)}85.0%{transform:translate(-0.12vh,-0.34vh) rotate(0.11deg)}87.5%{transform:translate(0.38vh,-0.05vh) rotate(-0.08deg)}90.0%{transform:translate(-0.46vh,0.43vh) rotate(-0.44deg)}92.5%{transform:translate(-0.01vh,0.31vh) rotate(-0.31deg)}95.0%{transform:translate(0.19vh,0.37vh) rotate(0.10deg)}97.5%{transform:translate(0.22vh,-0.29vh) rotate(-0.04deg)}100.0%{transform:translate(-0.25vh,0.24vh) rotate(-0.13deg)}}
+@media (prefers-reduced-motion: reduce){#jumpscare.on .js-face{animation:none;transform:scale(1)}#jumpscare.on .js-jolt,#jumpscare.on .js-ghost{animation:none}}

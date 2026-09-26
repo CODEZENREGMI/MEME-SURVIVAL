@@ -501,22 +501,41 @@ class Game {
     if (wasDark && !this.event && !this.bonaDark) { this.map.cfg.dark = false; this.map.lamps.forEach(l => l.broken = false); Audio8.stopMusic(); Audio8.startMusic(false); }
   }
   /* the face has to be decoded before the scare, exactly like the sound — otherwise it arrives late on a slow connection */
-  preloadScareImg() { const img = document.getElementById('jumpscareImg'); if (img && !img.src) img.src = DREAD.img; }
+  preloadScareImg() {
+    document.querySelectorAll('#jumpscare img').forEach(im => { if (!im.getAttribute('src')) im.src = DREAD.img; });
+    const st = document.querySelector('#jumpscare .js-static');
+    if (st && !st.style.backgroundImage) { // TV static, generated once
+      const c = document.createElement('canvas'); c.width = c.height = 96; const x = c.getContext('2d'), d = x.createImageData(96, 96);
+      for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() < 0.5 ? Math.random() * 90 : 150 + Math.random() * 105; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
+      x.putImageData(d, 0, 0); st.style.backgroundImage = `url(${c.toDataURL()})`;
+    }
+  }
   /* the face. full screen, loud, then it's over. */
   jumpscare() {
     const el = document.getElementById('jumpscare'), img = document.getElementById('jumpscareImg');
     if (!el || !img) return;
-    if (!img.src) img.src = DREAD.img; // normally already loaded by preloadScareImg()
-    this.shake(26); this.whiteFlash = 0; this.darkFlash = 0;
-    Audio8.stopMusic(); Audio8.stopTrack();
-    el.classList.remove('on'); void el.offsetWidth;                      // reset the animation
-    Audio8.playClip(DREAD.sound, 1); Audio8.play('scream');              // decoded ahead of time: it hits on this frame
-    Audio8.tone(48, 1.6, 'sawtooth', 0.5, -20); Audio8.noise(0.9, 0.35, 260); // sub-bass drop under the scream
-    el.classList.add('on');
-    clearTimeout(this._jsTimer);
-    this._jsTimer = setTimeout(() => { el.classList.remove('on'); if (this.state !== 'menu' && this.state !== 'gameover') { Audio8.startMusic(this.map.cfg.dark); } }, DREAD.hold * 1000);
+    this.preloadScareImg();   // normally already done when the wave started
+    clearTimeout(this._jsTimer); clearTimeout(this._jsRush);
+    this.whiteFlash = 0; this.darkFlash = 0;
+    // 1. the glimpse: the music dies, the lights stutter, and it's standing far off in the dark
+    Audio8.stopMusic(); Audio8.stopTrack(); Audio8.play('flicker');
+    Audio8.tone(36, DREAD.glimpse + 0.1, 'sine', 0.4, 6); Audio8.noise(DREAD.glimpse, 0.05, 180);   // a low swell under the silence
+    this.eventFlicker = Math.max(this.eventFlicker, DREAD.glimpse);
+    el.classList.remove('on', 'glimpse'); void el.offsetWidth; el.classList.add('glimpse');
+    // 2. the rush: it comes at you from the dark, the scream lands on the same frame
+    this._jsRush = setTimeout(() => {
+      el.classList.remove('glimpse'); void el.offsetWidth; el.classList.add('on');
+      Audio8.playClip(DREAD.sound, 1); Audio8.play('scream'); Audio8.play('scream');   // decoded ahead of time: it hits on this frame
+      Audio8.tone(48, 1.6, 'sawtooth', 0.55, -20); Audio8.noise(0.9, 0.45, 260); Audio8.noise(0.25, 0.5, 3200);   // sub-bass drop and a burst of static
+      this.shake(40);
+      this._jsTimer = setTimeout(() => {
+        el.classList.remove('on');
+        this.shake(18); this.eventFlicker = Math.max(this.eventFlicker, 0.6);   // it's gone, but the room is still shaking
+        if (this.state !== 'menu' && this.state !== 'gameover') Audio8.startMusic(this.map.cfg.dark);
+      }, DREAD.hold * 1000);
+    }, DREAD.glimpse * 1000);
   }
-  hideJumpscare() { const el = document.getElementById('jumpscare'); if (el) el.classList.remove('on'); clearTimeout(this._jsTimer); Audio8.stopClip(); }
+  hideJumpscare() { const el = document.getElementById('jumpscare'); if (el) el.classList.remove('on', 'glimpse'); clearTimeout(this._jsTimer); clearTimeout(this._jsRush); Audio8.stopClip(); }
   /* Bona rises: the lights go out until it's dead */
   bonaArrive(z) {
     this.shake(16); this.darkFlash = 0.9; Audio8.play('roar'); Audio8.play('scream'); Audio8.play('explode');

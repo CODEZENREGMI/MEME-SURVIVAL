@@ -31,7 +31,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=169">
+<link rel="stylesheet" href="css/style.css?v=170">
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -228,16 +228,20 @@
   </div>
 
   <div class="toast" id="toast"></div>
-  <div id="jumpscare"><img id="jumpscareImg" alt=""></div>
+  <div id="jumpscare" aria-hidden="true">
+    <div class="js-static"></div>
+    <div class="js-jolt"><div class="js-face"><img class="js-ghost js-r" alt=""><img class="js-ghost js-c" alt=""><img id="jumpscareImg" alt=""></div></div>
+    <div class="js-red"></div>
+  </div>
 </div>
 
-<script src="js/sprites.js?v=169"></script>
-<script src="js/config.js?v=169"></script>
-<script src="js/audio.js?v=169"></script>
-<script src="js/map.js?v=169"></script>
-<script src="js/entities.js?v=169"></script>
-<script src="js/game.js?v=169"></script>
-<script src="js/ui.js?v=169"></script>
-<script src="js/main.js?v=169"></script>
+<script src="js/sprites.js?v=170"></script>
+<script src="js/config.js?v=170"></script>
+<script src="js/audio.js?v=170"></script>
+<script src="js/map.js?v=170"></script>
+<script src="js/entities.js?v=170"></script>
+<script src="js/game.js?v=170"></script>
+<script src="js/ui.js?v=170"></script>
+<script src="js/main.js?v=170"></script>
 </body>
 </html>
