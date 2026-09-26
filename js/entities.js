@@ -87,7 +87,7 @@ class Player {
     this.cryT = 0; this.cryCd = 0; this.floodR = 0; this.sob = 0;
     this.rollT = 0; this.rollCd = 0; this.rollVx = 0; this.rollVy = 0; this.spin = 0; this.rumble = 0; this.rollHits = new WeakMap(); this.rollLoop = null;
     this.spinT = 0; this.spinCd = 0; this.spinTick = 0; this.spinA = 0; this.whoosh = 0; this.spinLoop = null;
-    this.strikeCd = 0; this.mgT = 0; this.mgCd = 0; this.mgFire = 0; this.mgSpin = 0; this.mgFlash = 0;
+    this.strikeCd = 0; this.mgT = 0; this.mgCd = 0; this.mgFire = 0; this.mgSpin = 0; this.mgFlash = 0; this.mgLoop = null;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -347,7 +347,9 @@ class Player {
   }
   mgAttacks(input) {
     const mg = this.char.mg, g = this.game;
-    if (!input.mouseDown || this.mgFire > 0) return;
+    if (!input.mouseDown) { if (this.mgLoop) { Audio8.stopHandle(this.mgLoop, 0.06); this.mgLoop = null; } return; }   // let go: the gunfire stops dead
+    if (this.mgFire > 0) return;
+    if (mg.sound && !this.mgLoop) this.mgLoop = Audio8.playClip(mg.sound, 0.85, { loop: true });   // the real burst, looped for as long as you hold
     this.mgFire = mg.interval / this.fireMult; this.recoil = mg.kick; this.mgFlash = 0.06;
     this.mgCfg = this.mgCfg || Object.assign({}, WEAPONS.minigun, { damage: mg.damage, spread: mg.spread, speed: mg.speed, range: mg.range, kick: mg.kick });
     const mx = this.x + Math.cos(this.angle) * 22, my = this.y + 3 + Math.sin(this.angle) * 22;
@@ -355,7 +357,7 @@ class Player {
     g.muzzle(mx, my, this.angle, 2); g.lights.push({ x: mx, y: my, r: 70, life: 0.05, max: 0.05 });
     const ea = this.angle + (this.flip ? -1 : 1) * Math.PI / 2;   // brass flying out of the side
     g.particles.push(new Particle(this.x + Math.cos(this.angle) * 6, this.y + 2, Math.cos(ea) * (40 + Math.random() * 30), Math.sin(ea) * (40 + Math.random() * 30) - 30, 0.5, '#e0b040', 1.5, 'dot'));
-    if (Math.random() < 0.5) Audio8.play('smg'); g.shake(0.8);
+    if (!mg.sound && Math.random() < 0.5) Audio8.play('smg'); g.shake(0.8);
   }
   /* ---- Giga Ballerina: PIROUETTE — he spins, and a ring of blades slices everything around him ---- */
   useSpin() {
@@ -1142,7 +1144,7 @@ class Player {
       else if (this.cryCd > 0) { this.cryCd -= dt; if (this.cryCd <= 0) { this.cryCd = 0; g.floatText(this.x, this.y - 18, 'READY TO CRY', '#9cc8f2'); Audio8.play('xp'); } } }
     if (this.char.mg) { const mg = this.char.mg; this.mgFire -= dt; this.mgFlash -= dt;
       if (this.mgT > 0) { this.mgT -= dt; this.mgSpin += dt * (this.game.input.mouseDown ? 40 : 8);
-        if (this.mgT <= 0) { this.mgT = 0; this.mgCd = mg.cooldown; this.game.floatText(this.x, this.y - 18, 'BARRELS COOLING', '#c9cfdb'); Audio8.play('reloaded'); } }
+        if (this.mgT <= 0) { this.mgT = 0; this.mgCd = mg.cooldown; Audio8.stopHandle(this.mgLoop, 0.1); this.mgLoop = null; this.game.floatText(this.x, this.y - 18, 'BARRELS COOLING', '#c9cfdb'); Audio8.play('reloaded'); } }
       else if (this.mgCd > 0) { this.mgCd -= dt; if (this.mgCd <= 0) { this.mgCd = 0; this.game.floatText(this.x, this.y - 18, 'MACHINE GUN READY', '#ffd23a'); Audio8.play('xp'); } } }
     if (this.char.strike && this.strikeCd > 0) { this.strikeCd -= dt; if (this.strikeCd <= 0) { this.strikeCd = 0; this.game.floatText(this.x, this.y - 18, 'AIR SUPPORT READY', '#ffd23a'); Audio8.play('xp'); } }
     if (this.char.spin) { const sn = this.char.spin;
