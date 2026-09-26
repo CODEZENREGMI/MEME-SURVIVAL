@@ -83,6 +83,13 @@ your beam hits them; only their glowing eyes give them away.
   and five fast zombies). Unassigned milestones (60 …) reuse an earlier one. Two bosses
   from wave 25, three from wave 40. The wave doesn't end until the boss is dead.
 
+  **Research Lab — the hole.** A pit is torn into the floor of the bench room (`LAB_HOLE` in `js/config.js`,
+  between the third pair of lab benches): a broken tile lip, cracks running out into the floor, the shaft's far wall
+  fading into black, a breath of mist, and every ~7 s two pale eyes blink open down there. It's always there, but only
+  during **wave 1** does stepping into it do anything: once per run, the face (`assets/img/lab_hole_face.png`, shown in
+  colour) jumps out with a scream (`assets/audio/lab_hole_scream.m4a`, the first 2.6 s of the clip, faded) through the
+  same jumpscare as wave 5. Both are loaded when wave 1 starts, so the scare can't stall.
+
   **Wave 5 — THE LIGHTS DIE.** On every map the power fails for the whole wave (flashlight only, lamps flickering,
   the dark ambient track). When you kill the wave's last boss, the face hits 0.15 s later (`DREAD.delay`; `assets/img/jumpscare.png` +
   `assets/audio/jumpscare.mp3`): it flies at the screen out of the dark, from tiny to past full size in ~0.13 s, and

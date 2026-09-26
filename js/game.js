@@ -115,7 +115,7 @@ class Game {
   reset() {
     this.map = this.getMap(this.loadout.map); this.resize();
     this.player = new Player(this, this.map.playerStart.x, this.map.playerStart.y, this.loadout.char, this.loadout.weapons);
-    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = [];
+    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = []; this.holeScared = false;
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0; this.heartsBought = 0;
@@ -158,6 +158,7 @@ class Game {
   /* ------------------------------------------------------------ waves */
   startWave(n) {
     this.wave = n; this.toSpawn = waveCount(n); this.spawnTimer = 1.2;
+    if (n === LAB_HOLE.wave && this.loadout.map === LAB_HOLE.map) this.preloadHole();
     this.spawnInterval = clamp(1.3 - n * 0.045, 0.3, 1.3);
     this.bossPending = bossCount(n); this.bossKind = pickBossKind(n);
     const tierNames = this.map.cfg.dark
@@ -513,31 +514,70 @@ class Game {
     }
   }
   /* the face. full screen, loud, then it's over. */
-  jumpscare() {
+  jumpscare(s = DREAD) {
     const el = document.getElementById('jumpscare'), img = document.getElementById('jumpscareImg');
     if (!el || !img) return;
     this.preloadScareImg();   // normally already done when the wave started
+    document.querySelectorAll('#jumpscare img').forEach(im => { if (im.getAttribute('src') !== s.img) im.src = s.img; });   // whose face it is this time (already decoded)
+    el.classList.toggle('color', !!s.color);
     clearTimeout(this._jsTimer); clearTimeout(this._jsRush);
     this.whiteFlash = 0; this.darkFlash = 0;
     Audio8.stopMusic(); Audio8.stopTrack();
     // the rush: it comes at you out of the dark, the scream lands on the same frame
     const rush = () => {
       el.classList.remove('glimpse'); void el.offsetWidth; el.classList.add('on');
-      Audio8.playClip(DREAD.sound, 1); Audio8.play('scream'); Audio8.play('scream');   // decoded ahead of time: it hits on this frame
+      Audio8.playClip(s.sound, 1); Audio8.play('scream'); Audio8.play('scream');   // decoded ahead of time: it hits on this frame
       Audio8.tone(48, 1.6, 'sawtooth', 0.55, -20); Audio8.noise(0.9, 0.45, 260); Audio8.noise(0.25, 0.5, 3200);   // sub-bass drop and a burst of static
       this.shake(40);
       this._jsTimer = setTimeout(() => {
         el.classList.remove('on');
         this.shake(18); this.eventFlicker = Math.max(this.eventFlicker, 0.6);   // it's gone, but the room is still shaking
         if (this.state !== 'menu' && this.state !== 'gameover') Audio8.startMusic(this.map.cfg.dark);
-      }, DREAD.hold * 1000);
+      }, s.hold * 1000);
     };
-    if (!(DREAD.glimpse > 0)) { el.classList.remove('on', 'glimpse'); rush(); return; }
+    if (!(s.glimpse > 0)) { el.classList.remove('on', 'glimpse'); rush(); return; }
     // optional glimpse first: it stands far off in the dark, then comes
-    Audio8.play('flicker'); Audio8.tone(36, DREAD.glimpse + 0.1, 'sine', 0.4, 6); Audio8.noise(DREAD.glimpse, 0.05, 180);
-    this.eventFlicker = Math.max(this.eventFlicker, DREAD.glimpse);
+    Audio8.play('flicker'); Audio8.tone(36, s.glimpse + 0.1, 'sine', 0.4, 6); Audio8.noise(s.glimpse, 0.05, 180);
+    this.eventFlicker = Math.max(this.eventFlicker, s.glimpse);
     el.classList.remove('on', 'glimpse'); void el.offsetWidth; el.classList.add('glimpse');
-    this._jsRush = setTimeout(rush, DREAD.glimpse * 1000);
+    this._jsRush = setTimeout(rush, s.glimpse * 1000);
+  }
+  /* the lab hole: its face and scream are loaded when wave 1 starts, so the scare can't stall */
+  preloadHole() {
+    Audio8.preloadClip(LAB_HOLE.sound);
+    if (!this._holeImg) { const im = new Image(); im.src = LAB_HOLE.img; if (im.decode) im.decode().catch(() => {}); this._holeImg = im; }
+  }
+  checkHole(p) {
+    const H = LAB_HOLE;
+    if (this.holeScared || this.loadout.map !== H.map || this.wave !== H.wave || this.state !== 'playing' || p.dead) return;
+    if (Math.hypot(p.x - H.x, (p.y - H.y) * H.rx / H.ry) > H.trigger) return;
+    this.holeScared = true; this.shake(12); Audio8.noise(0.4, 0.4, 160);   // the floor gives, something grabs
+    this.jumpscare(H);
+  }
+  /* a pit in the lab floor: broken tile edge, blackness going down forever, a breath of mist, and now and then two eyes */
+  drawHole(ctx) {
+    const H = LAB_HOLE, t = this.time, x = H.x, y = H.y;
+    const edge = (k, j) => { ctx.beginPath(); for (let i = 0; i <= 26; i++) { const a = i / 26 * TAU, n = 1 + j * (Math.sin(a * 5 + 1.3) * 0.5 + Math.sin(a * 9 + 4.1) * 0.35); ctx.lineTo(x + Math.cos(a) * H.rx * k * n, y + Math.sin(a) * H.ry * k * n); } ctx.closePath(); };
+    ctx.save();
+    ctx.strokeStyle = 'rgba(20,22,28,0.55)'; ctx.lineWidth = 1;   // cracks running out into the floor
+    for (let i = 0; i < 7; i++) { const a = i * 0.9 + 0.4, r0 = 0.95, L = 10 + (i * 7 % 13); ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * H.rx * r0, y + Math.sin(a) * H.ry * r0); ctx.lineTo(x + Math.cos(a + 0.12) * (H.rx + L * 0.6), y + Math.sin(a + 0.12) * (H.ry + L * 0.4)); ctx.lineTo(x + Math.cos(a - 0.05) * (H.rx + L), y + Math.sin(a - 0.05) * (H.ry + L * 0.7)); ctx.stroke(); }
+    edge(1.12, 0.09); ctx.fillStyle = '#6f7580'; ctx.fill();          // broken tile lip, lit edge
+    edge(1.04, 0.08); ctx.fillStyle = '#2a2d34'; ctx.fill();          // the torn floor slab
+    const wall = ctx.createLinearGradient(x, y - H.ry, x, y + H.ry * 0.4);   // the far wall of the shaft, catching a little light
+    wall.addColorStop(0, '#565c67'); wall.addColorStop(0.35, '#23262d'); wall.addColorStop(1, '#050507');
+    edge(0.94, 0.07); ctx.fillStyle = wall; ctx.fill();
+    ctx.save(); edge(0.94, 0.07); ctx.clip();                          // everything below stays inside the opening
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 1; for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(x + i * 6, y - H.ry); ctx.lineTo(x + i * 5, y); ctx.stroke(); }   // rebar and seams in the wall
+    const g = ctx.createRadialGradient(x, y + 4, 1, x, y + 4, H.rx * 0.9);
+    g.addColorStop(0, '#000'); g.addColorStop(0.7, '#010102'); g.addColorStop(1, 'rgba(1,1,2,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y + 4, H.rx * 0.95, H.ry * 0.85, 0, 0, TAU); ctx.fill();   // down, and down, and down
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(x, y + 5, H.rx * 0.6, H.ry * 0.5, 0, 0, TAU); ctx.fill();
+    ctx.restore();
+    for (let i = 0; i < 4; i++) { const a = t * 0.35 + i * 1.6, r = 0.35 + 0.25 * Math.sin(t * 0.7 + i); ctx.fillStyle = `rgba(170,180,200,${0.035 + 0.02 * Math.sin(t + i)})`; ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * H.rx * r, y + Math.sin(a) * H.ry * r - 2, 7, 3, a, 0, TAU); ctx.fill(); }   // a breath of mist
+    const c = t % 7.3;                                                  // every so often, two eyes blink open down there
+    if (c > 6.2 && c < 7.0 && Math.sin(c * 40) > -0.6) { ctx.fillStyle = 'rgba(232,220,190,0.85)'; ctx.fillRect(Math.round(x - 4), Math.round(y + 1), 2, 1); ctx.fillRect(Math.round(x + 2), Math.round(y + 1), 2, 1); }
+    ctx.fillStyle = '#8a909a'; [[-1.02, -0.2], [0.95, 0.5], [0.3, 1.08], [-0.6, -1.0]].forEach(([u, v]) => ctx.fillRect(Math.round(x + u * H.rx * 1.25), Math.round(y + v * H.ry * 1.2), 2, 2));   // loose chunks of tile
+    ctx.restore();
   }
   hideJumpscare() { const el = document.getElementById('jumpscare'); if (el) el.classList.remove('on', 'glimpse'); clearTimeout(this._jsTimer); clearTimeout(this._jsRush); Audio8.stopClip(); }
   /* Bona rises: the lights go out until it's dead */
@@ -631,7 +671,7 @@ class Game {
     this.time += dt;
     const p = this.player, inp = this.input;
     inp.worldX = this.cam.x + inp.mouseX; inp.worldY = this.cam.y + inp.mouseY;
-    if (this.state !== 'gameover') p.update(dt, inp);
+    if (this.state !== 'gameover') { p.update(dt, inp); this.checkHole(p); }
     if (this.state === 'wavebreak') { this.breakTimer -= dt; if (this.breakTimer <= 0) { this.state = 'playing'; this.startWave(this.wave + 1); } }
     if (this.state === 'playing') this.spawnTick(dt);
     this.map.computeFlow(p.x, p.y);
@@ -701,6 +741,7 @@ class Game {
     const glowP = p => p.type === 'fire' || p.type === 'dot' || p.type === 'text';
     // ---- world layer (gets darkened) ----
     ctx.save(); ctx.translate(-cx, -cy);
+    if (this.map.cfg === MAPS[LAB_HOLE.map]) this.drawHole(ctx);   // on the floor, under everything
     if (this.siege) this.drawHouse(ctx);
     if (this.map.cars.length) this.drawCars(ctx);
     this.drawFlood(ctx);
