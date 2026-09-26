@@ -295,8 +295,8 @@ const CART = {
 const BLACKOUT = { firstWave: 8, every: 10, zombieScale: 2, zombieHp: 2.5, zombieDmg: 1.5, playerScale: 2.2, shotDmg: 2.5, leap: 240, leapDmg: 160, leapCd: 2.5, gunDmg: 0.35 };
 /* Wave 5 on every map: the lights die, and when the boss goes down something is waiting on the screen */
 const DREAD = { wave: 5, img: 'assets/img/jumpscare.png', sound: 'assets/audio/jumpscare.mp3', delay: 0.15, glimpse: 0, hold: 2.1 };   // delay after the boss dies; glimpse > 0 would show it standing far off first (off: it read as a loading pause)
-/* Research Lab: a hole in the floor of the bench room. Step into it during wave 1 and something down there looks back (once per run). */
-const LAB_HOLE = { map: 'lab', x: 176, y: 424, rx: 22, ry: 15, trigger: 12, wave: 1, img: 'assets/img/lab_hole_face.png', sound: 'assets/audio/lab_hole_scream.m4a', hold: 2.2, color: true };
+/* Research Lab: a hole in the floor of the bench room. Step into it on one of these waves and something down there looks back (once per listed wave). */
+const LAB_HOLE = { map: 'lab', x: 176, y: 424, rx: 22, ry: 15, trigger: 12, waves: [1, 7, 10, 20, 25, 67, 99, 120, 170], img: 'assets/img/lab_hole_face.png', sound: 'assets/audio/lab_hole_scream.m4a', hold: 2.2, color: true };
 function isBlackoutWave(mapId, wave) { return mapId === 'lab' && wave >= BLACKOUT.firstWave && (wave - BLACKOUT.firstWave) % BLACKOUT.every === 0; }
 
 /* Race City siege: a haunted house in the infield is the wave objective */

@@ -115,7 +115,7 @@ class Game {
   reset() {
     this.map = this.getMap(this.loadout.map); this.resize();
     this.player = new Player(this, this.map.playerStart.x, this.map.playerStart.y, this.loadout.char, this.loadout.weapons);
-    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = []; this.holeScared = false;
+    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = []; this.holeScared = new Set();
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0; this.heartsBought = 0;
@@ -158,7 +158,7 @@ class Game {
   /* ------------------------------------------------------------ waves */
   startWave(n) {
     this.wave = n; this.toSpawn = waveCount(n); this.spawnTimer = 1.2;
-    if (n === LAB_HOLE.wave && this.loadout.map === LAB_HOLE.map) this.preloadHole();
+    if (LAB_HOLE.waves.includes(n) && this.loadout.map === LAB_HOLE.map) this.preloadHole();
     this.spawnInterval = clamp(1.3 - n * 0.045, 0.3, 1.3);
     this.bossPending = bossCount(n); this.bossKind = pickBossKind(n);
     const tierNames = this.map.cfg.dark
@@ -542,16 +542,16 @@ class Game {
     el.classList.remove('on', 'glimpse'); void el.offsetWidth; el.classList.add('glimpse');
     this._jsRush = setTimeout(rush, s.glimpse * 1000);
   }
-  /* the lab hole: its face and scream are loaded when wave 1 starts, so the scare can't stall */
+  /* the lab hole: its face and scream are loaded when a scare wave starts, so the scare can't stall */
   preloadHole() {
     Audio8.preloadClip(LAB_HOLE.sound);
     if (!this._holeImg) { const im = new Image(); im.src = LAB_HOLE.img; if (im.decode) im.decode().catch(() => {}); this._holeImg = im; }
   }
   checkHole(p) {
     const H = LAB_HOLE;
-    if (this.holeScared || this.loadout.map !== H.map || this.wave !== H.wave || this.state !== 'playing' || p.dead) return;
+    if (this.holeScared.has(this.wave) || this.loadout.map !== H.map || !H.waves.includes(this.wave) || this.state !== 'playing' || p.dead) return;
     if (Math.hypot(p.x - H.x, (p.y - H.y) * H.rx / H.ry) > H.trigger) return;
-    this.holeScared = true; this.shake(12); Audio8.noise(0.4, 0.4, 160);   // the floor gives, something grabs
+    this.holeScared.add(this.wave); this.shake(12); Audio8.noise(0.4, 0.4, 160);   // the floor gives, something grabs
     this.jumpscare(H);
   }
   /* a pit in the lab floor: broken tile edge, blackness going down forever, a breath of mist, and now and then two eyes */
