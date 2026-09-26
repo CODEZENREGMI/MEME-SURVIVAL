@@ -249,9 +249,9 @@ const CHARACTERS = {
                    slow: 0.3, bossSlow: 0.6, push: 46, bossPush: 12, dps: 14, pct: 0.02 } },   // regular zombies are held at the edge; bosses wade in
   blackegg: { name: 'BlackEgg', tag: 'Meme', hp: 100, speed: 1.0, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'blackegg', portrait: 'blackegg',
             portraitImg: 'assets/img/blackegg_portrait.png',   // the egg-man meme redrawn in pixels; the sprite is hand-placed in js/sprites.js
-            desc: 'An egg with a face, eyes calmly closed, chin resting in his white gloves. Nothing rattles him, not even the end of the world. EGG ROLL (Space): he tucks in and rolls for 8 s — WASD steers, he keeps his momentum, bounces off walls and crushes every zombie in his path flat. Bosses take a heavy hit and knock him back. Takes 60% less damage while rolling, no gun. 20 s recharge.',
+            desc: 'An egg with a face, eyes calmly closed, chin resting in his white gloves. Nothing rattles him, not even the end of the world. EGG ROLL (Space): he tucks in and rolls for 20 s to a dubstep saw — WASD steers, he keeps his momentum, bounces off walls and crushes every zombie in his path flat. Bosses take a heavy hit and knock him back. Takes 60% less damage while rolling, no gun. 25 s recharge.',
             pal: { K: '#1c120e', H: '#b98468', E: '#8e5c45', e: '#6a4130', D: '#2b1a13', M: '#5b3527', m: '#a3705a', W: '#ece7e3', w: '#b5ada9', S: '#3b2419', s: '#d8d2ce' },
-            roll: { name: 'EGG ROLL', duration: 8, cooldown: 20, speed: 2.2, accel: 4, coast: 0.45, bounce: 0.65, crushSpeed: 45, reach: 9, bossDamage: 70, bossHitCd: 0.6, armor: 0.4 } },
+            roll: { name: 'EGG ROLL', duration: 20, cooldown: 25, sound: 'assets/audio/blackegg_roll.mp3', speed: 2.2, accel: 4, coast: 0.45, bounce: 0.65, crushSpeed: 45, reach: 9, bossDamage: 70, bossHitCd: 0.6, armor: 0.4 } },
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg'];
 

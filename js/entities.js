@@ -85,7 +85,7 @@ class Player {
     this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0; this.viralT = 0; this.viralCd = 0; this.moneyT = 0; this.moneyCd = 0; this.throwCd = 0; this.slamT = 0; this.slamCd2 = 0;
     this.frenzyT = 0; this.frenzyCd = 0; this.biteCd = 0; this.lunge = null; this.chomp = 0;
     this.cryT = 0; this.cryCd = 0; this.floodR = 0; this.sob = 0;
-    this.rollT = 0; this.rollCd = 0; this.rollVx = 0; this.rollVy = 0; this.spin = 0; this.rumble = 0; this.rollHits = new WeakMap();
+    this.rollT = 0; this.rollCd = 0; this.rollVx = 0; this.rollVy = 0; this.spin = 0; this.rumble = 0; this.rollHits = new WeakMap(); this.rollLoop = null;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -325,6 +325,7 @@ class Player {
     this.rollT = rl.duration; this.reloading = false; this.spin = 0; this.rollHits = new WeakMap();
     const push = this.speed * rl.speed * 0.8; this.rollVx = Math.cos(this.angle) * push; this.rollVy = Math.sin(this.angle) * push;   // launches toward the cursor
     Audio8.play('thud'); Audio8.noise(0.5, 0.3, 380); g.shake(4);
+    if (rl.sound) { Audio8.stopHandle(this.rollLoop); this.rollLoop = Audio8.playClip(rl.sound, 1, { loop: true }); }   // the dubstep saw, on repeat for the whole roll
     for (let i = 0; i < 14; i++) { const a = i / 14 * TAU; g.particles.push(new Particle(this.x, this.y + 6, Math.cos(a) * 60, Math.sin(a) * 30 - 10, 0.45, i % 2 ? '#8a7a6a' : '#b5a898', 2, 'dot')); }
     g.showAbilityBanner('EGG ROLL', `${rl.duration}s · WASD to steer · crush them flat`);
     return true;
@@ -341,7 +342,7 @@ class Player {
     if (hitWall && sp > rl.crushSpeed) { g.shake(2); Audio8.play('hit'); }
     this.spin += (this.rollVx >= 0 ? 1 : -1) * sp * dt / 7;   // a 7 px radius egg rolling along the ground
     this.moving = sp > 6; if (Math.abs(this.rollVx) > 4) this.flip = this.rollVx < 0;
-    this.rumble -= dt; if (sp > rl.crushSpeed && this.rumble <= 0) { this.rumble = 0.22; Audio8.noise(0.14, 0.07, 220); }
+    this.rumble -= dt; if (!rl.sound && sp > rl.crushSpeed && this.rumble <= 0) { this.rumble = 0.22; Audio8.noise(0.14, 0.07, 220); }
     if (sp > 20 && Math.random() < 0.6) g.particles.push(new Particle(this.x - this.rollVx * 0.05 + (Math.random() - 0.5) * 8, this.y + 6, -this.rollVx * 0.15 + (Math.random() - 0.5) * 12, -8 - Math.random() * 10, 0.4, Math.random() < 0.5 ? '#8a7a6a' : '#6d6258', 2, 'dot'));
     if (sp < rl.crushSpeed) return;
     let crushed = 0;
@@ -1066,7 +1067,7 @@ class Player {
       else if (this.cryCd > 0) { this.cryCd -= dt; if (this.cryCd <= 0) { this.cryCd = 0; g.floatText(this.x, this.y - 18, 'READY TO CRY', '#9cc8f2'); Audio8.play('xp'); } } }
     if (this.char.roll) { const rl = this.char.roll;
       if (this.rollT > 0) { this.rollT -= dt;
-        if (this.rollT <= 0) { this.rollT = 0; this.rollCd = rl.cooldown; this.rollVx = this.rollVy = 0; this.game.floatText(this.x, this.y - 18, 'DIZZY', '#c9cfdb'); Audio8.play('reloaded'); } }
+        if (this.rollT <= 0) { this.rollT = 0; this.rollCd = rl.cooldown; this.rollVx = this.rollVy = 0; Audio8.stopHandle(this.rollLoop, 0.4); this.rollLoop = null; this.game.floatText(this.x, this.y - 18, 'DIZZY', '#c9cfdb'); Audio8.play('reloaded'); } }
       else if (this.rollCd > 0) { this.rollCd -= dt; if (this.rollCd <= 0) { this.rollCd = 0; this.game.floatText(this.x, this.y - 18, 'READY TO ROLL', '#f4d9b0'); Audio8.play('xp'); } } }
     if (this.char.shark) { const sk = this.char.shark; this.biteCd -= dt; this.chomp -= dt;
       if (this.lunge) { const L = this.lunge; L.t += dt; const k = Math.min(1, L.t / L.dur);
