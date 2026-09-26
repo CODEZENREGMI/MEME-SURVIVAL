@@ -465,19 +465,21 @@ class GameMap {
   renderImage() {
     const c = document.createElement('canvas'); c.width = this.pw; c.height = this.ph; this.canvas = c;
     const x = c.getContext('2d'); x.fillStyle = '#0b0d12'; x.fillRect(0, 0, c.width, c.height);   // until the picture arrives
-    const ver = ((document.querySelector('script[src*="map.js"]') || {}).src || '').split('?v=')[1] || '';
-    const img = new Image();
-    img.onload = () => {
+    // map pictures are immutable (a changed picture gets a new file name), so no ?v= — that also lets the <head> preload be reused
+    const load = (url, done) => { const img = new Image(); img.onload = () => done(img); img.onerror = () => done(null); img.src = url; };
+    const main = () => load(this.cfg.image, img => {
+      if (!img) return;
       x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, this.pw, this.ph);
       this.image = img; this._mini = null;
       if (window.ui && window.ui.renderMapPreviews) window.ui.renderMapPreviews();   // the map-select card can show it now
-    };
-    img.src = ver ? this.cfg.image + '?v=' + ver : this.cfg.image;
-    if (this.cfg.menuImage) { // a lighter grade of the same painting, used behind the title screen
-      const mi = new Image();
-      mi.onload = () => { const m = document.createElement('canvas'); m.width = this.pw; m.height = this.ph; const mx = m.getContext('2d'); mx.imageSmoothingEnabled = false; mx.drawImage(mi, 0, 0, this.pw, this.ph); this.menuCanvas = m; };
-      mi.src = ver ? this.cfg.menuImage + '?v=' + ver : this.cfg.menuImage;
-    }
+    });
+    if (!this.cfg.menuImage) return main();
+    // the title screen's lighter grade goes first; the heavier gameplay picture follows so it can't slow the title down
+    load(this.cfg.menuImage, mi => {
+      if (mi) { const m = document.createElement('canvas'); m.width = this.pw; m.height = this.ph; const mx = m.getContext('2d'); mx.imageSmoothingEnabled = false; mx.drawImage(mi, 0, 0, this.pw, this.ph); this.menuCanvas = m; }
+      else this.menuFailed = true;
+      main();
+    });
   }
   draw(ctx, camX, camY, vw, vh, menu) {
     ctx.drawImage(menu && this.menuCanvas || this.canvas, camX, camY, vw, vh, 0, 0, vw, vh);

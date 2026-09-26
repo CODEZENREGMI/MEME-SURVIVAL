@@ -21,7 +21,7 @@
 <meta name="twitter:title" content="Meme Survival — Free Zombie Survival Shooter in Your Browser">
 <meta name="twitter:description" content="Play Meme Survival free online: a top-down pixel-art zombie shooter with 19 meme survivors, wild abilities, bosses every 10 waves and 6 maps. No download.">
 <meta name="twitter:image" content="https://www.memesurvival.com/assets/img/og-image.jpg">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
@@ -29,9 +29,18 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/assets/img/icon-round-192.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=170">
+<link rel="preload" href="/assets/fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/img/horror_menu.webp" as="image" fetchpriority="high">
+<link rel="stylesheet" href="css/style.css?v=171">
+<script src="js/sprites.js?v=171" defer></script>
+<script src="js/config.js?v=171" defer></script>
+<script src="js/audio.js?v=171" defer></script>
+<script src="js/map.js?v=171" defer></script>
+<script src="js/entities.js?v=171" defer></script>
+<script src="js/game.js?v=171" defer></script>
+<script src="js/ui.js?v=171" defer></script>
+<script src="js/main.js?v=171" defer></script>
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -88,6 +97,7 @@
 <body>
 <noscript><p style="padding:24px;color:#e8e6dc;font-family:monospace">Meme Survival is a free top-down pixel-art zombie survival shooter that runs in your browser. Pick a survivor, three weapons and a map, then hold out against wave after wave of zombies and bosses. JavaScript is needed to play.</p></noscript>
 <div id="stage">
+  <div id="still" aria-hidden="true"><div class="still-blur" style="background-image:url(data:image/webp;base64,UklGRvwAAABXRUJQVlA4IPAAAACwBQCdASooABQAPrlIoEqnJCMhsBqtUOAXCUAVJOnuYwXMXwSnq+pQ+3phZd2l0GLHMEHolkAA/veBktPf1wgTYGfm77X1og/HxodKRAsTKLyhQKod6f0s3qvDJjPZ368QEP8fG65gHrkoSmlNK0UptRA4mhoohpMgs5Wdo6tq7HIleHcxb4DMHvNbcyWJHkXZWmzLv+uF7r2B7NLltma/95Ixhk1iEiWw6yzMl84wmODLhEmchOsdt3UWKkxkhaiodPDbb01mj5UtDJcrhZaEJrtTqJrY8duCTc9jyt9zWx9Z8DDs8oacg5K8+qLgAAA=)"></div><div class="still-sharp"></div></div>
   <canvas id="game" width="640" height="400"></canvas>
 
   <!-- ============ TITLE ============ -->
@@ -235,13 +245,5 @@
   </div>
 </div>
 
-<script src="js/sprites.js?v=170"></script>
-<script src="js/config.js?v=170"></script>
-<script src="js/audio.js?v=170"></script>
-<script src="js/map.js?v=170"></script>
-<script src="js/entities.js?v=170"></script>
-<script src="js/game.js?v=170"></script>
-<script src="js/ui.js?v=170"></script>
-<script src="js/main.js?v=170"></script>
 </body>
 </html>

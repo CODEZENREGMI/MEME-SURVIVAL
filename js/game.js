@@ -22,6 +22,8 @@ class Game {
     this.reset();
     requestAnimationFrame(t => this.loop(t));
   }
+  /* the page opened on a still of the title; now that the real scene is drawing, fade it in over the still */
+  comeAlive() { this.aliveAt = this.time; requestAnimationFrame(() => document.documentElement.classList.add('alive')); }
   getMap(id) { return this.maps[id] || (this.maps[id] = new GameMap(id)); }
   /* the title screen is a night scene: Urban City after dark, lamps burning, headlights on, blood on the road */
   menuScene() {
@@ -608,8 +610,8 @@ class Game {
   updateAmbient(dt) {
     this.time += dt; this.ui.tick(dt); this.updateFx(dt); this.menuScene(); this.updateMenuZombies(dt);
     if (this.menuCam) { // a slow drift so the title screen never looks like a still
-      const t = this.time * 0.06;
-      const tx = this.menuCam.x + Math.cos(t) * 90 - this.vw / 2, ty = this.menuCam.y + Math.sin(t * 0.8) * 60 - this.vh / 2;
+      const t = this.aliveAt == null ? 0 : (this.time - this.aliveAt) * 0.06;   // held dead centre (where the still is) until the scene comes alive
+      const tx = this.menuCam.x + Math.sin(t) * 90 - this.vw / 2, ty = this.menuCam.y + Math.sin(t * 0.8) * 60 - this.vh / 2;
       this.cam.x = clamp(tx, 0, Math.max(0, this.map.pw - this.vw)); this.cam.y = clamp(ty, 0, Math.max(0, this.map.ph - this.vh));
     }
   }
@@ -692,6 +694,7 @@ class Game {
     const dark = !!this.map.cfg.dark && !flick, inGame = this.state !== 'menu';
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
     this.map.draw(ctx, cx, cy, this.vw, this.vh, this.menuNight);
+    if (this.aliveAt == null && (!this.menuNight || !this.map.cfg.menuImage || this.map.menuCanvas || this.map.menuFailed)) this.comeAlive();
     const inView = e => e.x > cx - 40 && e.x < cx + this.vw + 40 && e.y > cy - 40 && e.y < cy + this.vh + 40;
     const glowP = p => p.type === 'fire' || p.type === 'dot' || p.type === 'text';
     // ---- world layer (gets darkened) ----

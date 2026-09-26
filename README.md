@@ -126,7 +126,7 @@ js/main.js      bootstrap
 
 ### Horror House (painted map)
 
-The whole map is one hand-painted image (`assets/img/horror_map.webp`, 1760×880 = 110×55 tiles, lossless) of a
+The whole map is one hand-painted image (`assets/img/horror_map2.webp`, 1760×880 = 110×55 tiles, WebP q94 ≈ 234 KB; the old lossless file was 1.1 MB) of a
 blood-soaked plaza at night: four tree planters, crates, abandoned cop cars, burning wrecks on the corners and
 street lamps. It's colour-graded for horror — shadows and midtones sunk and pulled toward a cold blue-teal, colour
 drained from everything except lamplight and fire (which stay warm and bright as the only real light), blood kept
@@ -169,6 +169,27 @@ transformation still uses the pixel-map frog in `js/sprites.js`.
 - No build step: edit the files and reload.
 - `./bump.sh` bumps the `?v=` cache tag on every script and stylesheet in `index.html`. Run it after any change to `js/` or `css/` so nobody gets a half-stale build.
 - The game auto-pauses when the window loses focus mid-run.
+
+## Loading: a still first, then it comes alive
+
+The first visit never shows a black screen:
+
+1. **First frame.** A 348-byte blurred copy of the title background is baked into `index.html` (`#still .still-blur`),
+   and the logo, PLAY and SETTINGS are plain HTML, so the title is there the moment the page opens.
+2. **The still.** `horror_menu.webp` is preloaded in the `<head>` with high priority and shown sharp by CSS
+   (`.still-sharp`), sized exactly like the menu's cover-fitted canvas (`max(1760px, 100vw, 200vh)`, centred). PLAY
+   and SETTINGS stay dimmed and unclickable until the code is up (`html.ready`).
+3. **Alive.** The canvas starts invisible. Once the menu scene has drawn a frame with the real art,
+   `Game.comeAlive()` adds `html.alive` and the live scene (wandering zombies, fire, drift) fades in over the still in
+   0.45 s. The camera drift is held at dead centre until then, so the live frame lines up with the still to the pixel.
+   A 6 s safety net in `main.js` shows the canvas regardless.
+
+Also for speed: map pictures are loaded in order (title art first, the gameplay map after, so it can't slow the
+title); map pictures have no `?v=` (they're immutable: a changed picture gets a new file name, which is also what lets
+the `<head>` preload be reused); scripts load with `defer` from the `<head>`; fonts are self-hosted in `assets/fonts/`
+(Press Start 2P and IBM Plex Mono, both SIL Open Font License, latin subset) instead of Google Fonts; and `vercel.json`
+lets browsers keep `js/` and `css/` for a year because every release changes their `?v=` (so **always run
+`./bump.sh`** after editing them).
 
 ## SEO
 

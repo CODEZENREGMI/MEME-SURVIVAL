@@ -65,7 +65,7 @@ page = f'''<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{html.escape(title)}</title>
 <meta name="description" content="{html.escape(desc)}">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="canonical" href="{U}faq">
 <meta name="theme-color" content="#0b0d12">
 <meta property="og:type" content="article">
@@ -85,9 +85,12 @@ page = f'''<!DOCTYPE html>
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="preload" href="/assets/fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{{font-family:'Press Start 2P';font-weight:400;font-display:swap;src:url(/assets/fonts/press-start-2p.woff2) format('woff2')}}
+@font-face{{font-family:'IBM Plex Mono';font-weight:400;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-400.woff2) format('woff2')}}
+@font-face{{font-family:'IBM Plex Mono';font-weight:700;font-display:swap;src:url(/assets/fonts/ibm-plex-mono-700.woff2) format('woff2')}}
 :root{{--bg:#0b0d12;--panel:#151a25;--line:#2b3345;--text:#e8e6dc;--muted:#a3abbc;--red:#e0301e;--link:#ff7a5c}}
 *{{box-sizing:border-box;margin:0;padding:0}}
 html{{scroll-behavior:smooth}}
