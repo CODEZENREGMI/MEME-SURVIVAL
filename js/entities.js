@@ -87,6 +87,7 @@ class Player {
     this.cryT = 0; this.cryCd = 0; this.floodR = 0; this.sob = 0;
     this.rollT = 0; this.rollCd = 0; this.rollVx = 0; this.rollVy = 0; this.spin = 0; this.rumble = 0; this.rollHits = new WeakMap(); this.rollLoop = null;
     this.spinT = 0; this.spinCd = 0; this.spinTick = 0; this.spinA = 0; this.whoosh = 0; this.spinLoop = null;
+    this.strikeCd = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -317,6 +318,20 @@ class Player {
     Audio8.noise(1.4, 0.4, 650); g.shake(3);
     for (let i = 0; i < 30; i++) { const a = i / 30 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 110, Math.sin(a) * 110 - 30, 0.55, i % 2 ? '#4f9be6' : '#dcecfb', 3, 'blood')); }
     g.showAbilityBanner('CRY FLOOD', `${fl.duration}s · the tears flood the street · keep shooting`);
+    return true;
+  }
+  /* ---- Doge: AIRSTRIKE — radio call, flare on the cursor, a jet carpet-bombs a line through it ---- */
+  useStrike() {
+    const sc = this.char.strike, g = this.game; if (!sc) return false;
+    if (this.strikeCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `AIRSTRIKE IN ${Math.ceil(this.strikeCd)}s`, '#9aa3b5'); return false; }
+    let tx = g.input.worldX, ty = g.input.worldY; const d = Math.hypot(tx - this.x, ty - this.y);
+    if (d > sc.range) { tx = this.x + (tx - this.x) / d * sc.range; ty = this.y + (ty - this.y) / d * sc.range; }   // the radio only reaches so far
+    const a = d > 8 ? Math.atan2(ty - this.y, tx - this.x) : this.angle;   // the jet comes in along your line of sight
+    g.strikes.push({ x: tx, y: ty, a, t: 0, beep: 0, dropped: 0, roar: false, cfg: sc, mult: this.damageMult });
+    this.strikeCd = sc.cooldown;
+    Audio8.tone(900, 0.06, 'square', 0.12); Audio8.tone(1300, 0.08, 'square', 0.12, 0, 0.08); Audio8.noise(0.25, 0.12, 2400);   // radio chirp
+    g.floatText(this.x, this.y - 20, 'BRAVO SIX, GOING IN', '#ffd23a');
+    g.showAbilityBanner('AIRSTRIKE', `inbound on your mark · ${sc.bombs} bombs · keep shooting`);
     return true;
   }
   /* ---- Giga Ballerina: PIROUETTE — he spins, and a ring of blades slices everything around him ---- */
@@ -670,7 +685,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.roll) return this.useRoll(); if (this.char.spin) return this.useSpin(); if (this.char.cry) return this.useCry(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.roll) return this.useRoll(); if (this.char.spin) return this.useSpin(); if (this.char.strike) return this.useStrike(); if (this.char.cry) return this.useCry(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -812,6 +827,8 @@ class Player {
     }
     const cf = this.char.cry;
     if (cf) { if (this.cryT > 0) return { name: cf.name, state: 'active', frac: this.cryT / cf.duration, sub: `${Math.ceil(this.cryT)}s · THE DAM BROKE` }; if (this.floodR > 0) return { name: cf.name, state: 'busy', frac: 0, sub: 'DRAINING...' }; if (this.cryCd > 0) return { name: cf.name, state: 'cd', frac: 1 - this.cryCd / cf.cooldown, sub: `RECHARGING ${Math.ceil(this.cryCd)}s` }; return { name: cf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
+    const sk2 = this.char.strike;
+    if (sk2) { if (this.game.strikes.some(s => s.cfg === sk2 && s.dropped < sk2.bombs)) return { name: sk2.name, state: 'active', frac: 1, sub: 'INBOUND · TAKE COVER' }; if (this.strikeCd > 0) return { name: sk2.name, state: 'cd', frac: 1 - this.strikeCd / sk2.cooldown, sub: `RECHARGING ${Math.ceil(this.strikeCd)}s` }; return { name: sk2.name, state: 'ready', frac: 1, sub: '[SPACE] AT CURSOR' }; }
     const sn = this.char.spin;
     if (sn) { if (this.spinT > 0) return { name: sn.name, state: 'active', frac: this.spinT / sn.duration, sub: `${Math.ceil(this.spinT)}s · SLICING` }; if (this.spinCd > 0) return { name: sn.name, state: 'cd', frac: 1 - this.spinCd / sn.cooldown, sub: `RECHARGING ${Math.ceil(this.spinCd)}s` }; return { name: sn.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const rl = this.char.roll;
@@ -1098,6 +1115,7 @@ class Player {
         if (this.cryT <= 0) { this.cryT = 0; this.cryCd = fl.cooldown; Audio8.stopHandle(this.cryLoop, 0.5); this.cryLoop = null; g.floatText(this.x, this.y - 18, '*sniff*', '#9cc8f2'); }
       } else if (this.floodR > 0) this.floodR = Math.max(0, this.floodR - fl.radius / fl.drain * dt);   // the water drains away
       else if (this.cryCd > 0) { this.cryCd -= dt; if (this.cryCd <= 0) { this.cryCd = 0; g.floatText(this.x, this.y - 18, 'READY TO CRY', '#9cc8f2'); Audio8.play('xp'); } } }
+    if (this.char.strike && this.strikeCd > 0) { this.strikeCd -= dt; if (this.strikeCd <= 0) { this.strikeCd = 0; this.game.floatText(this.x, this.y - 18, 'AIR SUPPORT READY', '#ffd23a'); Audio8.play('xp'); } }
     if (this.char.spin) { const sn = this.char.spin;
       if (this.spinT > 0) { this.spinT -= dt; this.spinA += dt * 17;   // ~2.7 turns a second
         this.spinTick -= dt; if (this.spinTick <= 0) { this.spinTick = sn.tick; this.spinSlice(); }

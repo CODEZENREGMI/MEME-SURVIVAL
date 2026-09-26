@@ -57,6 +57,7 @@ QA = [
   "<li><strong>Eggreck</strong>: turns invisible and calls in his wife as a shield.</li>"
   "<li><strong>BlackEgg</strong>: tucks into a rolling egg and crushes every zombie in his path flat.</li>"
   "<li><strong>Giga Ballerina</strong>: spins in a pirouette while a ring of blades slices every zombie around him.</li>"
+  "<li><strong>Doge</strong>: radios in an airstrike, and a jet carpet-bombs a line of zombies wherever he points.</li>"
   "<li><strong>Bezuko</strong>, <strong>Spider Mad</strong>, <strong>Genom</strong>, <strong>Videoman</strong> and more, plus classic soldiers like the Rookie, Runner, Heavy and Medic.</li></ul>"),
  ("What maps and bosses are in Meme Survival?", "maps-and-bosses",
   "<p>There are <strong>6 maps</strong>: Urban City, Suburbs, Industrial Zone, Research Lab, Race City and the hand-painted <strong>Horror House</strong>.</p>"
@@ -73,7 +74,7 @@ QA = [
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
  ("2026-09-26", [
-   "<strong>New survivor: Doge.</strong> Much soldier, very tactical: a Shiba Inu in a plate carrier and the coolest shades on the battlefield.",
+   "<strong>New survivor: Doge.</strong> Much soldier, very tactical: a Shiba Inu in a plate carrier and the coolest shades on the battlefield. AIRSTRIKE calls in a jet that carpet-bombs wherever he points.",
    "<strong>Urban City has a pool.</strong> It's murky, something glides underneath, and stepping in is a mistake.",
    "<strong>The Research Lab floor has a hole in it.</strong> Something down there blinks. On certain waves, it does more than blink.",
    "Sharkjutta redrawn: the shark in blue running shoes, side-on, exactly like the meme.",

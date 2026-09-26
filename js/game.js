@@ -115,7 +115,7 @@ class Game {
   reset() {
     this.map = this.getMap(this.loadout.map); this.resize();
     this.player = new Player(this, this.map.playerStart.x, this.map.playerStart.y, this.loadout.char, this.loadout.weapons);
-    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = []; this.scared = new Set();
+    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = []; this.scared = new Set(); this.strikes = [];
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0; this.heartsBought = 0;
@@ -349,7 +349,7 @@ class Game {
     }
     this.picked[pk.type]++;
   }
-  explode(x, y, radius, dmg, fromPlayer, exclude) {
+  explode(x, y, radius, dmg, fromPlayer, exclude, safe) {
     Audio8.play('explode'); this.shake(fromPlayer ? 7 : 5); this.lights.push({ x, y, r: radius * 3, life: 0.45, max: 0.45 });
     for (let i = 0; i < 26; i++) { const a = Math.random() * TAU, s = 30 + Math.random() * 120; this.particles.push(new Particle(x, y, Math.cos(a) * s, Math.sin(a) * s, 0.3 + Math.random() * 0.4, '#ff6a2a', 2 + Math.random() * 3, 'fire')); }
     for (let i = 0; i < 10; i++) { const a = Math.random() * TAU, s = 10 + Math.random() * 40; this.particles.push(new Particle(x, y, Math.cos(a) * s, Math.sin(a) * s, 0.8 + Math.random() * 0.6, '#555', 3, 'smoke')); }
@@ -357,7 +357,7 @@ class Game {
     if (this.siege && fromPlayer) { const h = this.map.house; if (this.house && !this.house.dead) { const ex = Math.max(Math.abs(x - h.x) - h.w / 2, 0), ey = Math.max(Math.abs(y - h.y) - h.h / 2, 0); if (Math.hypot(ex, ey) < radius) this.damageHouse(dmg * 0.8, x, y); } this.turrets.forEach(t => { if (!t.dead && t !== exclude && dist(x, y, t.x, t.y) < radius + t.r) this.damageTurret(t, dmg * 0.8); }); }
     this.map.cars.forEach(pr => { if (!pr.taken && pr.type !== 'car_wreck' && Math.abs(x - pr.x) < radius + 16 && Math.abs(y - pr.y) < radius + 8) this.damageCar(pr, dmg * 0.6, x, y); });
     this.zombies.forEach(z => { if (z === exclude) return; const d = dist(x, y, z.x, z.y); if (d < radius + z.r) { const f = 1 - clamp((d - z.r) / radius, 0, 0.7); z.takeDamage(dmg * f, Math.atan2(z.y - y, z.x - x), undefined, 2); } });
-    this.targets().forEach(tg => { const pd = dist(x, y, tg.x, tg.y); if (pd < radius) tg.hurt(Math.round(fromPlayer ? dmg * 0.25 : dmg), x, y); });
+    if (!safe) this.targets().forEach(tg => { const pd = dist(x, y, tg.x, tg.y); if (pd < radius) tg.hurt(Math.round(fromPlayer ? dmg * 0.25 : dmg), x, y); });   // safe: friendly bombs spare you and your allies
   }
 
   /* ------------------------------------------------------------ fx */
@@ -439,6 +439,53 @@ class Game {
     const B = this.player.char.money.bag;
     this.lures.push({ sx: x, sy: y, x, y, tx, ty, t: 0, h: 0, fly: Math.max(0.25, Math.min(0.55, dist(x, y, tx, ty) / 800)), life: B.life, max: B.life, r: B.radius, landed: false, notes: [] });
     Audio8.play('swap');
+  }
+  /* Doge's AIRSTRIKE: a flare on the target, beeps, a jet on its run, and a line of bombs rolling through */
+  updateStrikes(dt) {
+    for (const s of this.strikes) {
+      const c = s.cfg; s.t += dt;
+      if (s.t < c.delay) {
+        s.beep -= dt; if (s.beep <= 0) { s.beep = Math.max(0.12, 0.4 - s.t * 0.18); Audio8.tone(1250, 0.05, 'square', 0.1); }   // beeping faster as it closes
+        if (Math.random() < 0.7) this.particles.push(new Particle(s.x + (Math.random() - 0.5) * 4, s.y, (Math.random() - 0.5) * 10, -18 - Math.random() * 14, 0.9, Math.random() < 0.6 ? '#ff3a2a' : '#ff9a7a', 3, 'smoke'));   // red flare smoke
+      }
+      if (!s.roar && s.t >= c.delay - 0.7) { s.roar = true; Audio8.noise(1.6, 0.35, 700); Audio8.tone(110, 1.4, 'sawtooth', 0.12, -60); }   // the jet screaming in
+      while (s.dropped < c.bombs && s.t >= c.delay + s.dropped * c.interval) {
+        const k = s.dropped - (c.bombs - 1) / 2, bx = s.x + Math.cos(s.a) * k * c.spacing + (Math.random() - 0.5) * 6, by = s.y + Math.sin(s.a) * k * c.spacing + (Math.random() - 0.5) * 6;
+        this.explode(bx, by, c.radius, c.damage * s.mult, true, undefined, true);
+        this.map.splat(bx, by, 10, 'rgba(20,14,10,0.55)');
+        s.dropped++;
+      }
+      if (s.dropped >= c.bombs && s.t > c.delay + c.bombs * c.interval + 1.2) s.done = true;
+    }
+    this.strikes = this.strikes.filter(s => !s.done);
+  }
+  /* the jet: nose along its heading; the same shape darkened makes its shadow on the ground */
+  jetPath(ctx, x, y, a, sc) {
+    const P = [[16, 0], [8, -2], [2, -3], [-2, -13], [-6, -13], [-4, -3], [-10, -2], [-14, -7], [-17, -7], [-15, 0]];
+    ctx.beginPath(); const pts = P.concat(P.slice(1, -1).reverse().map(([u, v]) => [u, -v]));
+    pts.forEach(([u, v], i) => { const px = x + (u * Math.cos(a) - v * Math.sin(a)) * sc, py = y + (u * Math.sin(a) + v * Math.cos(a)) * sc; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.closePath();
+  }
+  jetPos(s) { const c = s.cfg, speed = c.spacing / c.interval, d = (s.t - c.delay) * speed - (c.bombs - 1) / 2 * c.spacing; return { x: s.x + Math.cos(s.a) * d, y: s.y + Math.sin(s.a) * d }; }
+  drawStrikes(ctx, layer) {
+    for (const s of this.strikes) {
+      const c = s.cfg, t = this.time, live = s.dropped < c.bombs;
+      if (layer === 'ground') {
+        if (live) { // the target: a pulsing ring, crosshairs, and the dashed line the bombs will walk along
+          const pulse = 1 + Math.sin(t * 14) * 0.08, R = 18 * pulse, half = (c.bombs - 1) / 2 * c.spacing + 10;
+          ctx.strokeStyle = 'rgba(255,58,42,0.45)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.beginPath();
+          ctx.moveTo(s.x - Math.cos(s.a) * half, s.y - Math.sin(s.a) * half); ctx.lineTo(s.x + Math.cos(s.a) * half, s.y + Math.sin(s.a) * half); ctx.stroke(); ctx.setLineDash([]);
+          ctx.strokeStyle = 'rgba(255,58,42,0.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(s.x, s.y, R, 0, TAU); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(s.x - R - 5, s.y); ctx.lineTo(s.x - R + 5, s.y); ctx.moveTo(s.x + R - 5, s.y); ctx.lineTo(s.x + R + 5, s.y); ctx.moveTo(s.x, s.y - R - 5); ctx.lineTo(s.x, s.y - R + 5); ctx.moveTo(s.x, s.y + R - 5); ctx.lineTo(s.x, s.y + R + 5); ctx.stroke();
+          ctx.fillStyle = '#ff3a2a'; ctx.fillRect(Math.round(s.x) - 1, Math.round(s.y) - 1, 3, 3);   // the flare itself
+        }
+        if (s.t > c.delay - 1.3) { const j = this.jetPos(s); ctx.fillStyle = 'rgba(0,0,0,0.3)'; this.jetPath(ctx, j.x + 20, j.y + 30, s.a, 1.6); ctx.fill(); }   // its shadow racing across the ground
+      } else if (s.t > c.delay - 1.3) { // the jet itself, overhead
+        const j = this.jetPos(s);
+        ctx.fillStyle = '#5d6470'; ctx.strokeStyle = '#1b1e24'; ctx.lineWidth = 1; this.jetPath(ctx, j.x, j.y, s.a, 1.6); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#9fd3ff'; ctx.beginPath(); ctx.ellipse(j.x + Math.cos(s.a) * 12, j.y + Math.sin(s.a) * 12, 4, 1.6, s.a, 0, TAU); ctx.fill();   // canopy
+        for (let i = 0; i < 2; i++) { const bx = j.x - Math.cos(s.a) * (26 + i * 6), by = j.y - Math.sin(s.a) * (26 + i * 6); ctx.fillStyle = i ? 'rgba(255,200,120,0.5)' : 'rgba(255,140,60,0.8)'; ctx.beginPath(); ctx.arc(bx, by, 3 - i, 0, TAU); ctx.fill(); }   // afterburner
+      }
+    }
   }
   updateLures(dt) {
     for (const L of this.lures) {
@@ -727,6 +774,7 @@ class Game {
     this.zombies = this.zombies.filter(z => !z.dead);
     this.clones.forEach(c => c.update(dt)); this.clones = this.clones.filter(c => !c.dead);
     this.updateLures(dt);
+    this.updateStrikes(dt);
     this.updateMilk(dt);
     this.updateSinkers(dt);
     for (const b of this.bullets) {
@@ -792,6 +840,7 @@ class Game {
     this.drawSinkers(ctx);
     this.drawMilk(ctx);
     this.drawLures(ctx);
+    this.drawStrikes(ctx, 'ground');
     this.pickups.forEach(k => inView(k) && k.draw(ctx));
     this.zombies.forEach(z => inView(z) && z.draw(ctx));
     this.clones.forEach(c => inView(c) && c.draw(ctx));
@@ -801,6 +850,7 @@ class Game {
     if (dark) this.drawDarkness(ctx, cx, cy, inGame);
     // ---- glow layer (visible in the dark) ----
     ctx.save(); ctx.translate(-cx, -cy);
+    this.drawStrikes(ctx, 'air');
     if (this.menuNight) { // dusk over the city: cool tint first, then the warm lights punched over it
       const painted = !!this.map.cfg.image;   // a painted map has its lighting baked in — just the vignette
       if (!painted) {
