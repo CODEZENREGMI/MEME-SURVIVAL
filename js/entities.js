@@ -85,6 +85,7 @@ class Player {
     this.demonState = 'human'; this.demonT = 0; this.demonTime = 0; this.demonCd = 0; this.kick = null; this.kickCd = 0; this.slash = 0; this.slashAngle = 0; this.slashCd = 0; this.invis = 0; this.invisCd = 0; this.wifeT = 0; this.wifeCd = 0; this.wifePos = null; this.shieldHit = 0; this.lavaT = 0; this.lavaCd = 0; this.viralT = 0; this.viralCd = 0; this.moneyT = 0; this.moneyCd = 0; this.throwCd = 0; this.slamT = 0; this.slamCd2 = 0;
     this.frenzyT = 0; this.frenzyCd = 0; this.biteCd = 0; this.lunge = null; this.chomp = 0;
     this.cryT = 0; this.cryCd = 0; this.floodR = 0; this.sob = 0;
+    this.rollT = 0; this.rollCd = 0; this.rollVx = 0; this.rollVy = 0; this.spin = 0; this.rumble = 0; this.rollHits = new WeakMap();
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -315,6 +316,54 @@ class Player {
     for (let i = 0; i < 30; i++) { const a = i / 30 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 110, Math.sin(a) * 110 - 30, 0.55, i % 2 ? '#4f9be6' : '#dcecfb', 3, 'blood')); }
     g.showAbilityBanner('CRY FLOOD', `${fl.duration}s · the tears flood the street · keep shooting`);
     return true;
+  }
+  /* ---- BlackEgg: EGG ROLL — he tucks in and rolls, crushing everything in his path ---- */
+  useRoll() {
+    const rl = this.char.roll, g = this.game; if (!rl) return false;
+    if (this.rollT > 0) return false;
+    if (this.rollCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `ROLL IN ${Math.ceil(this.rollCd)}s`, '#9aa3b5'); return false; }
+    this.rollT = rl.duration; this.reloading = false; this.spin = 0; this.rollHits = new WeakMap();
+    const push = this.speed * rl.speed * 0.8; this.rollVx = Math.cos(this.angle) * push; this.rollVy = Math.sin(this.angle) * push;   // launches toward the cursor
+    Audio8.play('thud'); Audio8.noise(0.5, 0.3, 380); g.shake(4);
+    for (let i = 0; i < 14; i++) { const a = i / 14 * TAU; g.particles.push(new Particle(this.x, this.y + 6, Math.cos(a) * 60, Math.sin(a) * 30 - 10, 0.45, i % 2 ? '#8a7a6a' : '#b5a898', 2, 'dot')); }
+    g.showAbilityBanner('EGG ROLL', `${rl.duration}s · WASD to steer · crush them flat`);
+    return true;
+  }
+  /* rolling movement: momentum, steering, wall bounces, and the crush */
+  eggRoll(dt, dx, dy) {
+    const rl = this.char.roll, g = this.game, m = g.map, max = this.speed * rl.speed;
+    if (dx || dy) { const l = Math.hypot(dx, dy), k = Math.min(1, rl.accel * dt); this.rollVx += (dx / l * max - this.rollVx) * k; this.rollVy += (dy / l * max - this.rollVy) * k; }
+    else { const f = Math.pow(rl.coast, dt); this.rollVx *= f; this.rollVy *= f; }   // let go and he keeps rolling, slowing down
+    let hitWall = false;
+    const tx = this.x + this.rollVx * dt; let q = m.resolve(tx, this.y, this.r); if (Math.abs(q.x - tx) > 0.01) { this.rollVx = -this.rollVx * rl.bounce; hitWall = true; } this.x = q.x;
+    const ty = this.y + this.rollVy * dt; q = m.resolve(this.x, ty, this.r); if (Math.abs(q.y - ty) > 0.01) { this.rollVy = -this.rollVy * rl.bounce; hitWall = true; } this.x = q.x; this.y = q.y;
+    const sp = Math.hypot(this.rollVx, this.rollVy);
+    if (hitWall && sp > rl.crushSpeed) { g.shake(2); Audio8.play('hit'); }
+    this.spin += (this.rollVx >= 0 ? 1 : -1) * sp * dt / 7;   // a 7 px radius egg rolling along the ground
+    this.moving = sp > 6; if (Math.abs(this.rollVx) > 4) this.flip = this.rollVx < 0;
+    this.rumble -= dt; if (sp > rl.crushSpeed && this.rumble <= 0) { this.rumble = 0.22; Audio8.noise(0.14, 0.07, 220); }
+    if (sp > 20 && Math.random() < 0.6) g.particles.push(new Particle(this.x - this.rollVx * 0.05 + (Math.random() - 0.5) * 8, this.y + 6, -this.rollVx * 0.15 + (Math.random() - 0.5) * 12, -8 - Math.random() * 10, 0.4, Math.random() < 0.5 ? '#8a7a6a' : '#6d6258', 2, 'dot'));
+    if (sp < rl.crushSpeed) return;
+    let crushed = 0;
+    for (const z of g.zombies) {
+      if (z.dead || z.captured > 0) continue;
+      if (dist(this.x, this.y, z.x, z.y) > z.r + rl.reach) continue;
+      const a = Math.atan2(z.y - this.y, z.x - this.x);
+      if (z.cfg.boss) { // too big to flatten: a heavy hit, and he bounces off
+        const last = this.rollHits.get(z); if (last != null && g.time - last < rl.bossHitCd) continue;
+        this.rollHits.set(z, g.time);
+        z.takeDamage(rl.bossDamage * this.damageMult, a, undefined, 3);
+        this.rollVx = -Math.cos(a) * sp * rl.bounce; this.rollVy = -Math.sin(a) * sp * rl.bounce;
+        g.floatText(z.x, z.y - 14 * z.scale, 'BONK', '#f4d9b0'); Audio8.play('thud'); g.shake(5);
+        continue;
+      }
+      const zx = z.x, zy = z.y;
+      z.takeDamage(z.hp + 9999, a, undefined, 0, true);   // quiet: no giant damage number, the splat says it all
+      g.blood(zx, zy, 4, '#b3221a'); g.map.splat(zx, zy, 9, '#5e110c');   // flattened into the road
+      for (let i = 0; i < 6; i++) g.particles.push(new Particle(zx, zy, Math.cos(a + (Math.random() - 0.5) * 1.6) * (50 + Math.random() * 60), Math.sin(a + (Math.random() - 0.5) * 1.6) * (50 + Math.random() * 60), 0.45, i % 2 ? '#b3221a' : '#6b1410', 3, 'blood'));
+      crushed++;
+    }
+    if (crushed) { g.floatText(this.x, this.y - 20, crushed > 1 ? `CRUSHED ×${crushed}` : 'CRUSHED', '#f4d9b0'); Audio8.play('zdie'); if (crushed > 1) Audio8.play('thud'); g.shake(2 + crushed); }
   }
   /* ---- Sharkjutta: FEEDING FRENZY — 12 s of jaws. Lunge, bite, swallow, heal. ---- */
   get frenzy() { return this.frenzyT > 0; }
@@ -590,7 +639,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.cry) return this.useCry(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.roll) return this.useRoll(); if (this.char.cry) return this.useCry(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -732,6 +781,8 @@ class Player {
     }
     const cf = this.char.cry;
     if (cf) { if (this.cryT > 0) return { name: cf.name, state: 'active', frac: this.cryT / cf.duration, sub: `${Math.ceil(this.cryT)}s · THE DAM BROKE` }; if (this.floodR > 0) return { name: cf.name, state: 'busy', frac: 0, sub: 'DRAINING...' }; if (this.cryCd > 0) return { name: cf.name, state: 'cd', frac: 1 - this.cryCd / cf.cooldown, sub: `RECHARGING ${Math.ceil(this.cryCd)}s` }; return { name: cf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
+    const rl = this.char.roll;
+    if (rl) { if (this.rollT > 0) return { name: rl.name, state: 'active', frac: this.rollT / rl.duration, sub: `${Math.ceil(this.rollT)}s · WASD STEER` }; if (this.rollCd > 0) return { name: rl.name, state: 'cd', frac: 1 - this.rollCd / rl.cooldown, sub: `RECHARGING ${Math.ceil(this.rollCd)}s` }; return { name: rl.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const sk = this.char.shark;
     if (sk) { if (this.frenzyT > 0) return { name: sk.name, state: 'active', frac: this.frenzyT / sk.duration, sub: `${Math.ceil(this.frenzyT)}s · LMB BITE` }; if (this.frenzyCd > 0) return { name: sk.name, state: 'cd', frac: 1 - this.frenzyCd / sk.cooldown, sub: `RECHARGING ${Math.ceil(this.frenzyCd)}s` }; return { name: sk.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const sl = this.char.slam;
@@ -934,6 +985,7 @@ class Player {
     if (this.frog) dmg = Math.round(dmg * this.fr.armor);
     if (this.demon) dmg = Math.round(dmg * this.dm.armor);
     if (this.frenzy) dmg = Math.round(dmg * this.char.shark.armor);
+    if (this.rollT > 0) dmg = Math.round(dmg * this.char.roll.armor);
     if (this.driving && this.car.civil) { // the car takes the hit — and a swarm can all chew on it at once
       this.car.hp -= dmg; this.hurtFlash = 0.2; this.invuln = 0.06; this.game.spark(this.x + (Math.random() - 0.5) * 30, this.y + (Math.random() - 0.5) * 16, 2);
       if (this.car.hp <= 0) this.wreckCar(); return;
@@ -990,7 +1042,8 @@ class Player {
     if (input.keys.w || input.keys.ArrowUp) dy -= 1; if (input.keys.s || input.keys.ArrowDown) dy += 1;
     if (input.keys.a || input.keys.ArrowLeft) dx -= 1; if (input.keys.d || input.keys.ArrowRight) dx += 1;
     this.moving = dx !== 0 || dy !== 0;
-    if (this.moving) {
+    if (this.rollT > 0) this.eggRoll(dt, dx, dy);
+    else if (this.moving) {
       const l = Math.hypot(dx, dy); dx /= l; dy /= l;
       const sp = this.speed * (this.reloading ? 0.85 : 1);
       this.x += dx * sp * dt; let p = this.game.map.resolve(this.x, this.y, this.r); this.x = p.x;
@@ -1011,6 +1064,10 @@ class Player {
         if (this.cryT <= 0) { this.cryT = 0; this.cryCd = fl.cooldown; Audio8.stopHandle(this.cryLoop, 0.5); this.cryLoop = null; g.floatText(this.x, this.y - 18, '*sniff*', '#9cc8f2'); }
       } else if (this.floodR > 0) this.floodR = Math.max(0, this.floodR - fl.radius / fl.drain * dt);   // the water drains away
       else if (this.cryCd > 0) { this.cryCd -= dt; if (this.cryCd <= 0) { this.cryCd = 0; g.floatText(this.x, this.y - 18, 'READY TO CRY', '#9cc8f2'); Audio8.play('xp'); } } }
+    if (this.char.roll) { const rl = this.char.roll;
+      if (this.rollT > 0) { this.rollT -= dt;
+        if (this.rollT <= 0) { this.rollT = 0; this.rollCd = rl.cooldown; this.rollVx = this.rollVy = 0; this.game.floatText(this.x, this.y - 18, 'DIZZY', '#c9cfdb'); Audio8.play('reloaded'); } }
+      else if (this.rollCd > 0) { this.rollCd -= dt; if (this.rollCd <= 0) { this.rollCd = 0; this.game.floatText(this.x, this.y - 18, 'READY TO ROLL', '#f4d9b0'); Audio8.play('xp'); } } }
     if (this.char.shark) { const sk = this.char.shark; this.biteCd -= dt; this.chomp -= dt;
       if (this.lunge) { const L = this.lunge; L.t += dt; const k = Math.min(1, L.t / L.dur);
         const q = this.game.map.resolve(L.sx + (L.tx - L.sx) * k, L.sy + (L.ty - L.sy) * k, this.r); this.x = q.x; this.y = q.y;
@@ -1056,6 +1113,7 @@ class Player {
     if (this.venom) { this.venomAttacks(input); return; }
     if (this.lavaT > 0) { this.lavaAttacks(input); return; }
     if (this.frenzyT > 0) { this.frenzyAttacks(input); return; }   // jaws, not guns
+    if (this.rollT > 0) return;   // he's a rolling egg: no hands free for the gun
     if (this.moneyT > 0) this.moneyAttacks(input);   // RMB throws, LMB keeps shooting — falls through to the gun below
     if (this.frog) { this.frogAttacks(input); return; }
     if (this.demon) { this.demonAttacks(input); return; }
@@ -1144,6 +1202,7 @@ class Player {
       }
     }
     if (this.invisible) { const tt = performance.now() / 1000; ctx.strokeStyle = `rgba(200,220,96,${0.35 + Math.sin(tt * 6) * 0.15})`; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.lineDashOffset = -tt * 20; ctx.beginPath(); ctx.arc(this.x, this.y, 13, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 0.28 + Math.sin(tt * 9) * 0.08; }
+    if (this.rollT > 0) { this.drawEggRoll(ctx); return; }
     const blink = this.invuln > 0 && Math.floor(this.invuln * 20) % 2 === 0;
     if (!blink || this.dead) Sprites.draw(ctx, this.hurtFlash > 0 ? 'player_hurt' : this.sprite, this.x, this.y + bob, { flip: this.flip, ox: -8, oy: -9 });
     // gun
@@ -1160,6 +1219,18 @@ class Player {
     if (this.reloading) { const p = 1 - this.reloadTimer / (this.wcfg.reload * this.char.reload); ctx.strokeStyle = '#111'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.x, this.y - 14, 5, -Math.PI / 2, -Math.PI / 2 + TAU * p); ctx.stroke(); ctx.strokeStyle = '#f5c518'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(this.x, this.y - 14, 5, -Math.PI / 2, -Math.PI / 2 + TAU * p); ctx.stroke(); }
   }
 }
+
+/* BlackEgg: the tucked egg, spinning as it rolls, with speed streaks behind it */
+Player.prototype.drawEggRoll = function (ctx) {
+  const rl = this.char.roll, sp = Math.hypot(this.rollVx, this.rollVy), fast = sp > rl.crushSpeed;
+  if (fast) { const a = Math.atan2(this.rollVy, this.rollVx), n = Math.min(4, Math.floor(sp / 40));
+    ctx.strokeStyle = 'rgba(244,217,176,0.35)'; ctx.lineWidth = 1;
+    for (let i = 0; i < n; i++) { const off = (i - (n - 1) / 2) * 4, px = -Math.sin(a) * off, py = Math.cos(a) * off;
+      ctx.beginPath(); ctx.moveTo(this.x + px - Math.cos(a) * 9, this.y + py - Math.sin(a) * 9); ctx.lineTo(this.x + px - Math.cos(a) * (18 + sp * 0.06), this.y + py - Math.sin(a) * (18 + sp * 0.06)); ctx.stroke(); } }
+  const img = this.hurtFlash > 0 ? Sprites.tintOf('egg_roll', '#ff3a2a') : Sprites.get('egg_roll');
+  ctx.save(); ctx.translate(Math.round(this.x), Math.round(this.y)); ctx.rotate(this.spin); ctx.drawImage(img, -8, -8); ctx.restore();
+  ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#f4d9b0'; ctx.fillText('ROLL', this.x, this.y - 16); ctx.textAlign = 'left';
+};
 
 /* Genom: the symbiote crawling over the host, and the venom form */
 Player.prototype.drawSymbiote = function (ctx) {

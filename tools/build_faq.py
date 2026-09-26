@@ -33,6 +33,7 @@ QA = [
   "<li><strong>Sharkjutta</strong>: an apex predator that eats zombies whole.</li>"
   "<li><strong>Sonny Jeans</strong>: doctor, plumber and pilot who punches the ground and sends a milk quake through the horde.</li>"
   "<li><strong>Eggreck</strong>: turns invisible and calls in his wife as a shield.</li>"
+  "<li><strong>BlackEgg</strong>: tucks into a rolling egg and crushes every zombie in his path flat.</li>"
   "<li><strong>Bezuko</strong>, <strong>Spider Mad</strong>, <strong>Genom</strong>, <strong>Videoman</strong> and more, plus classic soldiers like the Rookie, Runner, Heavy and Medic.</li></ul>"),
  ("What maps and bosses are in Meme Survival?", "maps-and-bosses",
   "<p>There are <strong>6 maps</strong>: Urban City, Suburbs, Industrial Zone, Research Lab, Race City and the hand-painted <strong>Horror House</strong>.</p>"
