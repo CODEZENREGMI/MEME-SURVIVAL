@@ -702,10 +702,10 @@ class Game {
       if (key === 'Escape') { if (this.ui.closeModals()) return; if (this.state === 'shop') { this.closeShop(); return; } if (this.state === 'playing' || this.state === 'wavebreak') this.pause(); else if (this.state === 'paused') this.resume(); }
       if (key === 't') k.t = true;
       if (key === 'b' || key === 'Tab') { if (this.state === 'shop' || this.state === 'playing' || this.state === 'wavebreak') { e.preventDefault(); this.toggleShop(); } }
-      if (key === 'f') { if (e.shiftKey || !((this.player.char.pull || this.player.char.wife || this.player.char.mg) && (this.state === 'playing' || this.state === 'wavebreak'))) this.ui.toggleFullscreen(); else k.f = true; } // F = WEB PULL for Spider Mad; Shift+F always = fullscreen
+      if (key === 'f') { if (e.shiftKey || !((this.player.char.pull || this.player.char.wife) && (this.state === 'playing' || this.state === 'wavebreak'))) this.ui.toggleFullscreen(); else k.f = true; } // F = WEB PULL for Spider Mad; Shift+F always = fullscreen
       if (this.state === 'playing' || this.state === 'wavebreak') {
         if (key >= '1' && key <= '9') { const id = this.player.weaponOrder[key - 1]; if (id) this.player.switchTo(id); }
-        if (key === 'q') this.player.cycle(1);
+        if (key === 'q') { if (this.player.char.mg) k.q = true; else this.player.cycle(1); }   // Doge: Q = weapon ability (E is his machine gun, F stays fullscreen)
       }
       if (this.state === 'levelup' && key >= '1' && key <= '4') this.chooseUpgrade(Object.keys(UPGRADES)[key - 1]);
       if (['w', 'a', 's', 'd', ' ', 'e', 'g', 'f', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) e.preventDefault();
@@ -1136,7 +1136,7 @@ class Game {
     else if (p.driving && !p.car.civil) { ctx.drawImage(Sprites.get('gun_m249'), 10, this.vh - 29, 36, 15); ctx.fillStyle = '#5a8ad8'; ctx.fillText(fit('TWIN M249', 86), 48, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD DRIVE · LMB TURRETS', 86), 48, this.vh - 16); }
     else if (p.beast) { ctx.drawImage(Sprites.get('gun_flesh'), 10, this.vh - 31, 36, 15); ctx.fillStyle = p.beastAmmo > 0 ? '#ff8a6a' : '#9aa3b5'; ctx.fillText(fit(p.beastAmmo > 0 ? 'FLESH CANNON' : 'CANNON DRY', 86), 48, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(p.beastAmmo > 0 ? 'LMB FIRE · RMB SMASH · SPC LEAP' : 'LMB SMASH · SPACE LEAP', 86), 48, this.vh - 16); }
     else { const img = Sprites.get(p.wcfg.sprite); ctx.drawImage(img, 12, this.vh - 30, 32, 16); ctx.fillStyle = '#fff'; ctx.fillText(fit(p.wcfg.name.toUpperCase(), 130 + 8 - 48 - 4), 48, this.vh - 27);
-    ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(p.moneyT > 0 ? 'RMB = MONEY BAG' : `[${p.weaponOrder.indexOf(p.current) + 1}/${p.weaponOrder.length}] Q/SCROLL SWAP`, 86), 48, this.vh - 16); }
+    ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit(p.moneyT > 0 ? 'RMB = MONEY BAG' : `[${p.weaponOrder.indexOf(p.current) + 1}/${p.weaponOrder.length}] ${p.char.mg ? 'SCROLL' : 'Q/SCROLL'} SWAP`, 86), 48, this.vh - 16); }
     // GET IN / GET OUT prompt for parked cars (Urban City)
     this.carRect = null; let slotY = this.vh - 64;
     const nearCar = p.nearbyCar(), inCar = p.car && p.car.civil;
@@ -1189,7 +1189,7 @@ class Game {
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? '#ffb02a' : '#ffe08a') : active ? '#ff8a2a' : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
       ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = ready ? '#ffb02a' : active ? '#fff' : '#9aa3b5';
       ctx.fillText(ab.name, ax + 6, ay + 5);
-      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife || p.char.mg ? 'F' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
+      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife ? 'F' : p.char.mg ? 'Q' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
       ctx.font = F;
     }
     // xp bar (bottom-centre)

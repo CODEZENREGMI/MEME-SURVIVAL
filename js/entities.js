@@ -1081,7 +1081,8 @@ class Player {
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x); this.flip = Math.cos(this.angle) < 0;
     if (input.keys[' ']) { input.keys[' '] = false; this.useCharAbility(); }
     if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else if (this.char.wife) this.useWife(); else if (this.char.mg) this.useMachineGun(); else this.useAbility(); } // Eggreck: E = MY WIFE, Doge: E = MACHINE GUN (their weapon ability moves to F)
-    if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); else if (this.char.wife || this.char.mg) this.useAbility(); }
+    if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); else if (this.char.wife) this.useAbility(); }
+    if (input.keys.q) { input.keys.q = false; if (this.char.mg) this.useAbility(); }
     if (input.keys.r && this.venom) { input.keys.r = false; this.useCapture(); }
     if (input.keys.r && this.frog) { input.keys.r = false; this.useFrogArmy(); } // R = FROG ARMY as the frog (no guns to reload) // R = CAPTURE in venom form (no guns to reload)
     if (input.keys.t) { input.keys.t = false; if (this.char.symbiote) this.toggleSymbiote(); }
@@ -1648,7 +1649,7 @@ class Zombie {
     if (player === this.game.player && player.invisible && !(this.captured > 0)) { // Eggreck vanished: it shuffles around blindly
       this.wander = (this.wander || 0) - dt; if (this.wander <= 0) { this.wander = 0.8 + Math.random() * 2; this.wanderA = Math.random() * TAU; this.wanderStop = Math.random() < 0.35; }
       this.hit -= dt; this.attackCd = Math.max(this.attackCd, 0.5); this.gunCd = Math.max(this.gunCd || 0, 0.5); this.aiming = 0; this.burstLeft = 0; this.charge = 0; this.leap = null; this.rush = null; this.slam = 0; this.drum = null; this.height = 0;
-      if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); if (this.dead) return; } }
+      if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; this.burnFx(dt); if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); if (this.dead) return; } }
     if (this.poison > 0) { this.poison -= dt; this.poisonTick = (this.poisonTick || 0) + dt; if (this.poisonTick > 0.25) { this.poisonTick = 0; this.takeDamage(1.5 + this.maxHp * 0.012, 0, undefined, 0, true); if (this.dead) return; } }
       if (this.web > 0) { this.web -= dt; return; }
       if (!this.wanderStop) { const sp = this.speed * 0.45, mr = Math.min(this.r, 7); this.x += Math.cos(this.wanderA) * sp * dt + this.kx * dt; let p = this.game.map.resolve(this.x, this.y, mr); this.x = p.x; this.y += Math.sin(this.wanderA) * sp * dt + this.ky * dt; p = this.game.map.resolve(this.x, this.y, mr); this.x = p.x; this.y = p.y; this.flip = Math.cos(this.wanderA) < 0; this.walk += dt * (sp / 12); }
@@ -1659,7 +1660,7 @@ class Zombie {
       const lure = this.cfg.boss ? null : this.game.nearestLure(this.x, this.y);   // bosses don't care about money
     if (lure && !(this.captured > 0) && !(this.web > 0) && !(this.pullT > 0)) {   // pullT is undefined until something pulls it, so test the positive
       this.hit -= dt; this.attackCd = Math.max(this.attackCd, 0.4); this.gunCd = Math.max(this.gunCd || 0, 0.5); this.charge = 0;
-      if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); if (this.dead) return; } }
+      if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; this.burnFx(dt); if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); if (this.dead) return; } }
       const bx = lure.x - this.x, by = lure.y - this.y, bd = Math.hypot(bx, by) || 1;
       this.grabT = (this.grabT || 0) + dt;
       if (bd > 14) { const sp = this.speed * 1.1, mr = Math.min(this.r, 7);   // scramble for it
@@ -1680,7 +1681,7 @@ class Zombie {
     }
     if (this.web > 0) { // stuck in Samay's web: can't move, shoot or bite
       this.web -= dt; this.hit -= dt; this.attackCd = Math.max(this.attackCd, 0.5); this.flip = player.x < this.x; this.walk += dt * 2;
-      if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); } }
+      if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; this.burnFx(dt); if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); } }
       if (this.web <= 0) { this.web = 0; this.webImmune = this.game.player.char.tapri ? this.game.player.char.tapri.immune : 1.5; }
       return;
     }
@@ -1714,9 +1715,8 @@ class Zombie {
     if (this.type === 'exploder' && d < 22 && this.fuse < 0 && !charmed) { this.fuse = 0.45; }
     if (this.fuse >= 0) { this.fuse -= dt; sp *= 0.3; if (this.fuse <= 0) { this.die(); return; } }
     if (this.burn > 0) {
-      this.burn -= dt; this.burnTick += dt;
+      this.burn -= dt; this.burnTick += dt; this.burnFx(dt);
       if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); if (this.dead) return; this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 8 * this.scale, this.y - 4 * this.scale, (Math.random() - 0.5) * 10, -30, 0.4, '#ff6a2a', 2 + Math.random() * 2, 'fire')); }
-      if (this.type !== 'boss' && Math.random() < 0.02) this.game.particles.push(new Particle(this.x, this.y - 8 * this.scale, (Math.random() - 0.5) * 8, -25, 1.2, '#333', 3, 'smoke'));
     }
     // separation from neighbours
     let sx = 0, sy = 0;
@@ -1920,7 +1920,7 @@ class Zombie {
   /* drowning in Cry XD's flood: up to the chest, bobbing, going under now and then, arms thrashing */
   draw(ctx) {
     const k = this.sunk || 0;
-    if (k < 0.03) return this.drawBody(ctx);
+    if (k < 0.03) { this.drawBody(ctx); if (this.burn > 0) this.drawFire(ctx); return; }
     const s = this.scale || 1, t = this.game.time, boss = !!this.cfg.boss;
     const bob = Math.sin(t * 5 + this.x * 0.1) * 1.4 * k;
     const dip = !boss && Math.sin(t * 2.3 + this.x * 0.07) > 0.82 ? 5 * s : 0;     // goes under for a moment, comes up gasping
@@ -1944,6 +1944,39 @@ class Zombie {
       ctx.stroke(); ctx.lineCap = 'butt';
     }
   }
+  /* while it burns: it chars, sheds embers, and a column of dark smoke rolls off it */
+  burnFx(dt) {
+    const g = this.game, s = this.scale || 1;
+    this.charred = Math.min(1, (this.charred || 0) + dt / 4);
+    if (this.fireSeed == null) this.fireSeed = Math.random() * 100;
+    if (g.particles.length > 900) return;   // a burning horde shouldn't drown the frame in particles
+    if (Math.random() < 0.45) g.particles.push(new Particle(this.x + (Math.random() - 0.5) * 9 * s, this.y - (2 + Math.random() * 7) * s, (Math.random() - 0.5) * 22, -35 - Math.random() * 40, 0.3 + Math.random() * 0.35, Math.random() < 0.5 ? '#ffb02a' : '#ff5a14', 1.5, 'fire'));   // embers
+    if (Math.random() < 0.13) g.particles.push(new Particle(this.x + (Math.random() - 0.5) * 6 * s, this.y - 11 * s, (Math.random() - 0.5) * 12, -16 - Math.random() * 14, 1.3 + Math.random() * 0.6, Math.random() < 0.5 ? '#2b2522' : '#403733', 3 + s, 'smoke'));   // smoke
+  }
+  /* real-looking fire: a heat glow on the ground, flickering flame tongues (red-orange outside, white-hot inside, blended
+     to glow), licking up off the body, and sparks at the tips. It dies down over the last half-second of the burn. */
+  drawFire(ctx) {
+    const s = (this.scale || 1) * (this.bk && this.bk.special ? 1.4 : 1), t = this.game.time, x = this.x, y = this.y, seed = this.fireSeed || 0;
+    const I = Math.min(1, this.burn / 0.5);
+    const wob = v => 0.55 + 0.25 * Math.sin(v) + 0.2 * Math.sin(v * 2.3 + 1.7);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const gl = ctx.createRadialGradient(x, y + 4 * s, 1, x, y + 4 * s, 15 * s); gl.addColorStop(0, `rgba(255,120,30,${0.32 * I})`); gl.addColorStop(1, 'rgba(255,60,10,0)');
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.ellipse(x, y + 4 * s, 15 * s, 8 * s, 0, 0, TAU); ctx.fill();   // the ground lit up around it
+    const tongue = (bx, by, w, h, sway, fill) => { ctx.beginPath(); ctx.moveTo(bx - w, by); ctx.quadraticCurveTo(bx - w * 0.9 + sway * 0.4, by - h * 0.55, bx + sway, by - h); ctx.quadraticCurveTo(bx + w * 0.9 + sway * 0.4, by - h * 0.55, bx + w, by); ctx.quadraticCurveTo(bx, by + w * 0.6, bx - w, by); ctx.fillStyle = fill; ctx.fill(); };
+    const N = 5;
+    for (let layer = 0; layer < 2; layer++) for (let i = 0; i < N; i++) {
+      const u = (i - (N - 1) / 2) / ((N - 1) / 2), ph = t * (7 + i * 0.9) + seed + i * 1.9;
+      const bx = x + u * 5 * s + Math.sin(ph * 0.7) * 0.8 * s, by = y + (5 - Math.abs(u) * 3) * s;
+      const h = (layer ? 7 : 12) * s * wob(ph) * I * (1 - Math.abs(u) * 0.35), w = (layer ? 1.6 : 2.8) * s, sway = Math.sin(ph * 1.3) * 2.2 * s;
+      const gr = ctx.createLinearGradient(bx, by, bx, by - h);
+      if (layer) { gr.addColorStop(0, `rgba(255,250,220,${0.95 * I})`); gr.addColorStop(0.45, `rgba(255,215,100,${0.75 * I})`); gr.addColorStop(1, 'rgba(255,170,60,0)'); }   // white-hot core
+      else { gr.addColorStop(0, `rgba(255,150,40,${0.85 * I})`); gr.addColorStop(0.5, `rgba(235,70,15,${0.7 * I})`); gr.addColorStop(1, 'rgba(120,20,5,0)'); }             // red-orange body of the flame
+      tongue(bx, by, w, h, sway, gr);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    for (let i = 0; i < 3; i++) { const ph = t * 11 + seed * (i + 1); if (Math.sin(ph) < 0.55) continue; ctx.fillStyle = `rgba(255,240,180,${I})`; ctx.fillRect(Math.round(x + Math.sin(ph * 1.7) * 5 * s), Math.round(y - (5 + (Math.abs(ph * 3) % 9)) * s), Math.max(1, Math.round(s)), Math.max(1, Math.round(s))); }   // sparks at the tips
+    ctx.restore();
+  }
   /* the body, cut off at the waterline and pushed down into it */
   drawSubmerged(ctx, wl, sink, alpha) {
     ctx.save(); ctx.beginPath(); ctx.rect(this.x - 400, this.y - 500, 800, wl - (this.y - 500)); ctx.clip();
@@ -1960,6 +1993,7 @@ class Zombie {
     const name = this.hit > 0 ? null : spriteName;
     if (name) Sprites.draw(ctx, name, this.x, this.y + bob, { flip: this.flip, scale: s, ox: -8 * s, oy: -9 * s });
     else { ctx.save(); ctx.translate(Math.round(this.x), Math.round(this.y + bob)); if (this.flip) ctx.scale(-1, 1); ctx.drawImage(Sprites.whiteOf(spriteName), -8 * s, -9 * s, 16 * s, 16 * s); ctx.restore(); }
+    if (this.charred > 0.02) { const im = Sprites.tintOf(spriteName, '#160905'); ctx.save(); ctx.globalAlpha = Math.min(0.6, this.charred * 0.6); ctx.translate(Math.round(this.x), Math.round(this.y + bob)); if (this.flip) ctx.scale(-1, 1); ctx.drawImage(im, -8 * s, -9 * s, im.width * s, im.height * s); ctx.restore(); }   // scorched
     const wid = this.bk ? this.bk.weapon : (this.gunId || (this.gunSprite ? 'pistol' : null));
     if (wid) { // gun in hand, pointed at the player
       const p = this.target || this.game.player, a = Math.atan2(p.y - this.y, p.x - this.x), gs = s * 0.9;
@@ -1973,7 +2007,6 @@ class Zombie {
       ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#e6e6f0'; ctx.fillText(`CAPTURING ${Math.ceil(this.captured)}s`, this.x, this.y - 16 * s - 8); ctx.textAlign = 'left';
     }
     if (this.poison > 0 && Math.random() < 0.5) { ctx.fillStyle = '#5fd35a'; ctx.fillRect(Math.round(this.x + (Math.random() - 0.5) * 10 * s), Math.round(this.y + (Math.random() - 0.5) * 10 * s), 2, 2); }
-    if (this.burn > 0) { for (let i = 0; i < 3; i++) { ctx.fillStyle = i % 2 ? '#ffd23a' : '#ff6a2a'; ctx.fillRect(Math.round(this.x + (Math.random() - 0.5) * 10 * s), Math.round(this.y + (Math.random() - 0.7) * 12 * s), 2, 2); } }
     if (this.web > 0 && this.game.player.char.slam) { // face down in the milk
       const tt = this.game.time, w = 11 * s;
       ctx.fillStyle = 'rgba(244,242,234,0.85)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 4 * s, w, w * 0.45, 0, 0, TAU); ctx.fill();
