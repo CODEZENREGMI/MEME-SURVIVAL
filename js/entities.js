@@ -86,6 +86,7 @@ class Player {
     this.frenzyT = 0; this.frenzyCd = 0; this.biteCd = 0; this.lunge = null; this.chomp = 0;
     this.cryT = 0; this.cryCd = 0; this.floodR = 0; this.sob = 0;
     this.rollT = 0; this.rollCd = 0; this.rollVx = 0; this.rollVy = 0; this.spin = 0; this.rumble = 0; this.rollHits = new WeakMap(); this.rollLoop = null;
+    this.spinT = 0; this.spinCd = 0; this.spinTick = 0; this.spinA = 0; this.whoosh = 0;
     this.addWeapon('pistol', true);
     weaponIds.forEach(id => { if (WEAPONS[id] && id !== 'pistol') this.addWeapon(id, true); });
     this.current = weaponIds[0] && WEAPONS[weaponIds[0]] ? weaponIds[0] : 'pistol';
@@ -112,7 +113,7 @@ class Player {
   get wstate() { return this.weapons[this.current]; }
   get damageMult() { return (1 + 0.15 * this.upgrades.damage) * this.char.damage; }
   get fireMult() { return (1 + 0.12 * this.upgrades.firerate) * this.char.firerate; }
-  get speed() { return this.baseSpeed * (1 + 0.08 * this.upgrades.speed) * (this.beast ? this.tf.speed : 1) * (this.venom ? this.sb.speed : 1) * (this.frog ? this.fr.speed : 1) * (this.demon ? this.dm.speed : 1) * (this.frenzy ? this.char.shark.speed : 1) * (this.rushing ? this.char.rush.speed : 1); }
+  get speed() { return this.baseSpeed * (1 + 0.08 * this.upgrades.speed) * (this.beast ? this.tf.speed : 1) * (this.venom ? this.sb.speed : 1) * (this.frog ? this.fr.speed : 1) * (this.demon ? this.dm.speed : 1) * (this.frenzy ? this.char.shark.speed : 1) * (this.rushing ? this.char.rush.speed : 1) * (this.spinT > 0 ? this.char.spin.speed : 1); }
 
   get tf() { return this.char.transform; }
   get rushing() { return this.rush > 0; }
@@ -316,6 +317,33 @@ class Player {
     for (let i = 0; i < 30; i++) { const a = i / 30 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 110, Math.sin(a) * 110 - 30, 0.55, i % 2 ? '#4f9be6' : '#dcecfb', 3, 'blood')); }
     g.showAbilityBanner('CRY FLOOD', `${fl.duration}s · the tears flood the street · keep shooting`);
     return true;
+  }
+  /* ---- Giga Ballerina: PIROUETTE — he spins, and a ring of blades slices everything around him ---- */
+  useSpin() {
+    const sp = this.char.spin, g = this.game; if (!sp) return false;
+    if (this.spinT > 0) return false;
+    if (this.spinCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `SPIN IN ${Math.ceil(this.spinCd)}s`, '#9aa3b5'); return false; }
+    this.spinT = sp.duration; this.spinTick = 0; this.spinA = 0; this.reloading = false;
+    Audio8.noise(0.35, 0.3, 2400); Audio8.tone(420, 0.3, 'triangle', 0.18, 500); g.shake(3);
+    for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 10, this.y + Math.sin(a) * 10, Math.cos(a) * 90, Math.sin(a) * 90, 0.4, i % 2 ? '#eeb3bd' : '#fff0d8', 2, 'dot')); }
+    g.showAbilityBanner('PIROUETTE', `${sp.duration}s · WASD to glide · slice them all`);
+    return true;
+  }
+  /* one slice of the blade ring: everything inside it is cut and flung outward */
+  spinSlice() {
+    const sp = this.char.spin, g = this.game; let cut = 0;
+    for (const z of g.zombies) {
+      if (z.dead || z.captured > 0) continue;
+      if (dist(this.x, this.y, z.x, z.y) > sp.radius + z.r) continue;
+      const a = Math.atan2(z.y - this.y, z.x - this.x), boss = z.cfg.boss, kbm = boss ? 0.15 : z.type === 'tank' ? 0.4 : 1;
+      z.kx += Math.cos(a) * 90 * sp.knock * kbm; z.ky += Math.sin(a) * 90 * sp.knock * kbm; z.hit = 0.08;
+      z.takeDamage((boss ? sp.bossDamage : sp.damage) * this.damageMult, a, undefined, 0, true);   // quiet: a number every tick would bury the screen
+      const tx = a + Math.PI / 2;   // blood flies off tangentially, like it left the blade
+      for (let i = 0; i < 2; i++) g.particles.push(new Particle(z.x, z.y, Math.cos(tx) * (40 + Math.random() * 50) + Math.cos(a) * 30, Math.sin(tx) * (40 + Math.random() * 50) + Math.sin(a) * 30, 0.35, i ? '#b3221a' : '#6b1410', 2, 'blood'));
+      if (z.dead) g.map.splat(z.x, z.y, 7, '#5e110c');
+      cut++;
+    }
+    if (cut) { Audio8.play('hit'); if (Math.random() < 0.35) g.floatText(this.x + (Math.random() - 0.5) * 30, this.y - 22, 'SLICE', '#fff0d8'); }
   }
   /* ---- BlackEgg: EGG ROLL — he tucks in and rolls, crushing everything in his path ---- */
   useRoll() {
@@ -640,7 +668,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.roll) return this.useRoll(); if (this.char.cry) return this.useCry(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.roll) return this.useRoll(); if (this.char.spin) return this.useSpin(); if (this.char.cry) return this.useCry(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -782,6 +810,8 @@ class Player {
     }
     const cf = this.char.cry;
     if (cf) { if (this.cryT > 0) return { name: cf.name, state: 'active', frac: this.cryT / cf.duration, sub: `${Math.ceil(this.cryT)}s · THE DAM BROKE` }; if (this.floodR > 0) return { name: cf.name, state: 'busy', frac: 0, sub: 'DRAINING...' }; if (this.cryCd > 0) return { name: cf.name, state: 'cd', frac: 1 - this.cryCd / cf.cooldown, sub: `RECHARGING ${Math.ceil(this.cryCd)}s` }; return { name: cf.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
+    const sn = this.char.spin;
+    if (sn) { if (this.spinT > 0) return { name: sn.name, state: 'active', frac: this.spinT / sn.duration, sub: `${Math.ceil(this.spinT)}s · SLICING` }; if (this.spinCd > 0) return { name: sn.name, state: 'cd', frac: 1 - this.spinCd / sn.cooldown, sub: `RECHARGING ${Math.ceil(this.spinCd)}s` }; return { name: sn.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const rl = this.char.roll;
     if (rl) { if (this.rollT > 0) return { name: rl.name, state: 'active', frac: this.rollT / rl.duration, sub: `${Math.ceil(this.rollT)}s · WASD STEER` }; if (this.rollCd > 0) return { name: rl.name, state: 'cd', frac: 1 - this.rollCd / rl.cooldown, sub: `RECHARGING ${Math.ceil(this.rollCd)}s` }; return { name: rl.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     const sk = this.char.shark;
@@ -987,6 +1017,7 @@ class Player {
     if (this.demon) dmg = Math.round(dmg * this.dm.armor);
     if (this.frenzy) dmg = Math.round(dmg * this.char.shark.armor);
     if (this.rollT > 0) dmg = Math.round(dmg * this.char.roll.armor);
+    if (this.spinT > 0) dmg = Math.round(dmg * this.char.spin.armor);
     if (this.driving && this.car.civil) { // the car takes the hit — and a swarm can all chew on it at once
       this.car.hp -= dmg; this.hurtFlash = 0.2; this.invuln = 0.06; this.game.spark(this.x + (Math.random() - 0.5) * 30, this.y + (Math.random() - 0.5) * 16, 2);
       if (this.car.hp <= 0) this.wreckCar(); return;
@@ -1065,6 +1096,13 @@ class Player {
         if (this.cryT <= 0) { this.cryT = 0; this.cryCd = fl.cooldown; Audio8.stopHandle(this.cryLoop, 0.5); this.cryLoop = null; g.floatText(this.x, this.y - 18, '*sniff*', '#9cc8f2'); }
       } else if (this.floodR > 0) this.floodR = Math.max(0, this.floodR - fl.radius / fl.drain * dt);   // the water drains away
       else if (this.cryCd > 0) { this.cryCd -= dt; if (this.cryCd <= 0) { this.cryCd = 0; g.floatText(this.x, this.y - 18, 'READY TO CRY', '#9cc8f2'); Audio8.play('xp'); } } }
+    if (this.char.spin) { const sn = this.char.spin;
+      if (this.spinT > 0) { this.spinT -= dt; this.spinA += dt * 17;   // ~2.7 turns a second
+        this.spinTick -= dt; if (this.spinTick <= 0) { this.spinTick = sn.tick; this.spinSlice(); }
+        this.whoosh -= dt; if (this.whoosh <= 0) { this.whoosh = 0.37; Audio8.noise(0.16, 0.09, 1600 + Math.random() * 600); }   // a whoosh each turn
+        if (Math.random() < 0.5) { const a = this.spinA + Math.random() * 0.6; this.game.particles.push(new Particle(this.x + Math.cos(a) * sn.radius, this.y + Math.sin(a) * sn.radius * 0.8, -Math.sin(a) * 40, Math.cos(a) * 40, 0.3, Math.random() < 0.5 ? '#eeb3bd' : '#fff0d8', 1.5, 'dot')); }
+        if (this.spinT <= 0) { this.spinT = 0; this.spinCd = sn.cooldown; this.game.floatText(this.x, this.y - 18, 'CURTSY', '#eeb3bd'); Audio8.play('reloaded'); } }
+      else if (this.spinCd > 0) { this.spinCd -= dt; if (this.spinCd <= 0) { this.spinCd = 0; this.game.floatText(this.x, this.y - 18, 'READY TO DANCE', '#eeb3bd'); Audio8.play('xp'); } } }
     if (this.char.roll) { const rl = this.char.roll;
       if (this.rollT > 0) { this.rollT -= dt;
         if (this.rollT <= 0) { this.rollT = 0; this.rollCd = rl.cooldown; this.rollVx = this.rollVy = 0; Audio8.stopHandle(this.rollLoop, 0.4); this.rollLoop = null; this.game.floatText(this.x, this.y - 18, 'DIZZY', '#c9cfdb'); Audio8.play('reloaded'); } }
@@ -1115,6 +1153,7 @@ class Player {
     if (this.lavaT > 0) { this.lavaAttacks(input); return; }
     if (this.frenzyT > 0) { this.frenzyAttacks(input); return; }   // jaws, not guns
     if (this.rollT > 0) return;   // he's a rolling egg: no hands free for the gun
+    if (this.spinT > 0) return;   // arms out, mid-pirouette
     if (this.moneyT > 0) this.moneyAttacks(input);   // RMB throws, LMB keeps shooting — falls through to the gun below
     if (this.frog) { this.frogAttacks(input); return; }
     if (this.demon) { this.demonAttacks(input); return; }
@@ -1204,6 +1243,7 @@ class Player {
     }
     if (this.invisible) { const tt = performance.now() / 1000; ctx.strokeStyle = `rgba(200,220,96,${0.35 + Math.sin(tt * 6) * 0.15})`; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.lineDashOffset = -tt * 20; ctx.beginPath(); ctx.arc(this.x, this.y, 13, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 0.28 + Math.sin(tt * 9) * 0.08; }
     if (this.rollT > 0) { this.drawEggRoll(ctx); return; }
+    if (this.spinT > 0) { this.drawSpin(ctx, bob); return; }
     const blink = this.invuln > 0 && Math.floor(this.invuln * 20) % 2 === 0;
     if (!blink || this.dead) Sprites.draw(ctx, this.hurtFlash > 0 ? 'player_hurt' : this.sprite, this.x, this.y + bob, { flip: this.flip, ox: -8, oy: -9 });
     // gun
@@ -1220,6 +1260,23 @@ class Player {
     if (this.reloading) { const p = 1 - this.reloadTimer / (this.wcfg.reload * this.char.reload); ctx.strokeStyle = '#111'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.x, this.y - 14, 5, -Math.PI / 2, -Math.PI / 2 + TAU * p); ctx.stroke(); ctx.strokeStyle = '#f5c518'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(this.x, this.y - 14, 5, -Math.PI / 2, -Math.PI / 2 + TAU * p); ctx.stroke(); }
   }
 }
+
+/* Giga Ballerina: the pirouette — a turning body, a pink tutu blur, and a ring of blade arcs */
+Player.prototype.drawSpin = function (ctx, bob) {
+  const sn = this.char.spin, A = this.spinA, R = sn.radius, fade = Math.min(1, this.spinT / 0.4, (sn.duration - this.spinT) * 5 + 0.2);
+  ctx.save(); ctx.globalAlpha = 0.18 * fade; ctx.fillStyle = '#eeb3bd'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 4, R, R * 0.8, 0, 0, TAU); ctx.fill(); ctx.restore();   // the danger zone
+  for (let k = 0; k < 3; k++) { // three blade arcs sweeping around him, each with a bright leading edge
+    const a0 = A + k * TAU / 3;
+    ctx.strokeStyle = `rgba(255,240,216,${0.85 * fade})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(this.x, this.y + 4, R, R * 0.8, 0, a0, a0 + 0.9); ctx.stroke();
+    ctx.strokeStyle = `rgba(238,179,189,${0.45 * fade})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(this.x, this.y + 4, R - 4, (R - 4) * 0.8, 0, a0 - 0.5, a0 + 0.7); ctx.stroke();
+    ctx.fillStyle = `rgba(255,255,255,${fade})`; ctx.fillRect(Math.round(this.x + Math.cos(a0 + 0.9) * R) - 1, Math.round(this.y + 4 + Math.sin(a0 + 0.9) * R * 0.8) - 1, 3, 3);
+  }
+  ctx.fillStyle = 'rgba(238,179,189,0.55)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 3, 11, 4, 0, 0, TAU); ctx.fill();   // the tutu, flared out by the spin
+  const face = Math.cos(A), sx = Math.max(0.25, Math.abs(face)) * (face < 0 ? -1 : 1);   // turning on the spot: squash through the side view, flip at the back
+  const img = this.hurtFlash > 0 ? Sprites.tintOf(this.sprite, '#ff3a2a') : Sprites.get(this.sprite);
+  ctx.save(); ctx.translate(Math.round(this.x), Math.round(this.y + bob)); ctx.scale(sx, 1); ctx.drawImage(img, -8, -9); ctx.restore();
+  ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#eeb3bd'; ctx.fillText('SPIN', this.x, this.y - 16); ctx.textAlign = 'left';
+};
 
 /* BlackEgg: the tucked egg, spinning as it rolls, with speed streaks behind it */
 Player.prototype.drawEggRoll = function (ctx) {
