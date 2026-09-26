@@ -518,7 +518,7 @@ class Player {
     const d = Math.min(mn.range, dist(gx, gy, input.worldX, input.worldY)) || 40;
     g.throwBag(gx, gy, this.x + Math.cos(this.angle) * d, this.y + Math.sin(this.angle) * d);
   }
-  /* ---- Kiya Mhalifa: GOING VIRAL — everything around her stops to record, and gets hit twice as hard ---- */
+  /* ---- Kiya Malida: GOING VIRAL — everything around her stops to record, and gets hit twice as hard ---- */
   useViral() {
     const vr = this.char.viral, g = this.game; if (!vr) return false;
     if (this.viralT > 0) return false;

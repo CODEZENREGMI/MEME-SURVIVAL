@@ -99,7 +99,7 @@ UPDATES = [
  ]),
  ("2026-09-22", [
    "<strong>Wave 5: the lights die.</strong> The power fails for the whole wave, and killing its boss lets something through.",
-   "<strong>New survivors: Kiya Mhalifa, Videoman and Eggreck.</strong> GOING VIRAL freezes the crowd, LAVA STONES rains fire, VANISH and MY WIFE keep Eggreck alive.",
+   "<strong>New survivors: Kiya Malida, Videoman and Eggreck.</strong> GOING VIRAL freezes the crowd, LAVA STONES rains fire, VANISH and MY WIFE keep Eggreck alive.",
    "<strong>New boss: Tung Tung Sahur</strong> at wave 50.",
  ]),
  ("2026-09-21", [
