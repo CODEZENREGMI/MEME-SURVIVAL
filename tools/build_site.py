@@ -53,7 +53,7 @@ QA = [
   "<ul><li><strong>Cry XD</strong>: cries a flood. Zombies in the water can't shoot, slow down and drown.</li>"
   "<li><strong>Frogepepe</strong>: transforms into a frog and spawns an army of small frog clones.</li>"
   "<li><strong>Sharkjutta</strong>: an apex predator that eats zombies whole.</li>"
-  "<li><strong>Sonny Jeans</strong>: doctor, plumber and pilot who punches the ground and sends a milk quake through the horde.</li>"
+  "<li><strong>Baldwin Milks</strong>: doctor, plumber and pilot who punches the ground and sends a milk quake through the horde.</li>"
   "<li><strong>Eggreck</strong>: turns invisible and calls in his wife as a shield.</li>"
   "<li><strong>BlackEgg</strong>: tucks into a rolling egg and crushes every zombie in his path flat.</li>"
   "<li><strong>Giga Ballerina</strong>: spins in a pirouette while a ring of blades slices every zombie around him.</li>"
@@ -74,6 +74,7 @@ QA = [
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
  ("2026-09-27", [
+   "Sonny Jeans is now called <strong>Baldwin Milks</strong>. Same bald head, same milk quake.",
    "<strong>Runner can TELEPORT.</strong> Press E and the whole map opens up with every zombie on it; click anywhere and he blinks there, knocking back whatever was standing on the spot. 30 s recharge. His gun's ability moves to Q.",
  ]),
  ("2026-09-26", [
@@ -99,7 +100,7 @@ UPDATES = [
    "<strong>New survivor: Sharkjutta.</strong> FEEDING FRENZY: a shark in running shoes that swallows zombies whole.",
  ]),
  ("2026-09-23", [
-   "<strong>New survivors: Jeffry and Sonny Jeans.</strong> PAYDAY throws endless money bags that pull the horde away; MILK QUAKE punches the ground and floods it with milk.",
+   "<strong>New survivors: Jeffry and Baldwin Milks.</strong> PAYDAY throws endless money bags that pull the horde away; MILK QUAKE punches the ground and floods it with milk.",
  ]),
  ("2026-09-22", [
    "<strong>Wave 5: the lights die.</strong> The power fails for the whole wave, and killing its boss lets something through.",
