@@ -53,7 +53,7 @@ QA = [
   "<ul><li><strong>Cry XD</strong>: cries a flood. Zombies in the water can't shoot, slow down and drown.</li>"
   "<li><strong>Frogepepe</strong>: transforms into a frog and spawns an army of small frog clones.</li>"
   "<li><strong>Sharkjutta</strong>: an apex predator that eats zombies whole.</li>"
-  "<li><strong>Baldwin Milks</strong>: doctor, plumber and pilot who punches the ground and sends a milk quake through the horde.</li>"
+  "<li><strong>Baldwin White</strong>: a nurse in blue scrubs who punches the ground and sends a milk quake through the horde.</li>"
   "<li><strong>Eggreck</strong>: turns invisible and calls in his wife as a shield.</li>"
   "<li><strong>BlackEgg</strong>: tucks into a rolling egg and crushes every zombie in his path flat.</li>"
   "<li><strong>Giga Ballerina</strong>: spins in a pirouette while a ring of blades slices every zombie around him.</li>"
@@ -78,7 +78,7 @@ UPDATES = [
    "<strong>Meme Survival now plays on phones and tablets.</strong> Left thumb moves, right thumb aims and fires, and every ability has its own round button. The menus fit a phone held sideways, and the game pauses when you switch apps.",
    "<strong>The Industrial Zone is full of holes.</strong> The ground has caved in all over the yard: one in the central lot, the rest hidden in the corners and the alleys behind the warehouses. You only see them once your flashlight is on them. Every wave, the first one you step into gets you.",
    "<strong>Two more holes in the Research Lab.</strong> One waits at the bench room's east doorway, right where you run through to the corridor. The other has opened up between the four computer desks in the north-east office.",
-   "Sonny Jeans is now called <strong>Baldwin Milks</strong>. Same bald head, same milk quake.",
+   "Sonny Jeans is now <strong>Baldwin White</strong>, a nurse. Same bald head, same scrubs, same milk quake.",
    "<strong>Runner can TELEPORT.</strong> Press E and the whole map opens up with every zombie on it; click anywhere and he blinks there, knocking back whatever was standing on the spot. 30 s recharge. His gun's ability moves to Q.",
  ]),
  ("2026-09-26", [
@@ -104,7 +104,7 @@ UPDATES = [
    "<strong>New survivor: Sharkjutta.</strong> FEEDING FRENZY: a shark in running shoes that swallows zombies whole.",
  ]),
  ("2026-09-23", [
-   "<strong>New survivors: Jeffry and Baldwin Milks.</strong> PAYDAY throws endless money bags that pull the horde away; MILK QUAKE punches the ground and floods it with milk.",
+   "<strong>New survivors: Jeffry and Baldwin White.</strong> PAYDAY throws endless money bags that pull the horde away; MILK QUAKE punches the ground and floods it with milk.",
  ]),
  ("2026-09-22", [
    "<strong>Wave 5: the lights die.</strong> The power fails for the whole wave, and killing its boss lets something through.",
