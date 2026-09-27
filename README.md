@@ -95,7 +95,8 @@ your beam hits them; only their glowing eyes give them away.
 
   **Research Lab — the hole.** A pit is torn into the floor of the bench room (the `hole` spot,
   between the third pair of lab benches — and a second one, `hole2`, just inside the bench room's east doorway onto the
-  central corridor, each firing on its own): a broken tile lip, cracks running out into the floor, the shaft's far wall
+  central corridor, `hole3` between the four computer desks of the north-east office — and one more, `ihole`, in the Industrial Zone at the north end of the central yard; each fires on
+  its own): a broken tile lip, cracks running out into the floor, the shaft's far wall
   fading into black, a breath of mist, and every ~7 s two pale eyes blink open down there. It's always there, but only
   on waves **1, 7, 10, 20, 25, 67, 99, 120 and 170** (`LAB_HOLE.waves`) does stepping into it do anything: once in each
   of those waves, the face (`assets/img/lab_hole_face.png`, shown in
