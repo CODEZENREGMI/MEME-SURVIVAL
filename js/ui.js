@@ -93,7 +93,7 @@ class UI {
     $('#admCoins').addEventListener('click', () => { mark(); g().coins += 500; this.toast('+500 coins'); });
     $('#admHeal').addEventListener('click', () => { mark(); const p = g().player; p.hp = p.maxHp; this.toast('Healed'); });
     $('#admGuns').addEventListener('click', () => { mark(); const p = g().player; PICKABLE_WEAPONS.forEach(w => { if (!p.weapons[w]) p.addWeapon(w, true); p.weapons[w].reserve = p.weapons[w].maxReserve; }); this.refreshWeapons(); this.toast('All guns, full ammo'); });
-    $('#admReady').addEventListener('click', () => { mark(); const p = g().player; p.formCd = 0; p.carCd = 0; p.rushCd = 0; p.teleCd = 0; p.squadCd = 0; p.fieldCd = 0; p.gleapCd = 0; p.ability.cd = 0; this.toast('Abilities ready'); });
+    $('#admReady').addEventListener('click', () => { mark(); const p = g().player; p.formCd = 0; p.carCd = 0; p.rushCd = 0; p.teleCd = 0; p.starCd = 0; p.squadCd = 0; p.fieldCd = 0; p.gleapCd = 0; p.ability.cd = 0; this.toast('Abilities ready'); });
     $('#admLevel').addEventListener('click', () => { if (!inRun()) return this.toast('Start a run first'); mark(); m.classList.remove('show'); g().pendingLevelUps += 1; g().state = 'levelup'; this.setState('levelup'); this.showLevelUp(); });
   }
   toggleAdmin() {

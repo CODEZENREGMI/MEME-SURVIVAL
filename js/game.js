@@ -831,6 +831,7 @@ class Game {
           if (b.flame) { z.takeDamage(b.damage, b.angle, undefined, 0.15, true); z.burn = Math.max(z.burn, 2.5); if (b.pierce-- <= 0) b.dead = true; if (b.dead) break; continue; }
           if (b.venom) { z.takeDamage(b.damage, b.angle, undefined, 0.3, true); z.poison = Math.max(z.poison || 0, 3); for (let i = 0; i < 3; i++) this.particles.push(new Particle(b.x, b.y, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60 - 20, 0.35, i ? '#0a0a0e' : '#5fd35a', 2, 'blood')); if (b.pierce-- <= 0) b.dead = true; if (b.dead) break; continue; }
           z.takeDamage(b.damage, b.angle); Audio8.play('hit');
+          if (b.star) for (let i = 0; i < 2; i++) this.particles.push(new Particle(b.x, b.y, (Math.random() - 0.5) * 70, (Math.random() - 0.5) * 70, 0.18, '#e8eef6', 1.5, 'dot'));   // steel sparks as it cuts through
           if (b.fire && !z.dead) { const F = b.fire;   // incendiary: it catches, and keeps burning
             if (!z.cfg.boss) z.burn = Math.max(z.burn, F.burn);
             else if (!(z.igniteCd > this.time)) { z.burn = Math.max(z.burn, F.bossBurn); z.igniteCd = this.time + F.bossIgniteCd; }   // bosses only catch now and then
@@ -1198,7 +1199,7 @@ class Game {
     const ay0 = 17 + hh, off = hh - 13; // everything below the hearts shifts down with extra rows
     Sprites.draw(ctx, 'pickup_ammo', 14, ay0, { ox: 0, oy: 0, scale: 1 });
     ctx.font = F; ctx.fillStyle = '#fff'; ctx.textBaseline = 'top';
-    const w = p.wstate; ctx.fillText(p.venom ? 'VENOM' : p.frog ? 'FROG' : p.demon ? 'DEMON' : p.lavaT > 0 ? '∞ LAVA' : p.beast ? `${p.beastAmmo}/${BEAST_GUN.mag}` : (p.overdrive || p.rushing || (p.driving && !p.car.civil)) ? '∞/∞' : `${w.mag}/${w.reserve === Infinity ? '∞' : w.reserve}`, 30, ay0 + 3);
+    const w = p.wstate; ctx.fillText(p.venom ? 'VENOM' : p.frog ? 'FROG' : p.demon ? 'DEMON' : p.lavaT > 0 ? '∞ LAVA' : p.starT > 0 ? '∞ STARS' : p.beast ? `${p.beastAmmo}/${BEAST_GUN.mag}` : (p.overdrive || p.rushing || (p.driving && !p.car.civil)) ? '∞/∞' : `${w.mag}/${w.reserve === Infinity ? '∞' : w.reserve}`, 30, ay0 + 3);
     if (p.beast) { ctx.fillStyle = p.beastAmmo > 0 ? '#c9cfdb' : '#ff6a5a'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(`REFILL ${p.beastKills}/${BEAST_GUN.refillKills} KILLS`, 8, 56 + off); ctx.font = F; }
     if (p.reloading) { ctx.fillStyle = '#f5c518'; ctx.fillText('RELOADING', 8, 56 + off); } else if (w.mag === 0 && w.reserve === 0) { ctx.fillStyle = '#ff6a5a'; ctx.fillText('NO AMMO - [B] BUY', 8, 56 + off); }
     // coins + supply cart button
@@ -1221,6 +1222,7 @@ class Game {
     else if (p.spinT > 0) { ctx.fillStyle = '#eeb3bd'; ctx.fillText('PIROUETTE', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD GLIDE · SLICE THEM', 116), 14, this.vh - 16); }
     else if (p.rollT > 0) { ctx.fillStyle = '#f4d9b0'; ctx.fillText('EGG ROLL', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('WASD STEER · CRUSH THEM', 116), 14, this.vh - 16); }
     else if (p.frenzy) { ctx.fillStyle = '#8af0ff'; ctx.fillText('JAWS', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LUNGE · EAT TO HEAL', 116), 14, this.vh - 16); }
+    else if (p.starT > 0) { ctx.fillStyle = '#c9d1dc'; ctx.fillText('NINJA STARS', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · CUTS THROUGH 3', 116), 14, this.vh - 16); }
     else if (p.lavaT > 0) { ctx.fillStyle = '#ff7a1a'; ctx.fillText('LAVA STONES', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB THROW · LANDS AT CURSOR', 116), 14, this.vh - 16); }
     else if (p.demon) { ctx.fillStyle = '#ff5aa8'; ctx.fillText('DEMON KATANA', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB SLASH · RMB KICK · ♪ CHARM', 116), 14, this.vh - 16); }
     else if (p.frog) { ctx.fillStyle = '#9ccf72'; ctx.fillText('TONGUE', 14, this.vh - 27); ctx.fillStyle = dim; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText(fit('LMB LASH · SPACE HOP · R ARMY', 116), 14, this.vh - 16); }

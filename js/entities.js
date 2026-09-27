@@ -73,7 +73,7 @@ class Player {
     this.ability = { active: 0, cd: 0, weapon: null };   // weapon special (minigun OVERDRIVE)
     this.form = 'human'; this.morphT = 0; this.formTime = 0; this.formCd = 0; this.jump = null; this.height = 0; this.leapCd = 0; this.smashCd = 0; this.swipe = 0; this.swipeAngle = 0;
     this.beastAmmo = BEAST_GUN.mag; this.beastKills = 0; this.beastMuzzle = 0;
-    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null; this.teleCd = 0;
+    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null; this.teleCd = 0; this.starT = 0; this.starCd = 0;
     this.squadTime = 0; this.squadCd = 0;
     this.fieldTime = 0; this.fieldCd = 0;
     this.car = null; this.carCd = 0;
@@ -571,6 +571,28 @@ class Player {
     for (let i = 0; i < 4; i++) g.particles.push(new Particle(gx, gy, Math.cos(this.angle) * 30 + (Math.random() - 0.5) * 40, -20 - Math.random() * 30, 0.35, '#ff7a1a', 2, 'fire'));
     Audio8.play('rocket'); g.shake(1);
   }
+  /* ---- Bishnu Grinder: NINJA STARS — the gun goes away, and spinning shuriken fly ---- */
+  useStars() {
+    const ns = this.char.stars, g = this.game; if (!ns) return false;
+    if (this.starT > 0) return false;
+    if (this.starCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `STARS IN ${Math.ceil(this.starCd)}s`, '#9aa3b5'); return false; }
+    this.starT = ns.duration; this.reloading = false; this.fireTimer = 0;
+    for (let i = 0; i < ns.ring; i++) this.throwStar(this.angle + i / ns.ring * TAU, 0);   // an opening ring in every direction
+    Audio8.noise(0.25, 0.2, 5200); Audio8.tone(1800, 0.12, 'triangle', 0.1, -900); g.shake(3);
+    g.showAbilityBanner('NINJA STARS', `${ns.duration}s · LMB throws shuriken · each cuts through 3 zombies`);
+    return true;
+  }
+  throwStar(a, spread) {
+    const cfg = this.char.stars.star, g = this.game, gx = this.x + Math.cos(a) * 8, gy = this.y - 2 + Math.sin(a) * 8;
+    const b = new Bullet(g, gx, gy, a + (Math.random() - 0.5) * spread, cfg, this.damageMult); b.star = true; b.spinR = Math.random() * TAU; g.bullets.push(b);
+  }
+  starAttacks(input) {
+    const cfg = this.char.stars.star;
+    if (!(input.mouseDown && this.fireTimer <= 0)) return;
+    this.fireTimer = cfg.interval / this.fireMult; this.recoil = cfg.kick;
+    this.throwStar(this.angle, cfg.spread);
+    Audio8.noise(0.06, 0.07, 6000); Audio8.tone(2400, 0.04, 'triangle', 0.05, -1200);   // a quick metallic whip
+  }
   /* ---- Eggreck: VANISH — 20 s of invisibility. Nothing hostile can see him; he can still shoot. ---- */
   get invisible() { return this.invis > 0; }
   useVanish() {
@@ -734,7 +756,7 @@ class Player {
     return true;
   }
   /* one button for whatever the character can do (transform / vehicle / rush / squad / field / tapri), else the weapon ability */
-  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.roll) return this.useRoll(); if (this.char.spin) return this.useSpin(); if (this.char.strike) return this.useStrike(); if (this.char.cry) return this.useCry(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
+  useCharAbility() { if (this.giant) return this.giantLeap(); if (this.char.stars) return this.useStars(); if (this.char.roll) return this.useRoll(); if (this.char.spin) return this.useSpin(); if (this.char.strike) return this.useStrike(); if (this.char.cry) return this.useCry(); if (this.char.shark) return this.useFrenzy(); if (this.char.slam) return this.useSlam(); if (this.char.money) return this.usePayday(); if (this.char.viral) return this.useViral(); if (this.char.lava) return this.useLava(); if (this.char.stealth) return this.useVanish(); if (this.char.demon) return this.useDemon(); if (this.char.frog) return this.useFrog(); if (this.char.symbiote) return this.toggleSymbiote(); if (this.char.web) return this.useWeb(); if (this.char.tapri) return this.useTapri(); if (this.tf) return this.useTransform(); if (this.char.vehicle) return this.useVehicle(); if (this.char.rush) return this.useRush(); if (this.char.squad) return this.useSquad(); if (this.char.field) return this.useField(); return this.useAbility(); }
   /* ---- Canimal: ROLL OUT — transforms into an armoured truck with twin 360° turrets ---- */
   get driving() { return !!this.car && this.car.phase === 'drive'; }
   useVehicle() {
@@ -871,6 +893,8 @@ class Player {
     return { name: pl.name, state: 'ready', frac: 1, sub: '[F] AIM AT A ZOMBIE' };
   }
   charAbility() {
+    const ns = this.char.stars;
+    if (ns) { if (this.starT > 0) return { name: ns.name, state: 'active', frac: this.starT / ns.duration, sub: `${Math.ceil(this.starT)}s · LMB THROW` }; if (this.starCd > 0) return { name: ns.name, state: 'cd', frac: 1 - this.starCd / ns.cooldown, sub: `RECHARGING ${Math.ceil(this.starCd)}s` }; return { name: ns.name, state: 'ready', frac: 1, sub: '[SPACE] READY · CLICK' }; }
     if (this.giant) { if (this.gjump) return { name: 'GIANT LEAP', state: 'busy', frac: 0, sub: 'AIRBORNE' }; if (this.gleapCd > 0) return { name: 'GIANT LEAP', state: 'cd', frac: 1 - this.gleapCd / BLACKOUT.leapCd, sub: `LEAP IN ${this.gleapCd.toFixed(1)}s` }; return { name: 'GIANT LEAP', state: 'ready', frac: 1, sub: '[SPACE] LEAP · CLICK' }; }
     if (this.tf) {
       const tf = this.tf;
@@ -1121,6 +1145,9 @@ class Player {
     if (this.char.stealth) { const st = this.char.stealth;
       if (this.invis > 0) { this.invis -= dt; if (this.invis <= 0) { this.invis = 0; this.invisCd = st.cooldown; this.game.floatText(this.x, this.y - 18, 'VISIBLE AGAIN', '#c9cfdb'); Audio8.play('flicker'); } }
       else if (this.invisCd > 0) { this.invisCd -= dt; if (this.invisCd <= 0) { this.invisCd = 0; this.game.floatText(this.x, this.y - 18, 'VANISH READY', '#8bd35a'); Audio8.play('xp'); } } }
+    if (this.char.stars) { const ns = this.char.stars;
+      if (this.starT > 0) { this.starT -= dt; if (this.starT <= 0) { this.starT = 0; this.starCd = ns.cooldown; this.game.floatText(this.x, this.y - 18, 'OUT OF STARS', '#c9cfdb'); Audio8.play('reloaded'); } }
+      else if (this.starCd > 0) { this.starCd -= dt; if (this.starCd <= 0) { this.starCd = 0; this.game.floatText(this.x, this.y - 18, 'STARS READY', '#c9d1dc'); Audio8.play('xp'); } } }
     if (this.char.lava) { const lv = this.char.lava;
       if (this.lavaT > 0) { this.lavaT -= dt; if (this.lavaT <= 0) { this.lavaT = 0; this.lavaCd = lv.cooldown; Audio8.stopTrack(); this.game.floatText(this.x, this.y - 18, 'VIDEO KHATAM', '#c9cfdb'); Audio8.play('reloaded'); } }
       else if (this.lavaCd > 0) { this.lavaCd -= dt; if (this.lavaCd <= 0) { this.lavaCd = 0; this.game.floatText(this.x, this.y - 18, 'LAVA READY', '#8bd35a'); Audio8.play('xp'); } } }
@@ -1232,6 +1259,7 @@ class Player {
     this.tickReload(dt);
     if (this.venom) { this.venomAttacks(input); return; }
     if (this.lavaT > 0) { this.lavaAttacks(input); return; }
+    if (this.starT > 0) { this.starAttacks(input); return; }   // shuriken, not bullets
     if (this.frenzyT > 0) { this.frenzyAttacks(input); return; }   // jaws, not guns
     if (this.rollT > 0) return;   // he's a rolling egg: no hands free for the gun
     if (this.spinT > 0) return;   // arms out, mid-pirouette
@@ -1332,7 +1360,7 @@ class Player {
     const rec = this.recoil;
     const gx = this.x + Math.cos(this.angle) * (6 - rec), gy = this.y + 2 + Math.sin(this.angle) * (6 - rec) + bob;
     ctx.save(); ctx.translate(gx, gy); ctx.rotate(this.angle); if (this.flip) ctx.scale(1, -1);
-    if (this.mgT > 0) { ctx.restore(); this.drawMachineGun(ctx, bob); } else { const img = Sprites.get(this.wcfg.sprite); ctx.drawImage(img, -3, -4, 16, 8); ctx.restore(); } ctx.globalAlpha = 1;
+    if (this.mgT > 0) { ctx.restore(); this.drawMachineGun(ctx, bob); } else if (this.starT > 0) { ctx.restore(); drawShuriken(ctx, gx + Math.cos(this.angle) * 3, gy - 1, 4, this.game.time * 6); } else { const img = Sprites.get(this.wcfg.sprite); ctx.drawImage(img, -3, -4, 16, 8); ctx.restore(); } ctx.globalAlpha = 1;
     if (this.overdrive) { const t = performance.now() / 1000; ctx.fillStyle = `rgba(255,170,40,${0.18 + Math.sin(t * 20) * 0.08})`; ctx.beginPath(); ctx.arc(this.x, this.y + 2, 14 + Math.sin(t * 20) * 2, 0, TAU); ctx.fill(); ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffb02a'; ctx.fillText('OVERDRIVE', this.x, this.y - 20); ctx.textAlign = 'left'; }
     if (this.pulling && this.pulling.pullT > 0) { const z = this.pulling, hx = this.x + Math.cos(this.angle) * 6, hy = this.y - 2; ctx.strokeStyle = 'rgba(244,242,234,0.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.x, z.y); ctx.stroke(); ctx.strokeStyle = 'rgba(244,242,234,0.3)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.x, z.y); ctx.stroke(); }
     if (this.webZip) { const z = this.webZip, hx = this.x + Math.cos(this.angle) * 6, hy = this.y - 2; ctx.strokeStyle = 'rgba(244,242,234,0.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.ax, z.ay); ctx.stroke(); ctx.strokeStyle = 'rgba(244,242,234,0.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.ax, z.ay); ctx.stroke(); ctx.fillStyle = '#f4f2ea'; ctx.beginPath(); ctx.arc(z.ax, z.ay, 3, 0, TAU); ctx.fill(); }
@@ -2270,8 +2298,13 @@ class Bullet {
     if (this.rocket) { this.smoke -= dt; if (this.smoke <= 0) { this.smoke = 0.02; this.game.particles.push(new Particle(this.x, this.y, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, 0.5, '#9a9a9a', 2, 'smoke')); } }
     if (dist(this.sx, this.sy, this.x, this.y) > this.range) { if (this.rocket) this.impact(); else this.dead = true; }
   }
-  impact() { this.dead = true; if (this.fire) for (let i = 0; i < 4; i++) this.game.particles.push(new Particle(this.x, this.y, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80, 0.25, i % 2 ? '#ff7a1a' : '#fff0a0', 1.5, 'fire')); if (this.lava) { const g = this.game; g.explode(this.x, this.y, this.explosive, this.damage, true); for (const z of g.zombies) { if (!z.dead && dist(this.x, this.y, z.x, z.y) < this.explosive + 14 + z.r) z.burn = Math.max(z.burn, 3); } g.map.splat(this.x, this.y, 9, '#7a2408'); g.lights.push({ x: this.x, y: this.y, r: 120, life: 0.5, max: 0.5 }); for (let i = 0; i < 14; i++) { const a = Math.random() * TAU, sp = 40 + Math.random() * 80; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp - 40, 0.6 + Math.random() * 0.5, i % 3 ? '#ff7a1a' : '#3a1a10', 3, 'blood')); } return; } if (this.explosive) this.game.explode(this.x, this.y, this.explosive, this.damage, true); else if (this.venom) this.game.map.splat(this.x, this.y, 5, '#0a0a0e'); else if (!this.flame) this.game.spark(this.x, this.y, 3); }
+  impact() { this.dead = true; if (this.star) { for (let i = 0; i < 4; i++) this.game.particles.push(new Particle(this.x, this.y, (Math.random() - 0.5) * 90, (Math.random() - 0.5) * 90, 0.2, i % 2 ? '#e8eef6' : '#9aa6b5', 1.5, 'dot')); Audio8.tone(2600, 0.05, 'square', 0.04, -800); } if (this.fire) for (let i = 0; i < 4; i++) this.game.particles.push(new Particle(this.x, this.y, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80, 0.25, i % 2 ? '#ff7a1a' : '#fff0a0', 1.5, 'fire')); if (this.lava) { const g = this.game; g.explode(this.x, this.y, this.explosive, this.damage, true); for (const z of g.zombies) { if (!z.dead && dist(this.x, this.y, z.x, z.y) < this.explosive + 14 + z.r) z.burn = Math.max(z.burn, 3); } g.map.splat(this.x, this.y, 9, '#7a2408'); g.lights.push({ x: this.x, y: this.y, r: 120, life: 0.5, max: 0.5 }); for (let i = 0; i < 14; i++) { const a = Math.random() * TAU, sp = 40 + Math.random() * 80; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp - 40, 0.6 + Math.random() * 0.5, i % 3 ? '#ff7a1a' : '#3a1a10', 3, 'blood')); } return; } if (this.explosive) this.game.explode(this.x, this.y, this.explosive, this.damage, true); else if (this.venom) this.game.map.splat(this.x, this.y, 5, '#0a0a0e'); else if (!this.flame) this.game.spark(this.x, this.y, 3); }
   draw(ctx) {
+    if (this.star) {   // a spinning shuriken with a faint motion trail
+      const tt = this.game.time * 28 + this.spinR;
+      ctx.strokeStyle = 'rgba(210,220,235,0.25)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x - this.vx * 0.03, this.y - this.vy * 0.03); ctx.stroke();
+      drawShuriken(ctx, this.x, this.y, 4.5, tt); return;
+    }
     if (this.lava) { // a glowing rock lobbed in an arc: shadow on the ground, the stone above it, embers trailing
       const t = Math.min(1, dist(this.sx, this.sy, this.x, this.y) / this.range), h = Math.sin(t * Math.PI) * 36, tt = this.game.time;
       ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 2, 5 - h * 0.05, 2.5, 0, 0, TAU); ctx.fill();
@@ -2547,6 +2580,16 @@ class Pickup {
     Sprites.draw(ctx, PICKUPS[this.type].sprite, this.x, this.y + bob - 2, { scale: this.type === 'crate' ? 1.2 : 1 });
     if (this.type === 'crate') { const img = Sprites.get(WEAPONS[this.data].sprite); ctx.drawImage(img, this.x - 8, this.y - 20 + bob, 16, 8); }
   }
+}
+
+/* a four-point ninja star: steel blades, darker edges, a hole in the middle */
+function drawShuriken(ctx, x, y, r, rot) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+  ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, rr = i % 2 ? r * 0.36 : r; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath();
+  ctx.fillStyle = '#c9d1dc'; ctx.fill(); ctx.strokeStyle = '#5a6472'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#f4f7fb'; ctx.fillRect(-r * 0.15, -r * 0.9, r * 0.3, r * 0.5);   // a glint on one blade
+  ctx.fillStyle = '#2a2e36'; ctx.beginPath(); ctx.arc(0, 0, r * 0.18, 0, TAU); ctx.fill();
+  ctx.restore();
 }
 
 /* -------------------------------------------------------------- PARTICLE */

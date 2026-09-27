@@ -265,8 +265,14 @@ const CHARACTERS = {
             pal: { K: '#1a1410', O: '#d98a3c', o: '#a8622a', C: '#f1e2c4', c: '#d9c39c', S: '#050505', W: '#f5f5f5', V: '#a8946c', v: '#6e6048', M: '#4a4a3e', m: '#8c8a78', R: '#2a2e38' },
             strike: { name: 'AIRSTRIKE', cooldown: 25, delay: 0.9, range: 360, bombs: 7, spacing: 26, stagger: 20, interval: 0.09, radius: 54, damage: 160 },   // damage grows with the wave, like zombie HP
             mg: { name: 'MACHINE GUN', duration: 25, cooldown: 20, sound: 'assets/audio/doge_mg_loop.wav', interval: 0.045, damage: 16, spread: 0.07, speed: 520, range: 330, kick: 0.8, carry: 0.85, burn: 3, bossBurn: 1.5, bossIgniteCd: 4 } },   // incendiary rounds
+  bishnu:   { name: 'Bishnu Grinder', tag: 'Ninja · friend', hp: 100, speed: 1.08, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'bishnu', portrait: 'bishnu',
+            portraitImg: 'assets/img/bishnu_portrait.png',   // traced from a photo of the developer's friend, repainted in a hand-picked palette; the sprite is hand-placed in js/sprites.js
+            desc: 'He is a good friend of the developer. NINJA STARS: for 15 s he puts the gun away and throws spinning shuriken that slice through up to 3 zombies each, starting with a ring of 12.',
+            pal: { K: '#141014', H: '#1e1a20', h: '#3e3540', S: '#b07c5f', s: '#8a5a44', E: '#1a1010', M: '#6a3a30', T: '#a9c0d0', t: '#86a0b2', J: '#2e3440', D: '#26262c' },
+            stars: { name: 'NINJA STARS', duration: 15, cooldown: 25, ring: 12,
+                     star: { damage: 55, interval: 0.11, speed: 440, spread: 0.05, range: 360, pellets: 1, pierce: 3, kick: 0.4 } } },   // each star cuts through up to 3 zombies
 };
-const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg', 'giga', 'doge'];
+const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg', 'giga', 'doge', 'bishnu'];
 
 /* maps */
 const MAPS = {
