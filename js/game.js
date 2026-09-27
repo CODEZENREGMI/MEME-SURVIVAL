@@ -135,7 +135,7 @@ class Game {
   }
   start() {
     this.menuLeave();
-    if (this.touch.on && !document.fullscreenElement && document.documentElement.requestFullscreen) {   // phones: go fullscreen and hold landscape (Android; iPhones ignore it)
+    if (this.touch.on && !window.MS_PORTAL && !document.fullscreenElement && document.documentElement.requestFullscreen) {   // phones: go fullscreen and hold landscape (Android; iPhones ignore it)
       document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {});
     }
     Audio8.init(); Audio8.resume(); Audio8.stopMusic(); Audio8.startMusic(this.map.cfg.dark); Audio8.preloadClip(DREAD.sound); this.preloadScareImg();
@@ -734,9 +734,10 @@ class Game {
     const k = this.input.keys;
     window.addEventListener('keydown', e => {
       if (e.target.tagName === 'INPUT') return;
-      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      const key = /^Key[A-Z]$/.test(e.code) ? e.code.slice(3).toLowerCase() : e.key.length === 1 ? e.key.toLowerCase() : e.key;   // letters by position: WASD is ZQSD on a French keyboard
       if (this.telePick) { if (key === 'Escape' || key === 'e') this.closeTelePick(); return; }   // the teleport map swallows the keyboard until you pick or back out
       k[key] = true;
+      if (key === 'p' && !(e.ctrlKey || e.metaKey)) { if (this.state === 'playing' || this.state === 'wavebreak') { this.pause(); return; } if (this.state === 'paused' && !document.querySelector('.modal.show')) { this.resume(); return; } }   // P pauses too (Esc also leaves fullscreen)
       if (key === 'Escape') { if (this.ui.closeModals()) return; if (this.state === 'shop') { this.closeShop(); return; } if (this.state === 'playing' || this.state === 'wavebreak') this.pause(); else if (this.state === 'paused') this.resume(); }
       if (key === 't') k.t = true;
       if (key === 'b' || key === 'Tab') { if (this.state === 'shop' || this.state === 'playing' || this.state === 'wavebreak') { e.preventDefault(); this.toggleShop(); } }
@@ -748,7 +749,7 @@ class Game {
       if (this.state === 'levelup' && key >= '1' && key <= '4') this.chooseUpgrade(Object.keys(UPGRADES)[key - 1]);
       if (['w', 'a', 's', 'd', ' ', 'e', 'g', 'f', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) e.preventDefault();
     });
-    window.addEventListener('keyup', e => { const key = e.key.length === 1 ? e.key.toLowerCase() : e.key; k[key] = false; });
+    window.addEventListener('keyup', e => { const key = /^Key[A-Z]$/.test(e.code) ? e.code.slice(3).toLowerCase() : e.key.length === 1 ? e.key.toLowerCase() : e.key; k[key] = false; });
     window.addEventListener('blur', () => { this.closeTelePick(); for (const i in k) k[i] = false; this.input.mouseDown = false; this.input.rightDown = false; if (this.state === 'playing' || this.state === 'wavebreak') this.pause(); }); // never get eaten while you're looking at another window
     const c = this.canvas;
     const toLogical = e => { const r = c.getBoundingClientRect(); this.input.mouseX = clamp((e.clientX - r.left) / r.width * this.vw, 0, this.vw); this.input.mouseY = clamp((e.clientY - r.top) / r.height * this.vh, 0, this.vh); };

@@ -75,6 +75,7 @@ class UI {
   }
   /* ------------------------------------------------------- admin panel (Ctrl+Shift+\) */
   initAdmin() {
+    if (window.MS_PORTAL) return;   // no cheat panel in portal builds
     const g = () => this.game, m = $('#modal-admin');
     window.addEventListener('keydown', e => {
       if (e.target && e.target.tagName === 'INPUT' && e.key !== 'Escape') return;
@@ -107,7 +108,8 @@ class UI {
   action(a) {
     const g = this.game;
     switch (a) {
-      case 'play': this.openSetup(); break;
+      case 'play': if (window.MS_PORTAL) { this.closeModals(); g.start(); } else this.openSetup(); break;   // game portals: one click into gameplay (their rule); the picker is a button away
+      case 'setup': this.openSetup(); break;
       case 'retry': this.closeModals(); g.start(); break;
       case 'resume': g.resume(); break;
       case 'menu': this.closeModals(); g.toMenu(); break;
@@ -118,7 +120,7 @@ class UI {
   }
   closeModals() { let any = false; $$('.modal.show').forEach(m => { m.classList.remove('show'); any = true; }); return any; }
   toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove('show'), 2400); }
-  toggleFullscreen() { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
+  toggleFullscreen() { if (window.MS_PORTAL) return; if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
 
   /* ------------------------------------------------------- setup wizard */
   openSetup() {

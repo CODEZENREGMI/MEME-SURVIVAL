@@ -209,7 +209,7 @@ title-screen menu links point at memesurvival.com in a new tab. Website-only ima
 re-upload after each update. On itch: tick **This file will be played in the browser**, viewport **1280 × 720**,
 **Fullscreen button** on.
 
-`python3 tools/build_crazygames.py` writes `dist/meme-survival-crazygames.zip` for CrazyGames (upload as an **HTML5** game): the same relative-path build, with the title-screen MENU removed (CrazyGames doesn't allow links out of a game), and the canonical / social / verification tags and JSON-LD dropped.
+`python3 tools/build_crazygames.py` writes `dist/meme-survival-crazygames.zip` for CrazyGames (upload as an **HTML5** game): the same relative-path build, with the title-screen MENU removed (CrazyGames doesn't allow links out of a game), and the canonical / social / verification tags and JSON-LD dropped. It also sets `window.MS_PORTAL` (and `html.portal`) to meet CrazyGames' gameplay rules: PLAY goes straight into a run with the saved loadout (a **CHOOSE SURVIVOR & MAP** button opens the picker), no custom fullscreen (the F key and the phone auto-fullscreen are off), and no admin panel. Upload the *contents* of `dist/crazygames/` (index.html, css, js, assets) — their uploader doesn't take zips. Everywhere: letter keys are read by position (`e.code`), so ZQSD works on AZERTY keyboards; `P` pauses too; audio resumes on `touchend` for iOS.
 
 ## Industrial Zone
 

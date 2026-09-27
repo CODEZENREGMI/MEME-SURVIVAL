@@ -380,3 +380,10 @@ html.touch #ov-title .btn.gear-btn{left:calc(12px + env(safe-area-inset-left))}
 html.touch .title-menu{right:calc(12px + env(safe-area-inset-right))}
 .he-stage{left:env(safe-area-inset-left);right:env(safe-area-inset-right)}
 html.touch .modal{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
+
+/* game-portal builds (CrazyGames): PLAY starts at once, this button opens the survivor / weapon / map picker */
+.portal-only{display:none!important}
+html.portal .portal-only{display:inline-flex!important}
+.btn.pick-btn{margin:-6px 0 6px;font-family:var(--pixel);font-size:10px;letter-spacing:1px;padding:9px 16px;min-width:0;background:rgba(14,17,24,.85);border:1.5px solid #c9ced8}
+.btn.pick-btn:hover{background:rgba(40,48,64,.95)}
+@media (max-height:520px){.btn.pick-btn{margin:12px 0 0;font-size:8px;padding:7px 12px}}

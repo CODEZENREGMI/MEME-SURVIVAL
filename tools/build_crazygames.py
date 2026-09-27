@@ -22,6 +22,8 @@ html = re.sub(r'<link rel="(?:icon|apple-touch-icon|manifest|canonical)"[^>]*>\n
 html = re.sub(r'<meta (?:property="og:|name="twitter:|name="google-site-verification")[^>]*>\n', '', html)   # their page carries its own share tags
 html = re.sub(r'<link rel="preload" href="/(assets/[^"]+)"', r'<link rel="preload" href="\1"', html)   # preloads: relative
 html = re.sub(r'\s*<details class="title-menu">.*?</details>', '', html, flags=re.S)                   # no links out of the game
+html = re.sub(r'\s*<span><kbd>F</kbd> fullscreen[^<]*<em>[^<]*</em></span>', '', html)                # CrazyGames runs its own fullscreen
+html = html.replace('<head>', "<head>\n<script>window.MS_PORTAL = 'crazygames'; document.documentElement.classList.add('portal');</script>", 1)   # PLAY = straight into a run, no custom fullscreen, no admin panel
 html = re.sub(r'<script type="application/ld\+json">.*?</script>\n?', '', html, flags=re.S)            # structured data is for our own site
 leftover = re.findall(r'(?:href|src)="/[^"]*"', html)
 assert not leftover, f'root paths left in index.html: {leftover}'

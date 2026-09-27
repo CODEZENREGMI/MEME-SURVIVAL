@@ -53,6 +53,7 @@ class TouchControls {
     c.addEventListener('touchcancel', e => this.onEnd(e), opt);
     // the first real touch anywhere (menus included) switches the game into touch mode
     window.addEventListener('touchstart', () => { this.lastTouch = performance.now(); if (!this.on) this.enable(); Audio8.init(); Audio8.resume(); }, { passive: true, capture: true });
+    window.addEventListener('touchend', () => { Audio8.resume(); }, { passive: true, capture: true });   // iOS only lets audio restart inside a tap
     // a laptop with a touchscreen: moving a real mouse hands control back to it
     window.addEventListener('mousemove', e => { if (this.on && !this.coarse && performance.now() - this.lastTouch > 1500 && (e.movementX || e.movementY)) this.disable(); });
     if (this.coarse) this.enable();
