@@ -939,9 +939,9 @@ class Game {
       const p = this.player;
       if (p.hp < p.maxHp * 0.3 && !p.dead) { ctx.globalAlpha = 0.25 + Math.sin(this.time * 6) * 0.12; ctx.drawImage(this.vignette('rgba(180,0,0,1)', 0.3), 0, 0); ctx.globalAlpha = 1; }
       this.drawHUD(ctx);
-      if (this.touch.on) this.touch.draw(ctx);
       if (this.telePick) this.drawTelePick(ctx);
     }
+    this.touch.render();   // sticks + buttons, sharp, on their own layer (clears itself outside a run)
   }
 
   /* the character's second ability (the panel above the first): Spider Mad's pull, Eggreck's wife, Doge's machine gun... */
