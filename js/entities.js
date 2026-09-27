@@ -614,9 +614,9 @@ class Player {
         g.zombies.forEach(z => { const d = dist(this.x, this.y, z.x, z.y); if (d < 110) { z.takeDamage(40 * this.damageMult, Math.atan2(z.y - this.y, z.x - this.x), undefined, 5); z.burn = Math.max(z.burn, 3); } });
         for (let i = 0; i < 48; i++) { const a = i / 48 * TAU, sp = 100 + Math.random() * 110; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * sp, Math.sin(a) * sp, 0.5 + Math.random() * 0.3, i % 3 ? '#ff5aa8' : '#ffd0e8', 3, 'fire')); }
         g.lights.push({ x: this.x, y: this.y, r: 200, life: 0.5, max: 0.5 }); g.map.splat(this.x, this.y, 10, '#5a1030');
-        g.showAbilityBanner('DEMON AWAKENED', `${dm.duration}s · her song charms the zombies · LMB katana · RMB kick`);
+        g.showAbilityBanner('DEMON AWAKENED', `${dm.duration}s · her pink circle charms the zombies · LMB katana · RMB kick`);
       }
-      if (this.demonT >= dm.morph) { this.demonState = 'demon'; this.demonTime = dm.duration; this.kickCd = 0; this.slashCd = 0; this.r = 9; Audio8.playTrack(dm.track, dm.duration); this.humanMaxHp = this.maxHp; this.maxHp = Math.max(this.maxHp, dm.hearts * 25); this.hp = this.maxHp; }
+      if (this.demonT >= dm.morph) { this.demonState = 'demon'; this.demonTime = dm.duration; this.kickCd = 0; this.slashCd = 0; this.r = 9; if (dm.track) Audio8.playTrack(dm.track, dm.duration); this.humanMaxHp = this.maxHp; this.maxHp = Math.max(this.maxHp, dm.hearts * 25); this.hp = this.maxHp; }
       return true;
     }
     if (this.demonState === 'reverting') {
