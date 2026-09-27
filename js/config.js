@@ -308,6 +308,9 @@ const SCARE_SPOTS = [
   // Research Lab: a hole torn into the floor of the bench room; something down there looks back
   { id: 'hole', kind: 'hole', map: 'lab', x: 176, y: 424, rx: 22, ry: 15, trigger: 12, waves: [1, 7, 10, 20, 25, 67, 99, 120, 170],
     img: 'assets/img/lab_hole_face.png', sound: 'assets/audio/lab_hole_scream.m4a', hold: 2.2, color: true },
+  // ...and a second one at the bench room's east doorway, right where you cut through to the central corridor
+  { id: 'hole2', kind: 'hole', map: 'lab', x: 604, y: 500, rx: 22, ry: 15, trigger: 12, waves: [1, 7, 10, 20, 25, 67, 99, 120, 170],
+    img: 'assets/img/lab_hole_face.png', sound: 'assets/audio/lab_hole_scream.m4a', hold: 2.2, color: true },
   // Urban City: a backyard pool between the two buildings below the plaza; the water is murkier than it looks
   { id: 'pool', kind: 'pool', map: 'city', x: 590, y: 650, w: 100, h: 56, inset: 6, wade: 0.6,
     img: 'assets/img/pool_face.webp', sound: 'assets/audio/pool_scream.m4a', hold: 2.2, color: true, bright: 0.95, contrast: 1.2 },

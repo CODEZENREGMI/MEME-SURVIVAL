@@ -74,6 +74,7 @@ QA = [
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
  ("2026-09-27", [
+   "<strong>A second hole in the Research Lab.</strong> This one waits at the bench room's east doorway, right where you run through to the corridor.",
    "Sonny Jeans is now called <strong>Baldwin Milks</strong>. Same bald head, same milk quake.",
    "<strong>Runner can TELEPORT.</strong> Press E and the whole map opens up with every zombie on it; click anywhere and he blinks there, knocking back whatever was standing on the spot. 30 s recharge. His gun's ability moves to Q.",
  ]),
