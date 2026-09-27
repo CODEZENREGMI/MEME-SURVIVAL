@@ -74,7 +74,7 @@ QA = [
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
  ("2026-09-27", [
-   "<strong>The Industrial Zone has a hole too.</strong> The concrete has caved in at the north end of the central yard. In the pitch black, you only see it once your flashlight is on it.",
+   "<strong>The Industrial Zone is full of holes.</strong> The ground has caved in all over the yard: one in the central lot, the rest hidden in the corners and the alleys behind the warehouses. You only see them once your flashlight is on them. Every wave, the first one you step into gets you.",
    "<strong>Two more holes in the Research Lab.</strong> One waits at the bench room's east doorway, right where you run through to the corridor. The other has opened up between the four computer desks in the north-east office.",
    "Sonny Jeans is now called <strong>Baldwin Milks</strong>. Same bald head, same milk quake.",
    "<strong>Runner can TELEPORT.</strong> Press E and the whole map opens up with every zombie on it; click anywhere and he blinks there, knocking back whatever was standing on the spot. 30 s recharge. His gun's ability moves to Q.",

@@ -631,7 +631,7 @@ class Game {
         if (p.moving && Math.random() < 0.45) this.particles.push(new Particle(p.x + (Math.random() - 0.5) * 10, p.y + 6, (Math.random() - 0.5) * 40, -25 - Math.random() * 30, 0.35, Math.random() < 0.5 ? '#bfe6ef' : '#5fb4c8', 2, 'dot'));
       }
       if (this.state !== 'playing' || (s.waves && !s.waves.includes(this.wave))) continue;
-      const key = s.id + ':' + this.wave;
+      const key = (s.group || s.id) + ':' + this.wave;   // grouped holes share one scare a wave
       if (this.scared.has(key) || !this.inSpot(s, p.x, p.y)) continue;
       this.scared.add(key); this.shake(12); Audio8.noise(0.4, 0.4, 160);   // the floor gives / the water heaves, and something grabs
       if (s.kind === 'pool') for (let i = 0; i < 24; i++) { const a = Math.random() * TAU; this.particles.push(new Particle(p.x, p.y + 4, Math.cos(a) * 90, Math.sin(a) * 50 - 60, 0.6, i % 2 ? '#bfe6ef' : '#2b7d90', 3, 'dot')); }

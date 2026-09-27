@@ -314,9 +314,13 @@ const SCARE_SPOTS = [
   // ...and a third, dead centre between the four computer desks of the north-east office
   { id: 'hole3', kind: 'hole', map: 'lab', x: 1080, y: 120, rx: 22, ry: 15, trigger: 12, waves: [1, 7, 10, 20, 25, 67, 99, 120, 170],
     img: 'assets/img/lab_hole_face.png', sound: 'assets/audio/lab_hole_scream.m4a', hold: 2.2, color: true },
-  // Industrial Zone: the yard's concrete has caved in at the north end of the central lot, in the pitch black
-  { id: 'ihole', kind: 'hole', map: 'industrial', x: 684, y: 322, rx: 22, ry: 15, trigger: 12, waves: [1, 7, 10, 20, 25, 67, 99, 120, 170],
-    img: 'assets/img/lab_hole_face.png', sound: 'assets/audio/lab_hole_scream.m4a', hold: 2.2, color: true },
+  // Industrial Zone: the ground has caved in all over the yard, most of it where nobody looks: the central lot, the four
+  // dirt lots in the corners, and the tight alleys behind the warehouses. They share one scare (group): every wave, the
+  // first hole you step into gets you, and the rest stay quiet until the next wave
+  ...[['ihole', 684, 322], ['ihole_nw', 104, 88], ['ihole_ne', 1192, 88], ['ihole_sw', 104, 728], ['ihole_se', 1192, 728],
+      ['ihole_wn', 88, 256], ['ihole_ws', 88, 544], ['ihole_en', 1208, 264]].map(([id, x, y]) => (
+    { id, group: 'industrial', kind: 'hole', map: 'industrial', x, y, rx: 22, ry: 15, trigger: 12,
+      img: 'assets/img/lab_hole_face.png', sound: 'assets/audio/lab_hole_scream.m4a', hold: 2.2, color: true })),
   // Urban City: a backyard pool between the two buildings below the plaza; the water is murkier than it looks
   { id: 'pool', kind: 'pool', map: 'city', x: 590, y: 650, w: 100, h: 56, inset: 6, wade: 0.6,
     img: 'assets/img/pool_face.webp', sound: 'assets/audio/pool_scream.m4a', hold: 2.2, color: true, bright: 0.95, contrast: 1.2 },
