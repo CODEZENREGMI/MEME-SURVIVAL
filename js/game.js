@@ -344,7 +344,13 @@ class Game {
     if (Math.random() < (noAmmo ? 0.5 : 0.09) * lucky) this.dropAt('ammo', z.x, z.y);
     if (Math.random() < (p.hp < p.maxHp * 0.4 ? 0.14 : 0.045) * lucky) this.dropAt('health', z.x, z.y);
   }
-  dropAt(type, x, y) { this.pickups.push(new Pickup(this, type, x, y)); }
+  dropAt(type, x, y) {
+    this.pickups.push(new Pickup(this, type, x, y));
+    if (this.pickups.length > 150) {   // a massacre can't bury the floor in loot: the drop closest to expiring goes first (weapon crates never)
+      let old = null; for (const k of this.pickups) if (k.type !== 'crate' && (!old || k.life < old.life)) old = k;
+      if (old) this.pickups.splice(this.pickups.indexOf(old), 1);
+    }
+  }
   collect(pk) {
     const p = this.player;
     switch (pk.type) {
@@ -840,6 +846,9 @@ class Game {
       if (!h.dead && h.hp < h.maxHp * 0.35 && Math.random() < 0.4) this.particles.push(new Particle(H.x + (Math.random() - 0.5) * H.w * 0.8, H.y - H.h / 2 + 20 + Math.random() * 20, (Math.random() - 0.5) * 10, -30 - Math.random() * 30, 0.5 + Math.random() * 0.4, '#ff6a2a', 2 + Math.random() * 3, 'fire'));
       this.siegeMoan = (this.siegeMoan || 5) - dt; if (this.siegeMoan <= 0) { this.siegeMoan = 6 + Math.random() * 10; if (dist(p.x, p.y, H.x, H.y) < 420) Audio8.play(Math.random() < 0.4 ? 'scream' : 'moan'); } }
     this.pickups.forEach(k => k.update(dt, p)); this.pickups = this.pickups.filter(k => !k.dead);
+    // blood and scorch marks fade out over time: a fresh splat reads for ~10 s and is all but gone in a minute, so a big fight never paints over the map
+    this.decalFade = (this.decalFade || 0) + dt;
+    if (this.decalFade >= 1) { this.decalFade = 0; const c = this.map.dctx; c.save(); c.globalCompositeOperation = 'destination-out'; c.fillStyle = 'rgba(0,0,0,0.06)'; c.fillRect(0, 0, this.map.pw, this.map.ph); c.restore(); }
     this.updateFx(dt);
     // camera
     const tx = clamp(p.x - this.vw / 2 + Math.cos(p.angle) * 20, 0, this.map.pw - this.vw), ty = clamp(p.y - this.vh / 2 + Math.sin(p.angle) * 12, 0, this.map.ph - this.vh);

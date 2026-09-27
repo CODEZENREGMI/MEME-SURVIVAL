@@ -74,6 +74,7 @@ QA = [
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
  ("2026-09-27", [
+   "Blood and explosion scorch marks now fade away over time, and dropped loot is capped, so a huge fight never buries the map.",
    "<strong>Custom HUD on phones.</strong> Settings → EDIT CONTROLS: drag every button and both sticks wherever your thumbs want them, resize or fade each one, move the minimap, pick fixed or floating sticks, or start from the Thumb Arc, Corner or Left-handed layouts. Saved on your phone.",
    "<strong>Meme Survival now plays on phones and tablets.</strong> Left thumb moves, right thumb aims and fires, and every ability has its own round button. The menus fit a phone held sideways, and the game pauses when you switch apps.",
    "<strong>The Industrial Zone is full of holes.</strong> The ground has caved in all over the yard: one in the central lot, the rest hidden in the corners and the alleys behind the warehouses. You only see them once your flashlight is on them. Every wave, the first one you step into gets you.",
