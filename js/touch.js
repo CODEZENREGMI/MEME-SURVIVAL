@@ -140,8 +140,8 @@ class TouchControls {
       const st = p.overdrive ? { state: 'active', frac: p.ability.active / ab.duration } : p.ability.cd > 0 ? { state: 'cd', frac: 1 - p.ability.cd / ab.cooldown, sub: `${Math.ceil(p.ability.cd)}s` } : { state: 'ready', frac: 1 };
       add({ id: 'wa', label: ab.name, st, col: '#ffb02a', down: () => p.useAbility() });
     }
-    const rlab = p.venom ? 'CAPTURE' : p.frog ? 'ARMY' : null;   // R does something else in these forms
-    add({ id: 'rl', label: rlab || 'RELOAD', icon: rlab ? null : 'reload', col: '#f5c518', down: () => { inp.keys.r = true; }, up: () => { inp.keys.r = false; } });
+    // no gun to reload as the venom or the frog (their capture / army already has its own button)
+    if (!p.venom && !p.frog && !p.demon && !p.beast) add({ id: 'rl', label: 'RELOAD', icon: 'reload', col: '#f5c518', down: () => { inp.keys.r = true; }, up: () => { inp.keys.r = false; } });
     if (!p.venom && !p.frog && !p.demon && !p.beast && !p.driving && p.weaponOrder.length > 1) add({ id: 'sw', label: 'SWAP', icon: 'swap', col: '#e3e6ec', down: () => p.cycle(1) });
     if (alt) add({ id: 'alt', label: alt, col: '#ff8a6a', down: () => { inp.rightDown = true; }, up: () => { inp.rightDown = false; } });
     if (g.carRect) add({ id: 'car', label: p.car && p.car.civil ? 'GET OUT' : 'GET IN', col: '#5ec2ff', down: () => p.toggleCar() });
@@ -198,7 +198,7 @@ class TouchControls {
       if (b.icon) { this.icon(ctx, b.icon, b.x, b.y, b.r, txt); continue; }
       let label = b.short, fs = 11; const max = b.r * 2 - 10;
       ctx.font = `${fs}px "Press Start 2P", monospace`;
-      while (fs > 7 && ctx.measureText(label).width > max) { fs--; ctx.font = `${fs}px "Press Start 2P", monospace`; }
+      while (fs > 6 && ctx.measureText(label).width > max) { fs--; ctx.font = `${fs}px "Press Start 2P", monospace`; }
       while (label.length > 2 && ctx.measureText(label).width > max) label = label.slice(0, -1);
       const secs = cd && /(\d+(?:\.\d)?)s\b/.exec(st.sub || '');   // recharging: the seconds left, under the name
       ctx.fillStyle = txt; ctx.fillText(label, b.x, b.y + (secs ? -7 : 1));
@@ -320,5 +320,5 @@ class HudEditor {
 /* touch mode reads its hints as taps, not keys: "[SPACE] READY · CLICK" → "READY · TAP" */
 function touchText(s) {
   return String(s).replace(/\[(?:SPACE|[A-Z])\]\s*(?:·\s*)?/gi, '').replace(/\bCLICK\b/g, 'TAP').replace(/\bclick\b/g, 'tap')
-    .replace(/\bhold LMB\b/gi, 'hold the aim stick').replace(/\bLMB\b/g, 'FIRE').replace(/\bRMB\b/g, 'ALT').replace(/\bWASD\b/g, 'STICK').replace(/\b(?:Q\/)?SCROLL SWAP\b/g, 'TAP SWAP').replace(/\bSCROLL\b/g, 'SWAP').replace(/\bCURSOR\b/g, 'AIM').replace(/\bcursor\b/g, 'aim').replace(/^\s*·\s*/, '');
+    .replace(/\bhold LMB\b/gi, 'hold the aim stick').replace(/\bLMB\b/g, 'FIRE').replace(/\bRMB\b/g, 'ALT').replace(/\bWASD\b/g, 'STICK').replace(/\bT to shed\b/g, 'tap SYMBIOTE to shed').replace(/(^|·\s)[A-Z] (?=[A-Za-z]{2})/g, '$1').replace(/\bSPACE\b/g, 'ABILITY').replace(/\bSpace\b/g, 'ability').replace(/\b(?:Q\/)?SCROLL SWAP\b/g, 'TAP SWAP').replace(/\bSCROLL\b/g, 'SWAP').replace(/\bCURSOR\b/g, 'AIM').replace(/\bcursor\b/g, 'aim').replace(/^\s*·\s*/, '');
 }
