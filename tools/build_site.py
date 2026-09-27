@@ -74,6 +74,7 @@ QA = [
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
  ("2026-09-27", [
+   "<strong>Bishnu Grinder learned ROPE.</strong> He lassos the zombie you aim at and ties it up tight for 5 seconds: it can't move, shoot or bite.",
    "<strong>New survivor: Brr Brr Patapim.</strong> The forest troll with the giant nose and bigger feet. FOREST FRIENDS sends 10 birds and 8 frogs after the horde for 15 s, and every single peck does exactly 1 damage.",
    "<strong>New survivor: Bishnu Grinder.</strong> A good friend of the developer, drawn from a real photo. NINJA STARS puts his gun away for 15 s: he opens with a ring of 12 shuriken, then throws spinning stars that cut through up to 3 zombies each.",
    "Blood and explosion scorch marks now fade away over time, and dropped loot is capped, so a huge fight never buries the map.",

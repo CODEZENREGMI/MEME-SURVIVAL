@@ -73,7 +73,7 @@ class Player {
     this.ability = { active: 0, cd: 0, weapon: null };   // weapon special (minigun OVERDRIVE)
     this.form = 'human'; this.morphT = 0; this.formTime = 0; this.formCd = 0; this.jump = null; this.height = 0; this.leapCd = 0; this.smashCd = 0; this.swipe = 0; this.swipeAngle = 0;
     this.beastAmmo = BEAST_GUN.mag; this.beastKills = 0; this.beastMuzzle = 0;
-    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null; this.teleCd = 0; this.starT = 0; this.starCd = 0; this.forestT = 0; this.forestCd = 0;
+    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null; this.teleCd = 0; this.starT = 0; this.starCd = 0; this.forestT = 0; this.forestCd = 0; this.ropeCd = 0; this.roping = null;
     this.squadTime = 0; this.squadCd = 0;
     this.fieldTime = 0; this.fieldCd = 0;
     this.car = null; this.carCd = 0;
@@ -584,6 +584,34 @@ class Player {
     g.shake(2); g.showAbilityBanner('FOREST FRIENDS', `${F.birds} birds · ${F.frogs} frogs · ${F.duration}s · 1 damage a peck`);
     return true;
   }
+  /* ---- Bishnu Grinder: ROPE — lasso the zombie you aim at and tie it up tight ---- */
+  useRope() {
+    const rp = this.char.rope, g = this.game; if (!rp) return false;
+    if (this.roping) return false;
+    if (this.ropeCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `ROPE IN ${Math.ceil(this.ropeCd)}s`, '#9aa3b5'); return false; }
+    const inp = g.input; let best = null, bd = 1e9;
+    for (const z of g.zombies) {   // the zombie nearest the aim point, else the nearest one along the aim line (same as Spider Mad's pull)
+      if (z.dead || z.captured > 0 || dist(z.x, z.y, this.x, this.y) > rp.range) continue;
+      const dc = dist(z.x, z.y, inp.worldX, inp.worldY); let score = dc < 40 ? dc : 1e9;
+      if (score === 1e9) { let da = Math.atan2(z.y - this.y, z.x - this.x) - this.angle; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) < 0.3) score = 100 + dist(z.x, z.y, this.x, this.y); }
+      if (score < bd && g.map.los(this.x, this.y, z.x, z.y)) { bd = score; best = z; }
+    }
+    if (!best) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, 'NO TARGET', '#9aa3b5'); return false; }
+    this.ropeCd = rp.cooldown; this.roping = { z: best, t: 0, dur: Math.max(0.12, dist(this.x, this.y, best.x, best.y) / rp.speed) };
+    if (rp.sound) Audio8.playClip(rp.sound, 1); else { Audio8.noise(0.22, 0.12, 900); Audio8.tone(520, 0.2, 'triangle', 0.08, -300); }   // the throw
+    return true;
+  }
+  /* the rope in flight: it reaches the zombie, wraps it, and it's tied */
+  updateRope(dt) {
+    const R = this.roping; if (!R) return; const rp = this.char.rope, g = this.game, z = R.z;
+    R.t += dt; if (z.dead) { this.roping = null; return; }
+    if (R.t >= R.dur && !R.tied) {
+      R.tied = true; R.t = R.dur; z.web = z.cfg.boss ? rp.bossTie : rp.tie; z.webImmune = 0; z.kx = z.ky = 0; z.pullT = 0; z.tiedByRope = true;
+      g.floatText(z.x, z.y - 14 * (z.scale || 1), z.cfg.boss ? 'TIED (BRIEFLY)' : 'TIED UP', '#d9b27a'); Audio8.play('thud'); g.shake(1.5);
+      for (let i = 0; i < 6; i++) g.particles.push(new Particle(z.x, z.y, (Math.random() - 0.5) * 50, -20 - Math.random() * 30, 0.35, '#b8894e', 2, 'dot'));
+    }
+    if (R.tied && R.t >= R.dur + 0.25) this.roping = null;   // the line goes slack and drops
+  }
   /* ---- Bishnu Grinder: NINJA STARS — the gun goes away, and spinning shuriken fly ---- */
   useStars() {
     const ns = this.char.stars, g = this.game; if (!ns) return false;
@@ -892,6 +920,8 @@ class Player {
     return true;
   }
   charAbility2() {
+    const rp = this.char.rope;
+    if (rp) { if (this.roping) return { name: rp.name, state: 'busy', frac: 1, sub: 'THROWING' }; if (this.ropeCd > 0) return { name: rp.name, state: 'cd', frac: 1 - this.ropeCd / rp.cooldown, sub: `RECHARGING ${Math.ceil(this.ropeCd)}s` }; return { name: rp.name, state: 'ready', frac: 1, sub: '[E] AIM AT A ZOMBIE' }; }
     const tp = this.char.tele;
     if (tp) { if (this.game.telePick) return { name: tp.name, state: 'busy', frac: 1, sub: 'PICK A SPOT' }; if (this.teleCd > 0) return { name: tp.name, state: 'cd', frac: 1 - this.teleCd / tp.cooldown, sub: `RECHARGING ${Math.ceil(this.teleCd)}s` }; return { name: tp.name, state: 'ready', frac: 1, sub: '[E] OPEN THE MAP' }; }
     const mg = this.char.mg;
@@ -1148,9 +1178,9 @@ class Player {
     // aim first so animations face the cursor
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x); this.flip = Math.cos(this.angle) < 0;
     if (input.keys[' ']) { input.keys[' '] = false; this.useCharAbility(); }
-    if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else if (this.char.wife) this.useWife(); else if (this.char.mg) this.useMachineGun(); else if (this.char.tele) this.useTeleport(); else this.useAbility(); } // Eggreck: E = MY WIFE, Doge: E = MACHINE GUN, Runner: E = TELEPORT (their weapon ability moves to F / Q)
+    if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else if (this.char.wife) this.useWife(); else if (this.char.mg) this.useMachineGun(); else if (this.char.tele) this.useTeleport(); else if (this.char.rope) this.useRope(); else this.useAbility(); } // Eggreck: E = MY WIFE, Doge: E = MACHINE GUN, Runner: E = TELEPORT (their weapon ability moves to F / Q)
     if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); else if (this.char.wife) this.useAbility(); }
-    if (input.keys.q) { input.keys.q = false; if (this.char.mg || this.char.tele) this.useAbility(); }
+    if (input.keys.q) { input.keys.q = false; if (this.char.mg || this.char.tele || this.char.rope) this.useAbility(); }
     if (input.keys.r && this.venom) { input.keys.r = false; this.useCapture(); }
     if (input.keys.r && this.frog) { input.keys.r = false; this.useFrogArmy(); } // R = FROG ARMY as the frog (no guns to reload) // R = CAPTURE in venom form (no guns to reload)
     if (input.keys.t) { input.keys.t = false; if (this.char.symbiote) this.toggleSymbiote(); }
@@ -1222,6 +1252,7 @@ class Player {
       if (this.mgT > 0) { this.mgT -= dt; this.mgSpin += dt * (this.game.input.mouseDown ? 40 : 8);
         if (this.mgT <= 0) { this.mgT = 0; this.mgCd = mg.cooldown; Audio8.stopHandle(this.mgLoop, 0.1); this.mgLoop = null; this.game.floatText(this.x, this.y - 18, 'BARRELS COOLING', '#c9cfdb'); Audio8.play('reloaded'); } }
       else if (this.mgCd > 0) { this.mgCd -= dt; if (this.mgCd <= 0) { this.mgCd = 0; this.game.floatText(this.x, this.y - 18, 'MACHINE GUN READY', '#ffd23a'); Audio8.play('xp'); } } }
+    if (this.char.rope) { this.updateRope(dt); if (this.ropeCd > 0) { this.ropeCd -= dt; if (this.ropeCd <= 0) { this.ropeCd = 0; this.game.floatText(this.x, this.y - 18, 'ROPE READY', '#d9b27a'); Audio8.play('xp'); } } }
     if (this.char.tele && this.teleCd > 0) { this.teleCd -= dt; if (this.teleCd <= 0) { this.teleCd = 0; this.game.floatText(this.x, this.y - 18, 'TELEPORT READY', '#5ec2ff'); Audio8.play('xp'); } }
     if (this.char.strike && this.strikeCd > 0) { this.strikeCd -= dt; if (this.strikeCd <= 0) { this.strikeCd = 0; this.game.floatText(this.x, this.y - 18, 'AIR SUPPORT READY', '#ffd23a'); Audio8.play('xp'); } }
     if (this.char.spin) { const sn = this.char.spin;
@@ -1382,6 +1413,13 @@ class Player {
     ctx.save(); ctx.translate(gx, gy); ctx.rotate(this.angle); if (this.flip) ctx.scale(1, -1);
     if (this.mgT > 0) { ctx.restore(); this.drawMachineGun(ctx, bob); } else if (this.starT > 0) { ctx.restore(); drawShuriken(ctx, gx + Math.cos(this.angle) * 3, gy - 1, 4, this.game.time * 6); } else { const img = Sprites.get(this.wcfg.sprite); ctx.drawImage(img, -3, -4, 16, 8); ctx.restore(); } ctx.globalAlpha = 1;
     if (this.overdrive) { const t = performance.now() / 1000; ctx.fillStyle = `rgba(255,170,40,${0.18 + Math.sin(t * 20) * 0.08})`; ctx.beginPath(); ctx.arc(this.x, this.y + 2, 14 + Math.sin(t * 20) * 2, 0, TAU); ctx.fill(); ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffb02a'; ctx.fillText('OVERDRIVE', this.x, this.y - 20); ctx.textAlign = 'left'; }
+    if (this.roping) {   // the lasso: a sagging brown line from his hand, the loop spinning at the end
+      const R = this.roping, z = R.z, k = Math.min(1, R.t / R.dur), hx = this.x + Math.cos(this.angle) * 6, hy = this.y - 2, ex = hx + (z.x - hx) * k, ey = (hy + ((z.y - 2) - hy) * k);
+      const sag = Math.sin(k * Math.PI) * 10 + (R.tied ? 6 * (R.t - R.dur) / 0.25 : 0);
+      ctx.strokeStyle = '#6e4a26'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.quadraticCurveTo((hx + ex) / 2, (hy + ey) / 2 + sag, ex, ey); ctx.stroke();
+      ctx.strokeStyle = '#c8995a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(hx, hy - 0.5); ctx.quadraticCurveTo((hx + ex) / 2, (hy + ey) / 2 + sag - 0.5, ex, ey - 0.5); ctx.stroke();
+      if (!R.tied) { ctx.strokeStyle = '#8a5e32'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(ex, ey, 5, 3, this.game.time * 14, 0, TAU); ctx.stroke(); }
+    }
     if (this.pulling && this.pulling.pullT > 0) { const z = this.pulling, hx = this.x + Math.cos(this.angle) * 6, hy = this.y - 2; ctx.strokeStyle = 'rgba(244,242,234,0.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.x, z.y); ctx.stroke(); ctx.strokeStyle = 'rgba(244,242,234,0.3)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.x, z.y); ctx.stroke(); }
     if (this.webZip) { const z = this.webZip, hx = this.x + Math.cos(this.angle) * 6, hy = this.y - 2; ctx.strokeStyle = 'rgba(244,242,234,0.9)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.ax, z.ay); ctx.stroke(); ctx.strokeStyle = 'rgba(244,242,234,0.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(z.ax, z.ay); ctx.stroke(); ctx.fillStyle = '#f4f2ea'; ctx.beginPath(); ctx.arc(z.ax, z.ay, 3, 0, TAU); ctx.fill(); }
     if (this.rushing) { ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#5ec2ff'; ctx.fillText('RUSH', this.x, this.y - 20); ctx.textAlign = 'left'; }
@@ -1759,7 +1797,7 @@ class Zombie {
     if (this.web > 0) { // stuck in Samay's web: can't move, shoot or bite
       this.web -= dt; this.hit -= dt; this.attackCd = Math.max(this.attackCd, 0.5); this.flip = player.x < this.x; this.walk += dt * 2;
       if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; this.burnFx(dt); if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); } }
-      if (this.web <= 0) { this.web = 0; this.webImmune = this.game.player.char.tapri ? this.game.player.char.tapri.immune : 1.5; }
+      if (this.web <= 0) { this.web = 0; this.tiedByRope = false; this.webImmune = this.game.player.char.tapri ? this.game.player.char.tapri.immune : 1.5; }
       return;
     }
     const dx = player.x - this.x, dy = player.y - this.y, d = Math.hypot(dx, dy) || 1;
@@ -2098,6 +2136,13 @@ class Zombie {
       ctx.fillStyle = '#f4f2ea'; ctx.fillRect(Math.round(px - 1), Math.round(py - 3), 2, 2);
       if (Math.sin(tt * 11 + this.x) > 0.8) { ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(Math.round(px - 5), Math.round(py - 1), 10, 1); ctx.fillRect(Math.round(px), Math.round(py - 6), 1, 10); }
       ctx.fillStyle = '#c02020'; ctx.fillRect(Math.round(px + 4), Math.round(py - 5), 2, 2);
+    }
+    else if (this.web > 0 && this.tiedByRope) { // Bishnu's rope, wound tight around it
+      const w = 8 * s, cx = this.x, cy = this.y;
+      [-5, -1, 3].forEach((dy, i) => { const yy = cy + dy * s; ctx.strokeStyle = '#5a3a1c'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(cx, yy, w, 2.2 * s, 0, 0, TAU); ctx.stroke();
+        ctx.strokeStyle = i % 2 ? '#c8995a' : '#d9b27a'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(cx, yy - 0.3, w, 2.2 * s, 0, 0.15, Math.PI - 0.15); ctx.stroke(); });
+      ctx.fillStyle = '#8a5e32'; ctx.fillRect(Math.round(cx + w - 2), Math.round(cy - 2 * s), 3, 3); ctx.fillStyle = '#c8995a'; ctx.fillRect(Math.round(cx + w), Math.round(cy - 1 * s), 2, 4 * s);   // the knot and a loose end
+      if (this.web < 0.8 && Math.sin(this.game.time * 30) > 0) { ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(Math.round(cx - w), Math.round(cy - 6 * s), w * 2, 1); }   // straining, about to slip free
     }
     else if (this.web > 0) { // spider web wrapped around it
       const wr = 9 * s, wx = this.x, wy = this.y - 2 * s; ctx.strokeStyle = 'rgba(245,242,234,0.85)'; ctx.lineWidth = 1;
