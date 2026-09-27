@@ -79,7 +79,7 @@ class UI {
     window.addEventListener('keydown', e => {
       if (e.target && e.target.tagName === 'INPUT' && e.key !== 'Escape') return;
       const isSlash = e.code === 'Backslash' || e.key === '\\' || e.key === '|';   // with Shift held, "\" arrives as "|"
-      if (e.ctrlKey && e.shiftKey && isSlash) { e.preventDefault(); e.stopPropagation(); this.toggleAdmin(); }   // Ctrl+Shift+\
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && isSlash) { e.preventDefault(); e.stopPropagation(); this.toggleAdmin(); }   // Cmd+Shift+\ on a Mac, Ctrl+Shift+\ elsewhere
     }, true);
     const mark = () => { g().admin = true; };
     const inRun = () => { const s = g().state; return s !== 'menu' && s !== 'gameover'; };

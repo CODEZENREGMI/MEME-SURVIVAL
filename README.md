@@ -128,7 +128,7 @@ your beam hits them; only their glowing eyes give them away.
 
 ## Admin panel (hidden)
 
-Press **Ctrl+Shift+\\** to open a developer panel: jump to any wave, spawn any boss or a batch of zombies,
+Press **Cmd+Shift+\\** on a Mac (**Ctrl+Shift+\\** on Windows) to open a developer panel: jump to any wave, spawn any boss or a batch of zombies,
 god mode, infinite ammo, coins, full heal, all guns, reset ability cooldowns, force a level-up.
 Any run that touches it is marked as an admin run and never saves a high score.
 
