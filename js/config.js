@@ -271,7 +271,7 @@ const CHARACTERS = {
             pal: { K: '#141014', H: '#1e1a20', h: '#3e3540', S: '#b07c5f', s: '#8a5a44', E: '#1a1010', M: '#6a3a30', T: '#a9c0d0', t: '#86a0b2', J: '#2e3440', D: '#26262c' },
             stars: { name: 'NINJA STARS', duration: 15, cooldown: 25, ring: 12, sound: 'assets/audio/bishnu_star.mp3',
                      star: { damage: 55, interval: 0.11, speed: 440, spread: 0.05, range: 360, pellets: 1, pierce: 3, kick: 0.4 } },   // each star cuts through up to 3 zombies
-            rope: { name: 'ROPE', cooldown: 8, range: 320, tie: 5, bossTie: 2, speed: 720 } },   // lasso the zombie you aim at: tied up, it can't move, shoot or bite
+            rope: { name: 'ROPE', cooldown: 8, range: 320, tie: 5, bossTie: 2, speed: 720, sound: 'assets/audio/bishnu_rope.m4a' } },   // lasso the zombie you aim at: tied up, it can't move, shoot or bite
   patapim:  { name: 'Brr Brr Patapim', tag: 'Forest troll · meme', hp: 130, speed: 0.92, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'patapim', portrait: 'patapim',
             portraitImg: 'assets/img/patapim_portrait.png',   // the Brr Brr Patapim painting redrawn in pixels (eye hand-placed); the sprite is hand-placed in js/sprites.js
             desc: 'The forest troll with the enormous nose and even bigger feet. FOREST FRIENDS: a flock of birds and a gang of frogs swarm the zombies for 15 s. Every peck does exactly 1 damage.',
