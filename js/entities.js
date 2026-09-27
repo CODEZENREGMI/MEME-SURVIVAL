@@ -578,7 +578,7 @@ class Player {
     if (this.starCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `STARS IN ${Math.ceil(this.starCd)}s`, '#9aa3b5'); return false; }
     this.starT = ns.duration; this.reloading = false; this.fireTimer = 0;
     for (let i = 0; i < ns.ring; i++) this.throwStar(this.angle + i / ns.ring * TAU, 0);   // an opening ring in every direction
-    Audio8.noise(0.25, 0.2, 5200); Audio8.tone(1800, 0.12, 'triangle', 0.1, -900); g.shake(3);
+    if (ns.sound) Audio8.playClip(ns.sound, 1); else { Audio8.noise(0.25, 0.2, 5200); Audio8.tone(1800, 0.12, 'triangle', 0.1, -900); } g.shake(3); this.starSndAt = this.game.time + 0.3;
     g.showAbilityBanner('NINJA STARS', `${ns.duration}s · LMB throws shuriken · each cuts through 3 zombies`);
     return true;
   }
@@ -591,7 +591,9 @@ class Player {
     if (!(input.mouseDown && this.fireTimer <= 0)) return;
     this.fireTimer = cfg.interval / this.fireMult; this.recoil = cfg.kick;
     this.throwStar(this.angle, cfg.spread);
-    Audio8.noise(0.06, 0.07, 6000); Audio8.tone(2400, 0.04, 'triangle', 0.05, -1200);   // a quick metallic whip
+    const snd = this.char.stars.sound;   // the metal whoosh, but at most ~3 a second so a held throw stays crisp
+    if (snd && this.game.time >= (this.starSndAt || 0)) { this.starSndAt = this.game.time + 0.3; Audio8.playClip(snd, 0.55); }
+    else if (!snd) { Audio8.noise(0.06, 0.07, 6000); Audio8.tone(2400, 0.04, 'triangle', 0.05, -1200); }
   }
   /* ---- Eggreck: VANISH — 20 s of invisibility. Nothing hostile can see him; he can still shoot. ---- */
   get invisible() { return this.invis > 0; }

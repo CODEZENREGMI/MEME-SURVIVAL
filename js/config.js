@@ -269,7 +269,7 @@ const CHARACTERS = {
             portraitImg: 'assets/img/bishnu_portrait.png',   // traced from a photo of the developer's friend, repainted in a hand-picked palette; the sprite is hand-placed in js/sprites.js
             desc: 'He is a good friend of the developer. NINJA STARS: for 15 s he puts the gun away and throws spinning shuriken that slice through up to 3 zombies each, starting with a ring of 12.',
             pal: { K: '#141014', H: '#1e1a20', h: '#3e3540', S: '#b07c5f', s: '#8a5a44', E: '#1a1010', M: '#6a3a30', T: '#a9c0d0', t: '#86a0b2', J: '#2e3440', D: '#26262c' },
-            stars: { name: 'NINJA STARS', duration: 15, cooldown: 25, ring: 12,
+            stars: { name: 'NINJA STARS', duration: 15, cooldown: 25, ring: 12, sound: 'assets/audio/bishnu_star.mp3',
                      star: { damage: 55, interval: 0.11, speed: 440, spread: 0.05, range: 360, pellets: 1, pierce: 3, kick: 0.4 } } },   // each star cuts through up to 3 zombies
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg', 'giga', 'doge', 'bishnu'];
