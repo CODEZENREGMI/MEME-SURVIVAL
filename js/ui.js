@@ -203,7 +203,7 @@ class UI {
   /* ------------------------------------------------------- states / overlays */
   setState(s) {
     $$('.overlay').forEach(o => { if (!o.classList.contains('banner')) o.classList.remove('show'); });
-    if (s === 'menu' || s === 'setup') { this.bannerTimer = 0; $('#ov-wave').classList.remove('show'); }   // wave banners belong to a run — never let one outlive it onto the menus
+    if (s !== 'playing') this.hideBanner();   // a wave banner only ever shows over live play — never on top of pause, level-up, game over or the menus
     if (s === 'menu') { $('#ov-title').classList.add('show'); this.refreshTitle(); }
     if (s === 'setup') $('#ov-setup').classList.add('show');
     if (s === 'paused') $('#ov-pause').classList.add('show');
@@ -211,7 +211,8 @@ class UI {
     if (s === 'gameover') $('#ov-gameover').classList.add('show');
   }
   /* ------------------------------------------------------- supply cart */
-  showShop() { Sprites.renderTo($('#cartIcon'), 'icon_cart'); $('#cartCoinIcon').innerHTML = coinImg(); this.buildShop(); $('#ov-shop').classList.add('show'); }
+  hideBanner() { this.bannerTimer = 0; $('#ov-wave').classList.remove('show'); }
+  showShop() { this.hideBanner(); Sprites.renderTo($('#cartIcon'), 'icon_cart'); $('#cartCoinIcon').innerHTML = coinImg(); this.buildShop(); $('#ov-shop').classList.add('show'); }
   hideShop() { $('#ov-shop').classList.remove('show'); }
   buildShop() {
     const g = this.game, p = g.player; $('#cartCoins').textContent = g.coins;
@@ -239,7 +240,7 @@ class UI {
   }
   showBanner(text, sub) { $('#waveBannerText').textContent = text; $('#waveBannerSub').textContent = sub || ''; const b = $('#ov-wave'); b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); this.bannerTimer = 2.6; }
   showLevelUp() {
-    $('#ov-levelup').classList.add('show');
+    this.hideBanner(); $('#ov-levelup').classList.add('show');
     $('#ov-levelup .hint').textContent = this.game.pendingLevelUps > 1 ? `Choose one upgrade (${this.game.pendingLevelUps} remaining)` : 'Choose one upgrade';
     $$('#levelupCards .upgrade-card').forEach(c => { const l = this.game.player.upgrades[c.dataset.upgrade]; c.querySelector('.lvl').textContent = l ? `current: LV ${l}` : ''; });
   }
