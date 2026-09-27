@@ -858,7 +858,7 @@ class Game {
     this.ui.tick(dt);
   }
   /* everything zombies can attack: the player plus any live clones */
-  targets() { if (this.player.invisible && this.clones.length) return this.clones.slice(); return this.clones.length ? [this.player].concat(this.clones) : [this.player]; }
+  targets() { const cl = this.clones.filter(c => !c.pest); if (this.player.invisible && cl.length) return cl; return cl.length ? [this.player].concat(cl) : [this.player]; }   // Patapim's birds and frogs are pests: nothing hunts them
   nearestTarget(x, y) { let best = this.player, bd = Infinity; for (const t of this.targets()) { if (t.dead) continue; const d = Math.hypot(t.x - x, t.y - y); if (d < bd) { bd = d; best = t; } } return best; }
   near(x, y) {
     const cx = (x / 32) | 0, cy = (y / 32) | 0; const out = [];
