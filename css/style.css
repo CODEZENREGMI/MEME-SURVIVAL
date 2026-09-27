@@ -293,6 +293,8 @@ html.touch .touch-hint{display:flex;flex-wrap:wrap;justify-content:center;gap:8p
     background:#08090d;color:#e8e6dc;text-align:center;padding:24px;font-size:13px}
   html.touch #rotate b{font-family:var(--pixel);font-size:14px;letter-spacing:1px;line-height:1.6}
   html.touch #rotate svg{color:#ff3322;animation:rot 2s ease-in-out infinite}
+  html.touch #rotate .rot-lock{max-width:300px;margin-top:10px;padding:10px 14px;border:1px solid #3a4150;border-radius:8px;background:#10131a;color:#c9ced8;font-size:12px;line-height:1.55}
+  html.touch #rotate .rot-lock b{font-family:var(--mono);font-size:12px;color:#ffd23a;letter-spacing:0;font-weight:700}
 }
 @keyframes rot{0%,20%{transform:rotate(0)}50%,80%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
 /* short screens: a phone on its side is only ~360-430 px tall */
