@@ -109,8 +109,8 @@ class TouchControls {
       add({ id: 'wa', r: 29, label: ab.name, st, col: '#ffb02a', down: () => p.useAbility() });
     }
     const rlab = p.venom ? 'CAPTURE' : p.frog ? 'ARMY' : null;   // R does something else in these forms
-    add({ id: 'rl', r: 30, label: rlab || 'RELOAD', icon: rlab ? null : 'reload', col: '#f5c518', down: () => { inp.keys.r = true; }, up: () => { inp.keys.r = false; } });
-    if (!p.venom && !p.frog && !p.demon && !p.beast && !p.driving && p.weaponOrder.length > 1) add({ id: 'sw', r: 28, label: 'SWAP', icon: 'swap', col: '#e3e6ec', down: () => p.cycle(1) });
+    add({ id: 'rl', r: 25, label: rlab || 'RELOAD', icon: rlab ? null : 'reload', col: '#f5c518', down: () => { inp.keys.r = true; }, up: () => { inp.keys.r = false; } });
+    if (!p.venom && !p.frog && !p.demon && !p.beast && !p.driving && p.weaponOrder.length > 1) add({ id: 'sw', r: 24, label: 'SWAP', icon: 'swap', col: '#e3e6ec', down: () => p.cycle(1) });
     if (alt) add({ id: 'alt', r: 29, label: alt, col: '#ff8a6a', down: () => { inp.rightDown = true; }, up: () => { inp.rightDown = false; } });
     if (g.carRect) add({ id: 'car', r: 27, label: p.car && p.car.civil ? 'GET OUT' : 'GET IN', col: '#5ec2ff', down: () => p.toggleCar() });
     B.push({ id: 'pause', x: W - 128 * s - 30, y: 26 * s, r: 21, label: 'PAUSE', icon: 'pause', col: '#ffffff', pressed: keep('pause'), down: () => g.pause() });   // just left of the WAVE box
