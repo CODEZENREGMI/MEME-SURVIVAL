@@ -371,3 +371,10 @@ html.hud-editing .modal{visibility:hidden}
 .he-help{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:none;z-index:5;flex-direction:column;gap:4px;background:rgba(16,19,26,.9);border:1px solid #3a4150;border-radius:8px;padding:10px 12px;font-family:var(--mono);font-size:11px;line-height:1.5;color:#c9ced8;pointer-events:none;max-width:45vw}
 .he-help.show{display:flex}
 .he-help b{font-family:var(--pixel);font-size:9px;color:#fff;margin-bottom:2px}
+
+/* phones with a camera cutout: the game now draws under it (viewport-fit=cover); menus and buttons keep clear of it */
+html.touch .overlay{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
+html.touch #ov-title .btn.gear-btn{left:calc(12px + env(safe-area-inset-left))}
+html.touch .title-menu{right:calc(12px + env(safe-area-inset-right))}
+.he-stage{left:env(safe-area-inset-left);right:env(safe-area-inset-right)}
+html.touch .modal{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}

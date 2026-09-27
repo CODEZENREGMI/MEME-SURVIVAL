@@ -112,6 +112,9 @@ class Game {
     this.canvas.width = this.vw; this.canvas.height = this.vh; this.lightCanvas.width = this.vw; this.lightCanvas.height = this.vh; this.coneCanvas.width = Math.ceil(this.vw / 2); this.coneCanvas.height = Math.ceil(this.vh / 2);
     this.canvas.style.width = W + 'px'; this.canvas.style.height = H + 'px';
     this.ctx.imageSmoothingEnabled = false; this._vig = {};
+    // phones with a camera cutout / notch: the page now runs under it (viewport-fit=cover), so the HUD and buttons keep out of that strip
+    if (!this._safeProbe) { const d = this._safeProbe = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)'; document.body.appendChild(d); }
+    const cs = getComputedStyle(this._safeProbe); this.safeL = parseFloat(cs.paddingLeft) || 0; this.safeR = parseFloat(cs.paddingRight) || 0;
     if (this.touch && this.touch.on && H > W) { this.touch.releaseAll(); this.pause(); }   // held upright: wait for landscape
   }
 
@@ -948,7 +951,12 @@ class Game {
     if (inGame) {
       const p = this.player;
       if (p.hp < p.maxHp * 0.3 && !p.dead) { ctx.globalAlpha = 0.25 + Math.sin(this.time * 6) * 0.12; ctx.drawImage(this.vignette('rgba(180,0,0,1)', 0.3), 0, 0); ctx.globalAlpha = 1; }
-      this.drawHUD(ctx);
+      const sl = Math.round(this.safeL / this.scale || 0), sr = Math.round(this.safeR / this.scale || 0);
+      if (sl || sr) {   // the HUD is laid out inside the safe area: shifted clear of the cutout and narrowed by it, then its tap targets shifted back to screen space
+        const vw0 = this.vw; ctx.save(); ctx.translate(sl, 0); this.vw = vw0 - sl - sr;
+        try { this.drawHUD(ctx); } finally { this.vw = vw0; ctx.restore(); }
+        for (const k of ['cartRect', 'abilityRect', 'carRect', 'transformRect', 'transformRect2']) if (this[k]) this[k] = Object.assign({}, this[k], { x: this[k].x + sl });
+      } else this.drawHUD(ctx);
       if (this.telePick) this.drawTelePick(ctx);
     }
     this.touch.render();   // sticks + buttons, sharp, on their own layer (clears itself outside a run)

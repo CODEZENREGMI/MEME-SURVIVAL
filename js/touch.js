@@ -59,7 +59,7 @@ class TouchControls {
   }
   /* the player's layout (or the default thumb arc), and one slot of it in CSS px */
   hud() { const st = this.g.settings; if (!this._hud || this._hudSrc !== st.hud) { this._hud = hudSanitize(st.hud); this._hudSrc = st.hud; } return this._hud; }
-  pt(id, W, H) { const it = this.hud().items[id], b = HUD_ITEMS[id]; return { x: it.x * W, y: it.y * H, r: (b.r || 0) * it.s, o: it.o }; }
+  pt(id, W, H) { const it = this.hud().items[id], b = HUD_ITEMS[id], L = this.g.safeL || 0, R = this.g.safeR || 0; return { x: L + it.x * (W - L - R), y: it.y * H, r: (b.r || 0) * it.s, o: it.o }; }   // positions are fractions of the safe area (clear of any camera cutout)
   /* where the minimap goes, in the game's logical px */
   mapRect() { const g = this.g, it = this.hud().items.map, w = HUD_ITEMS.map.w * it.s, h = HUD_ITEMS.map.h * it.s; return { x: Math.round(clamp(it.x * g.vw - w / 2, 0, g.vw - w)), y: Math.round(clamp(it.y * g.vh - h / 2, 0, g.vh - h)), w, h, o: it.o }; }
   openEditor() { (this.editor || (this.editor = new HudEditor(this))).open(); }
@@ -152,7 +152,7 @@ class TouchControls {
     if (!p.venom && !p.frog && !p.demon && !p.beast && !p.driving && p.weaponOrder.length > 1) add({ id: 'sw', label: 'SWAP', icon: 'swap', col: '#e3e6ec', down: () => p.cycle(1) });
     if (alt) add({ id: 'alt', label: alt, col: '#ff8a6a', down: () => { inp.rightDown = true; }, up: () => { inp.rightDown = false; } });
     if (g.carRect) add({ id: 'car', label: p.car && p.car.civil ? 'GET OUT' : 'GET IN', col: '#5ec2ff', down: () => p.toggleCar() });
-    B.push({ id: 'pause', x: W - 128 * s - 30, y: 26 * s, r: 21, o: 1, label: 'PAUSE', icon: 'pause', col: '#ffffff', pressed: keep('pause'), down: () => g.pause() });   // just left of the WAVE box
+    B.push({ id: 'pause', x: W - (this.g.safeR || 0) - 128 * s - 30, y: 26 * s, r: 21, o: 1, label: 'PAUSE', icon: 'pause', col: '#ffffff', pressed: keep('pause'), down: () => g.pause() });   // just left of the WAVE box
     // two abilities whose names start the same ("WEB SWING" / "WEB PULL") are told apart by their last word
     const a = B.find(b => b.id === 'a1'), b2 = B.find(b => b.id === 'a2');
     for (const b of B) b.short = b.label.split(' ')[0];
