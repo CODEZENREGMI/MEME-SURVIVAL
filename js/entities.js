@@ -585,10 +585,26 @@ class Player {
     return true;
   }
   /* ---- Bishnu Grinder: ROPE — lasso the zombie you aim at and tie it up tight ---- */
-  useRope() {
+  /* the zombie a rope thrown along this angle would catch: the one closest to the line, within range and in sight */
+  ropeTarget(angle) {
+    const rp = this.char.rope, g = this.game; let best = null, bd = 1e9;
+    for (const z of g.zombies) {
+      if (z.dead || z.captured > 0) continue; const d = dist(z.x, z.y, this.x, this.y); if (d > rp.range) continue;
+      let da = Math.atan2(z.y - this.y, z.x - this.x) - angle; da = Math.abs(Math.atan2(Math.sin(da), Math.cos(da)));
+      if (da > 0.35 + Math.min(0.25, 14 / Math.max(d, 1))) continue;   // a little wider up close, where a zombie covers more of the view
+      const score = da * 400 + d; if (score < bd && g.map.los(this.x, this.y, z.x, z.y)) { bd = score; best = z; }
+    }
+    return best;
+  }
+  /* aim = an angle picked on the phone's drag arrow; without it the rope goes to the zombie under the cursor / along the aim */
+  useRope(aim) {
     const rp = this.char.rope, g = this.game; if (!rp) return false;
     if (this.roping) return false;
     if (this.ropeCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `ROPE IN ${Math.ceil(this.ropeCd)}s`, '#9aa3b5'); return false; }
+    if (aim !== undefined) {
+      const z = this.ropeTarget(aim); if (!z) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, 'NO TARGET THERE', '#9aa3b5'); return false; }
+      return this.throwRope(z);
+    }
     const inp = g.input; let best = null, bd = 1e9;
     for (const z of g.zombies) {   // the zombie nearest the aim point, else the nearest one along the aim line (same as Spider Mad's pull)
       if (z.dead || z.captured > 0 || dist(z.x, z.y, this.x, this.y) > rp.range) continue;
@@ -597,6 +613,10 @@ class Player {
       if (score < bd && g.map.los(this.x, this.y, z.x, z.y)) { bd = score; best = z; }
     }
     if (!best) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, 'NO TARGET', '#9aa3b5'); return false; }
+    return this.throwRope(best);
+  }
+  throwRope(best) {
+    const rp = this.char.rope; this.angle = Math.atan2(best.y - this.y, best.x - this.x); this.flip = Math.cos(this.angle) < 0;
     this.ropeCd = rp.cooldown; this.roping = { z: best, t: 0, dur: Math.max(0.12, dist(this.x, this.y, best.x, best.y) / rp.speed) };
     if (rp.sound) Audio8.playClip(rp.sound, 1); else { Audio8.noise(0.22, 0.12, 900); Audio8.tone(520, 0.2, 'triangle', 0.08, -300); }   // the throw
     return true;

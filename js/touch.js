@@ -66,7 +66,7 @@ class TouchControls {
   enable() { this.on = true; document.documentElement.classList.add('touch'); this.g.resize(); }
   disable() { this.on = false; document.documentElement.classList.remove('touch'); this.releaseAll(); this.g.resize(); this.render(); }
   releaseAll() {
-    const inp = this.g.input; this.move = this.aim = this.tele = null; inp.stick = null; inp.mouseDown = false; inp.rightDown = false;
+    const inp = this.g.input; this.move = this.aim = this.tele = this.dragAim = null; inp.stick = null; inp.mouseDown = false; inp.rightDown = false;
     this.held.forEach(b => { b.pressed = false; if (b.up) b.up(); }); this.held.clear();
   }
   /* touches in CSS px from the canvas corner; the game's own (logical) coordinates are these divided by its scale */
@@ -82,7 +82,7 @@ class TouchControls {
       if (g.telePick) { this.tele = id; inp.mouseX = lx; inp.mouseY = ly; continue; }   // Runner's teleport map: drag to aim, let go to jump
       if (!this.live()) continue;
       const b = this.hit(x, y);
-      if (b) { this.held.set(id, b); b.pressed = true; if (b.down) b.down(); if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {} continue; }
+      if (b) { this.held.set(id, b); b.pressed = true; if (b.drag) this.dragAim = { id, bx: b.x, by: b.y, x, y, far: 0 }; if (b.down) b.down(); if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {} continue; }
       const cr = g.cartRect; if (cr && lx >= cr.x && lx <= cr.x + cr.w && ly >= cr.y && ly <= cr.y + cr.h) { g.openShop(); continue; }
       const H = g.canvas.getBoundingClientRect().height, mp = this.pt('move', W, H), ap = this.pt('aim', W, H), mid = (mp.x + ap.x) / 2;
       const fixed = this.hud().sticks === 'fixed', onMove = mp.x < ap.x ? x < mid : x > mid;   // the move stick's side of the screen (mirrored for left-handed layouts)
@@ -96,6 +96,7 @@ class TouchControls {
     for (const t of e.changedTouches) {
       const [x, y] = this.pos(t), id = t.identifier;
       if (this.tele === id) { [inp.mouseX, inp.mouseY] = this.toLogical(x, y); }
+      const A = this.dragAim; if (A && A.id === id) { A.x = x; A.y = y; A.far = Math.max(A.far, Math.hypot(x - A.bx, y - A.by)); }
       for (const s of [this.move, this.aim]) if (s && s.id === id) {
         s.x = x; s.y = y; const dx = x - s.ox, dy = y - s.oy, d = Math.hypot(dx, dy);
         if (d > s.R && this.hud().sticks !== 'fixed') { s.ox = x - dx / d * s.R; s.oy = y - dy / d * s.R; }   // floating: the base trails your thumb
@@ -111,6 +112,11 @@ class TouchControls {
       if (this.move && this.move.id === id) { this.move = null; inp.stick = null; }
       if (this.aim && this.aim.id === id) { this.aim = null; inp.mouseDown = false; }
       const b = this.held.get(id); if (b) { this.held.delete(id); b.pressed = false; if (b.up) b.up(); }
+      const A = this.dragAim; if (A && A.id === id) { this.dragAim = null;
+        const d = Math.hypot(A.x - A.bx, A.y - A.by), p = g.player;
+        if (A.far < 14) g.useSecond();                                   // a quick tap: the zombie in front of him
+        else if (d >= 14 && p) p.useRope(Math.atan2(A.y - A.by, A.x - A.bx));   // let go of the arrow: that zombie
+        /* dragged back onto the button: cancelled */ }
     }
   }
   vec(s) { const dx = s.x - s.ox, dy = s.y - s.oy, d = Math.hypot(dx, dy); return d < 0.01 ? { x: 0, y: 0, m: 0 } : { x: dx / d, y: dy / d, m: Math.min(1, d / s.R) }; }
@@ -134,7 +140,8 @@ class TouchControls {
     const alt = p.venom ? 'CLAW' : p.demon ? 'KICK' : p.beast ? 'SMASH' : p.moneyT > 0 ? 'MONEY' : null, ca = p.charAbility(), ca2 = p.charAbility2();
     const add = b => { const q = this.pt(b.id, W, H); b.x = q.x; b.y = q.y; b.r = q.r; b.o = q.o; b.pressed = keep(b.id); B.push(b); };
     if (ca) add({ id: 'a1', label: ca.name, st: ca, col: '#8bd35a', down: () => p.useCharAbility() });
-    if (ca2) add({ id: 'a2', label: ca2.name, st: ca2, col: '#8af0ff', down: () => g.useSecond() });
+    if (ca2 && p.char.rope) add({ id: 'a2', label: ca2.name, st: ca2, col: '#d9b27a', drag: true });   // Bishnu's rope: hold and drag to aim it
+    else if (ca2) add({ id: 'a2', label: ca2.name, st: ca2, col: '#8af0ff', down: () => g.useSecond() });
     const ab = p.wcfg.ability;
     if (ab && p.form === 'human' && !p.venom && !p.frog && !p.demon && !p.driving) {
       const st = p.overdrive ? { state: 'active', frac: p.ability.active / ab.duration } : p.ability.cd > 0 ? { state: 'cd', frac: 1 - p.ability.cd / ab.cooldown, sub: `${Math.ceil(p.ability.cd)}s` } : { state: 'ready', frac: 1 };
@@ -187,6 +194,20 @@ class TouchControls {
     };
     stick(this.move, 'move');
     stick(this.aim, 'aim');
+    const A = this.dragAim, pl = this.g.player;
+    if (A && pl && pl.char.rope && Math.hypot(A.x - A.bx, A.y - A.by) >= 14) {   // the rope's aiming arrow, from Bishnu toward where you drag, and the zombie it will catch
+      const g = this.g, k = W / g.vw, px = (pl.x - g.cam.x) * k, py = (pl.y - g.cam.y) * k, ang = Math.atan2(A.y - A.by, A.x - A.bx), z = pl.ropeTarget(ang), len = pl.char.rope.range * k;
+      const col = z ? '#ffd23a' : 'rgba(200,205,215,0.7)', reach = z ? Math.max(20, Math.hypot(z.x - pl.x, z.y - pl.y) * k - (z.r + 10) * k) : len, ex = px + Math.cos(ang) * reach, ey = py + Math.sin(ang) * reach;   // it stops at the zombie it will catch
+      ctx.save(); ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 7; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ex, ey); ctx.stroke();
+      ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.setLineDash([10, 7]); ctx.lineDashOffset = -t * 40; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(ex + Math.cos(ang) * 12, ey + Math.sin(ang) * 12); ctx.lineTo(ex + Math.cos(ang + 2.5) * 12, ey + Math.sin(ang + 2.5) * 12); ctx.lineTo(ex + Math.cos(ang - 2.5) * 12, ey + Math.sin(ang - 2.5) * 12); ctx.closePath(); ctx.fill();
+      if (z) { const zx = (z.x - g.cam.x) * k, zy = (z.y - g.cam.y) * k, zr = (z.r + 6) * k + Math.sin(t * 10) * 2;
+        ctx.strokeStyle = '#ffd23a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(zx, zy, zr, 0, TAU); ctx.stroke();
+        ctx.font = '10px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText('TIE', zx + 1, zy - zr - 7); ctx.fillStyle = '#ffd23a'; ctx.fillText('TIE', zx, zy - zr - 8); }
+      else { ctx.font = '9px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = '#c9cfdb'; ctx.fillText('NO ZOMBIE', ex, ey - 16); }
+      if (Math.hypot(A.x - A.bx, A.y - A.by) < 30) { ctx.font = '8px "Press Start 2P", monospace'; ctx.fillStyle = '#c9cfdb'; ctx.fillText('DRAG BACK TO CANCEL', A.bx, A.by - 50); }
+      ctx.restore(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    }
     for (const b of this.buttons) {
       ctx.globalAlpha = b.pressed ? 1 : b.o;
       const st = b.st, ready = !st || st.state === 'ready', active = st && (st.state === 'active' || st.state === 'busy'), cd = st && st.state === 'cd';
