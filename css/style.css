@@ -273,3 +273,58 @@ img.coin{width:14px;height:14px;vertical-align:-2px;margin-right:2px;image-rende
 @keyframes jsflash{0%,100%{background:#000}50%{background:#5a0000}}
 @keyframes jsjolt{0.0%{transform:translate(1.12vh,2.20vh) rotate(2.42deg)}2.5%{transform:translate(3.90vh,2.11vh) rotate(3.35deg)}5.0%{transform:translate(-4.01vh,-0.29vh) rotate(3.40deg)}7.5%{transform:translate(1.23vh,3.30vh) rotate(-2.87deg)}10.0%{transform:translate(-0.25vh,-2.01vh) rotate(0.31deg)}12.5%{transform:translate(0.57vh,-3.73vh) rotate(-1.95deg)}15.0%{transform:translate(-1.63vh,3.08vh) rotate(1.77deg)}17.5%{transform:translate(-2.42vh,2.11vh) rotate(-2.31deg)}20.0%{transform:translate(0.80vh,-2.56vh) rotate(-3.07deg)}22.5%{transform:translate(2.44vh,-1.91vh) rotate(-1.68deg)}25.0%{transform:translate(3.05vh,2.35vh) rotate(-1.20deg)}27.5%{transform:translate(2.79vh,0.24vh) rotate(0.97deg)}30.0%{transform:translate(-1.71vh,2.56vh) rotate(0.99deg)}32.5%{transform:translate(2.59vh,2.18vh) rotate(-1.00deg)}35.0%{transform:translate(-0.74vh,-1.77vh) rotate(-1.69deg)}37.5%{transform:translate(-2.20vh,-1.00vh) rotate(0.47deg)}40.0%{transform:translate(-2.39vh,0.86vh) rotate(-0.70deg)}42.5%{transform:translate(-0.87vh,1.46vh) rotate(-0.08deg)}45.0%{transform:translate(-0.80vh,-0.08vh) rotate(0.80deg)}47.5%{transform:translate(-1.82vh,1.95vh) rotate(-1.76deg)}50.0%{transform:translate(0.97vh,1.34vh) rotate(-1.68deg)}52.5%{transform:translate(1.05vh,-0.49vh) rotate(0.26deg)}55.0%{transform:translate(-1.69vh,-1.56vh) rotate(-0.99deg)}57.5%{transform:translate(1.47vh,-0.98vh) rotate(0.74deg)}60.0%{transform:translate(1.30vh,1.34vh) rotate(-0.42deg)}62.5%{transform:translate(-0.41vh,0.07vh) rotate(0.70deg)}65.0%{transform:translate(-1.03vh,0.65vh) rotate(0.70deg)}67.5%{transform:translate(0.88vh,-1.13vh) rotate(0.98deg)}70.0%{transform:translate(-0.92vh,-0.36vh) rotate(0.23deg)}72.5%{transform:translate(0.87vh,-0.33vh) rotate(0.79deg)}75.0%{transform:translate(0.09vh,-0.36vh) rotate(-0.31deg)}77.5%{transform:translate(-0.56vh,-0.73vh) rotate(-0.55deg)}80.0%{transform:translate(0.30vh,0.79vh) rotate(-0.48deg)}82.5%{transform:translate(-0.65vh,0.70vh) rotate(0.04deg)}85.0%{transform:translate(-0.12vh,-0.34vh) rotate(0.11deg)}87.5%{transform:translate(0.38vh,-0.05vh) rotate(-0.08deg)}90.0%{transform:translate(-0.46vh,0.43vh) rotate(-0.44deg)}92.5%{transform:translate(-0.01vh,0.31vh) rotate(-0.31deg)}95.0%{transform:translate(0.19vh,0.37vh) rotate(0.10deg)}97.5%{transform:translate(0.22vh,-0.29vh) rotate(-0.04deg)}100.0%{transform:translate(-0.25vh,0.24vh) rotate(-0.13deg)}}
 @media (prefers-reduced-motion: reduce){#jumpscare.on .js-face{animation:none;transform:scale(1)}#jumpscare.on .js-jolt,#jumpscare.on .js-ghost{animation:none}}
+
+/* ---------- phones & tablets (touch mode is switched on by js/touch.js) ---------- */
+html.touch,html.touch body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+html.touch #game{touch-action:none;cursor:default}
+html.touch .keybar,html.touch .upgrade-card kbd,html.touch .keys-only{display:none}
+.touch-hint{display:none}
+html.touch .touch-hint{display:block;position:absolute;left:0;right:0;bottom:10px;font-size:12px;color:#e3e6ec;text-shadow:0 2px 0 #000;padding:0 16px}
+#rotate{display:none}
+@media (orientation:portrait){
+  html.touch #rotate{display:flex;position:fixed;inset:0;z-index:10000;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    background:#08090d;color:#e8e6dc;text-align:center;padding:24px;font-size:13px}
+  html.touch #rotate b{font-family:var(--pixel);font-size:14px;letter-spacing:1px;line-height:1.6}
+  html.touch #rotate svg{color:#ff3322;animation:rot 2s ease-in-out infinite}
+}
+@keyframes rot{0%,20%{transform:rotate(0)}50%,80%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
+/* short screens: a phone on its side is only ~360-430 px tall */
+@media (max-height:520px){
+  .overlay{padding:10px 14px;gap:8px}
+  .overlay h2{font-size:15px;margin-bottom:0}
+  .title-block{margin:0 0 14px}
+  .ttl-zombie{font-size:clamp(28px,11vh,56px);letter-spacing:3px}
+  .ttl-survival{width:clamp(200px,34vw,400px);margin-top:6px}
+  .btn.big{font-size:13px;padding:10px 34px}
+  .play-btn .ico{height:16px}
+  #ov-title{gap:12px}
+  .title-menu{top:10px;right:12px}
+  .score-line{font-size:11px;margin-top:4px}
+  .keybar{display:none}
+  .setup{gap:8px;padding:0 6px}
+  .steps{font-size:11px}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .card{padding:8px 8px;gap:4px}
+  .card canvas{width:64px;height:64px}
+  .card canvas.gun{width:96px;height:48px}
+  .card canvas.map{max-width:200px}
+  .card b{font-size:13px}
+  .card small{font-size:10px}
+  #charCards{grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}
+  #charCards .card small{font-size:9px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  #charCards .card.selected small{-webkit-line-clamp:unset;display:block}
+  #charCards .stats{display:none}
+  #charCards .card .tag{font-size:9px}
+  #weaponCards,#mapCards{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .stat{grid-template-columns:52px 1fr;font-size:9px}
+  .setup-foot{position:sticky;bottom:0;background:rgba(8,10,16,.94);padding:6px 0;z-index:2}
+  .upgrade-cards{grid-template-columns:repeat(4,minmax(100px,150px));gap:8px}
+  .upgrade-card{padding:10px 8px;gap:4px}
+  .upgrade-card canvas{width:40px;height:40px}
+  .go-title{font-size:30px;margin-bottom:2px}
+  .go-stats{font-size:13px;line-height:1.5}
+  .go-grid{margin:4px 0}
+  .cart{padding:10px 12px}
+  .btn{padding:8px 16px}
+  .modal-box{max-height:92vh;overflow:auto}
+}

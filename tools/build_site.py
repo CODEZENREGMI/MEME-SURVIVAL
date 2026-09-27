@@ -74,6 +74,7 @@ QA = [
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
  ("2026-09-27", [
+   "<strong>Meme Survival now plays on phones and tablets.</strong> Left thumb moves, right thumb aims and fires (with a little aim assist), and every ability has its own round button. The menus fit a phone held sideways, and the game pauses when you switch apps.",
    "<strong>The Industrial Zone is full of holes.</strong> The ground has caved in all over the yard: one in the central lot, the rest hidden in the corners and the alleys behind the warehouses. You only see them once your flashlight is on them. Every wave, the first one you step into gets you.",
    "<strong>Two more holes in the Research Lab.</strong> One waits at the bench room's east doorway, right where you run through to the corridor. The other has opened up between the four computer desks in the north-east office.",
    "Sonny Jeans is now called <strong>Baldwin Milks</strong>. Same bald head, same milk quake.",

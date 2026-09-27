@@ -18,7 +18,9 @@ class Game {
     this.cam = { x: 0, y: 0 }; this.shakeAmt = 0;
     this.grid = new Map();
     this.bindInput();
+    this.touch = new TouchControls(this);
     this.resize(); window.addEventListener('resize', () => this.resize());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { this.closeTelePick(); if (this.touch) this.touch.releaseAll(); this.pause(); } });   // phone locked / app switched: stop the run
     this.reset();
     requestAnimationFrame(t => this.loop(t));
   }
@@ -104,11 +106,13 @@ class Game {
     // integer pixel scale that keeps the view no larger than the map, then stretch the canvas to the full window
     let scale = Math.max(1, Math.floor(H / 400));
     scale = Math.max(scale, Math.ceil(W / mw), Math.ceil(H / mh));
+    if (this.touch && this.touch.on) scale = Math.max(1, H / 300, W / mw, H / mh);   // phones: ~300 logical px tall, so the HUD is big enough to read and tap
     if (this.menuNight && this.map && this.map.cfg.image) scale = Math.max(1, W / mw, H / mh);   // title screen: the whole painting, cover-fitted to the window
     this.vw = Math.max(320, Math.ceil(W / scale)); this.vh = Math.max(200, Math.ceil(H / scale)); this.scale = scale;
     this.canvas.width = this.vw; this.canvas.height = this.vh; this.lightCanvas.width = this.vw; this.lightCanvas.height = this.vh; this.coneCanvas.width = Math.ceil(this.vw / 2); this.coneCanvas.height = Math.ceil(this.vh / 2);
     this.canvas.style.width = W + 'px'; this.canvas.style.height = H + 'px';
     this.ctx.imageSmoothingEnabled = false; this._vig = {};
+    if (this.touch && this.touch.on && H > W) { this.touch.releaseAll(); this.pause(); }   // held upright: wait for landscape
   }
 
   /* ------------------------------------------------------------ setup */
@@ -128,6 +132,9 @@ class Game {
   }
   start() {
     this.menuLeave();
+    if (this.touch.on && !document.fullscreenElement && document.documentElement.requestFullscreen) {   // phones: go fullscreen and hold landscape (Android; iPhones ignore it)
+      document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {})).catch(() => {});
+    }
     Audio8.init(); Audio8.resume(); Audio8.stopMusic(); Audio8.startMusic(this.map.cfg.dark); Audio8.preloadClip(DREAD.sound); this.preloadScareImg();
     { const ch = CHARACTERS[this.loadout.char] || {}; for (const k in ch) if (ch[k] && typeof ch[k] === 'object' && typeof ch[k].sound === 'string') Audio8.preloadClip(ch[k].sound); }   // every ability clip the character has, decoded before it's needed
     this.reset(); this.state = 'playing'; this.ui.setState('playing');
@@ -370,7 +377,7 @@ class Game {
     this.particles.push(new Particle(x, y, Math.cos(sa) * 40 + (Math.random() - 0.5) * 20, Math.sin(sa) * 40 - 30, 0.6, '#d9a441', 1.5, 'shell'));
     this.flash = 0.05; this.lights.push({ x, y, r: 130, life: 0.08, max: 0.08 });
   }
-  showAbilityBanner(name, sub) { this.ui.showBanner(name, sub); }
+  showAbilityBanner(name, sub) { this.ui.showBanner(name, this.touch && this.touch.on ? touchText(sub) : sub); }
 
   /* drowned zombies sinking out of sight: the body slides down under a fixed waterline and fades */
   updateSinkers(dt) {
@@ -741,7 +748,7 @@ class Game {
       const r = this.cartRect; if (r && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= r.x && this.input.mouseX <= r.x + r.w && this.input.mouseY >= r.y && this.input.mouseY <= r.y + r.h) { this.openShop(); return; }
       const ar = this.abilityRect; if (ar && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= ar.x && this.input.mouseX <= ar.x + ar.w && this.input.mouseY >= ar.y && this.input.mouseY <= ar.y + ar.h) { this.player.useAbility(); return; }
       const cr = this.carRect; if (cr && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= cr.x && this.input.mouseX <= cr.x + cr.w && this.input.mouseY >= cr.y && this.input.mouseY <= cr.y + cr.h) { this.player.toggleCar(); return; }
-      const tr2 = this.transformRect2; if (tr2 && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr2.x && this.input.mouseX <= tr2.x + tr2.w && this.input.mouseY >= tr2.y && this.input.mouseY <= tr2.y + tr2.h) { if (this.player.char.wife) this.player.useWife(); else if (this.player.char.mg) this.player.useMachineGun(); else if (this.player.char.tele) this.player.useTeleport(); else if (this.player.char.frog) this.player.useFrogArmy(); else if (this.player.char.symbiote) this.player.useCapture(); else this.player.usePull(); return; }
+      const tr2 = this.transformRect2; if (tr2 && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr2.x && this.input.mouseX <= tr2.x + tr2.w && this.input.mouseY >= tr2.y && this.input.mouseY <= tr2.y + tr2.h) { this.useSecond(); return; }
       const tr = this.transformRect; if (tr && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr.x && this.input.mouseX <= tr.x + tr.w && this.input.mouseY >= tr.y && this.input.mouseY <= tr.y + tr.h) { this.player.useCharAbility(); return; }
       this.input.mouseDown = true; });
     window.addEventListener('mouseup', e => { if (e.button === 2) this.input.rightDown = false; else this.input.mouseDown = false; });
@@ -774,7 +781,7 @@ class Game {
   updateFx(dt) {
     this.map.fires.forEach(f => { for (let i = 0; i < 2; i++) this.particles.push(new Particle(f.x + (Math.random() - 0.5) * 10, f.y + (Math.random() - 0.5) * 4, (Math.random() - 0.5) * 12, -20 - Math.random() * 30, 0.5 + Math.random() * 0.5, '#ff6a2a', 2 + Math.random() * 3, 'fire')); if (Math.random() < 0.3) this.particles.push(new Particle(f.x, f.y - 6, (Math.random() - 0.5) * 8, -25, 1.5, '#333', 3, 'smoke')); });
     this.particles.forEach(p => p.update(dt)); this.particles = this.particles.filter(p => !p.dead);
-    if (this.particles.length > 900) this.particles.splice(0, this.particles.length - 900);
+    const pmax = this.touch && this.touch.on ? 450 : 900; if (this.particles.length > pmax) this.particles.splice(0, this.particles.length - pmax);
     this.shakeAmt *= Math.pow(0.02, dt); this.flash = (this.flash || 0) - dt;
     this.lights.forEach(l => l.life -= dt); this.lights = this.lights.filter(l => l.life > 0);
     this.whiteFlash = Math.max(0, (this.whiteFlash || 0) - dt); this.darkFlash = Math.max(0, (this.darkFlash || 0) - dt);
@@ -784,6 +791,7 @@ class Game {
   update(dt) {
     this.time += dt;
     const p = this.player, inp = this.input;
+    if (this.touch.on) this.touch.frame();
     inp.worldX = this.cam.x + inp.mouseX; inp.worldY = this.cam.y + inp.mouseY;
     if (this.state !== 'gameover') { p.update(dt, inp); this.checkScares(p); }
     if (this.state === 'wavebreak') { this.breakTimer -= dt; if (this.breakTimer <= 0) { this.state = 'playing'; this.startWave(this.wave + 1); } }
@@ -931,10 +939,13 @@ class Game {
       const p = this.player;
       if (p.hp < p.maxHp * 0.3 && !p.dead) { ctx.globalAlpha = 0.25 + Math.sin(this.time * 6) * 0.12; ctx.drawImage(this.vignette('rgba(180,0,0,1)', 0.3), 0, 0); ctx.globalAlpha = 1; }
       this.drawHUD(ctx);
+      if (this.touch.on) this.touch.draw(ctx);
       if (this.telePick) this.drawTelePick(ctx);
     }
   }
 
+  /* the character's second ability (the panel above the first): Spider Mad's pull, Eggreck's wife, Doge's machine gun... */
+  useSecond() { const p = this.player, c = p.char; if (c.wife) p.useWife(); else if (c.mg) p.useMachineGun(); else if (c.tele) p.useTeleport(); else if (c.frog) p.useFrogArmy(); else if (c.symbiote) p.useCapture(); else p.usePull(); }
   /* ---- Runner: TELEPORT — the whole map, frozen; click where to go ---- */
   openTelePick() {
     this.telePick = { t0: performance.now() }; this.input.mouseDown = false; this.input.rightDown = false;
@@ -979,7 +990,7 @@ class Game {
       } else { ctx.strokeStyle = '#ff4a3a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx - 5, cy - 5); ctx.lineTo(cx + 5, cy + 5); ctx.moveTo(cx + 5, cy - 5); ctx.lineTo(cx - 5, cy + 5); ctx.stroke(); ctx.lineWidth = 1; }
     }
     ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = '10px "Press Start 2P", monospace'; ctx.fillStyle = '#5ec2ff'; ctx.fillText('TELEPORT', this.vw / 2, 7);
-    ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#c9cfdb'; ctx.fillText('CLICK ANYWHERE ON THE MAP  ·  RMB / E / ESC TO CANCEL', this.vw / 2, 21);
+    ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#c9cfdb'; ctx.fillText(this.touch.on ? 'DRAG TO A SPOT AND LET GO  ·  LET GO OFF THE MAP TO CANCEL' : 'CLICK ANYWHERE ON THE MAP  ·  RMB / E / ESC TO CANCEL', this.vw / 2, 21);
     ctx.textAlign = 'left'; ctx.restore();
   }
   /* ---- Genom: a captured boss switches sides ---- */
@@ -1161,7 +1172,7 @@ class Game {
     const p = this.player, F = '8px "Press Start 2P", monospace';
     // on dark maps (Industrial, the Lab, the wave-5 blackout, Bona) the panels have to fight a pure-black background
     const dk = !!this.map.cfg.dark, panel = dk ? 'rgba(16,20,30,0.97)' : 'rgba(12,14,20,0.78)', panelHov = dk ? 'rgba(70,84,112,0.97)' : 'rgba(60,70,90,0.9)', panelEdge = dk ? 'rgba(170,205,255,0.55)' : 'rgba(255,255,255,0.15)', dim = dk ? '#cdd6e6' : '#9aa3b5';
-    const fit = (text, maxW) => { while (text.length > 1 && ctx.measureText(text).width > maxW) text = text.slice(0, -1); return text; }; // never let a label spill out of its box
+    const fit = (text, maxW) => { if (this.touch.on) text = touchText(text); while (text.length > 1 && ctx.measureText(text).width > maxW) text = text.slice(0, -1); return text; }; // never let a label spill out of its box
     const box = (x, y, w, h) => { if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4); } ctx.fillStyle = panel; ctx.fillRect(x, y, w, h); ctx.strokeStyle = panelEdge; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); };
     // hearts + ammo (top-left)
     // hearts wrap into rows of 10 so a big heart count never runs off across the screen
@@ -1188,7 +1199,7 @@ class Game {
     const cy0 = 86 + off; this.cartRect = { x: 8, y: cy0, w: 64, h: 22 };
     if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(6, cy0 - 2, 68, 26); } ctx.fillStyle = hover ? panelHov : panel; ctx.fillRect(8, cy0, 64, 22);
     ctx.strokeStyle = lowAmmo && Math.sin(this.time * 6) > 0 ? '#f5c518' : 'rgba(255,255,255,0.25)'; ctx.strokeRect(8.5, cy0 + 0.5, 63, 21);
-    Sprites.draw(ctx, 'icon_cart', 12, cy0 + 5, { ox: 0, oy: 0 }); ctx.fillStyle = '#fff'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText('CART', 30, cy0 + 5); ctx.fillStyle = '#9aa3b5'; ctx.fillText('[B]', 30, cy0 + 14); ctx.font = F;
+    Sprites.draw(ctx, 'icon_cart', 12, cy0 + 5, { ox: 0, oy: 0 }); ctx.fillStyle = '#fff'; ctx.font = '6px "Press Start 2P", monospace'; ctx.fillText('CART', 30, cy0 + 5); ctx.fillStyle = '#9aa3b5'; ctx.fillText(this.touch.on ? 'TAP' : '[B]', 30, cy0 + 14); ctx.font = F;
     // wave + score (top-right)
     const goal = Math.ceil(Math.max(1, this.wave) / CONFIG.WAVES_PER_LEVEL) * CONFIG.WAVES_PER_LEVEL;
     box(this.vw - 120, 8, 112, 36); ctx.fillStyle = '#fff'; ctx.textAlign = 'left';
@@ -1212,7 +1223,8 @@ class Game {
     // GET IN / GET OUT prompt for parked cars (Urban City)
     this.carRect = null; let slotY = this.vh - 64;
     const nearCar = p.nearbyCar(), inCar = p.car && p.car.civil;
-    if (nearCar || inCar) {
+    if (nearCar || inCar) this.carRect = { x: 8, y: slotY, w: 130, h: 26 };   // touch mode reads this to show its GET IN button
+    if ((nearCar || inCar) && !this.touch.on) {   // on a phone the round buttons carry all of this
       const ax = 8, ay = slotY, aw = 130, ah = 26; this.carRect = { x: ax, y: ay, w: aw, h: ah }; slotY -= 30;
       const hov = this.input.mouseX >= ax && this.input.mouseX <= ax + aw && this.input.mouseY >= ay && this.input.mouseY <= ay + ah;
       if (dk) { ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(ax - 2, ay - 2, aw + 4, ah + 4); } ctx.fillStyle = hov ? panelHov : panel; ctx.fillRect(ax, ay, aw, ah);
@@ -1224,7 +1236,7 @@ class Game {
     }
     // character ability button (Drone's TRANSFORM / Runner's RUSH)
     const ca = p.charAbility(); this.transformRect = null;
-    if (ca) {
+    if (ca && !this.touch.on) {
       const ax = 8, ay = slotY, aw = 130, ah = 26; this.transformRect = { x: ax, y: ay, w: aw, h: ah }; slotY -= 30;
       const active = ca.state === 'active', ready = ca.state === 'ready', col = p.char.rush ? '#5ec2ff' : p.char.squad ? '#ffd23a' : p.char.field ? '#7fd35a' : p.char.vehicle ? '#5a8ad8' : p.char.tapri ? '#ff5a4a' : p.char.web ? '#f4f2ea' : p.char.symbiote ? '#5fd35a' : '#8bd35a';
       const hov = this.input.mouseX >= ax && this.input.mouseX <= ax + aw && this.input.mouseY >= ay && this.input.mouseY <= ay + ah;
@@ -1239,7 +1251,7 @@ class Game {
     }
     // second character ability (Spider Mad's WEB PULL)
     const ca2 = p.charAbility2(); this.transformRect2 = null;
-    if (ca2) {
+    if (ca2 && !this.touch.on) {
       const ax = 8, ay = slotY, aw = 130, ah = 26; this.transformRect2 = { x: ax, y: ay, w: aw, h: ah }; slotY -= 30;
       const active = ca2.state === 'busy', ready = ca2.state === 'ready', col = '#8af0ff';
       const hov = this.input.mouseX >= ax && this.input.mouseX <= ax + aw && this.input.mouseY >= ay && this.input.mouseY <= ay + ah;
@@ -1251,7 +1263,7 @@ class Game {
     }
     // weapon ability button (only when the current weapon has one)
     const ab = p.wcfg.ability; this.abilityRect = null;
-    if (ab && p.form === 'human' && !p.venom && !p.frog && !p.demon && !p.driving) { // hidden whenever the gun itself is put away
+    if (ab && p.form === 'human' && !p.venom && !p.frog && !p.demon && !p.driving && !this.touch.on) { // hidden whenever the gun itself is put away
       const ax = 8, ay = slotY, aw = 130, ah = 26; this.abilityRect = { x: ax, y: ay, w: aw, h: ah };
       const active = p.overdrive, cd = p.ability.cd, ready = !active && cd <= 0;
       const hov = this.input.mouseX >= ax && this.input.mouseX <= ax + aw && this.input.mouseY >= ay && this.input.mouseY <= ay + ah;
@@ -1273,7 +1285,7 @@ class Game {
     const bosses = this.zombies.filter(z => z.cfg.boss && !z.dead);
     bosses.slice(0, 3).forEach((b, i) => { const bw = 240, bxx = this.vw / 2 - bw / 2, by = barTop + i * 24; ctx.fillStyle = '#0c0e14'; ctx.fillRect(bxx - 2, by, bw + 4, 12); ctx.fillStyle = '#5f2e8a'; ctx.fillRect(bxx, by + 2, bw, 8); ctx.fillStyle = b.aiming > 0 ? '#ff4a3a' : '#c05aff'; ctx.fillRect(bxx, by + 2, bw * clamp(b.hp / b.maxHp, 0, 1), 8); ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(`${b.bk ? b.bk.name : 'BOSS'} LV ${this.wave} · ${Math.ceil(b.hp)}`, this.vw / 2, by + 15); ctx.textAlign = 'left'; ctx.font = F; });
     if (this.state === 'wavebreak') { ctx.font = F; ctx.fillStyle = '#f5c518'; ctx.textAlign = 'center'; ctx.fillText(`NEXT WAVE IN ${Math.ceil(this.breakTimer)}`, this.vw / 2, 60); ctx.textAlign = 'left'; }
-    if (this.settings.minimap !== false) { this.map.drawMinimap(this.mini, p, this.zombies, this.pickups); ctx.globalAlpha = 0.85; ctx.drawImage(this.mini, this.vw - this.mini.width - 8, this.vh - this.mini.height - 40); ctx.globalAlpha = 1; ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.strokeRect(this.vw - this.mini.width - 8.5, this.vh - this.mini.height - 40.5, this.mini.width + 1, this.mini.height + 1); }
+    if (this.settings.minimap !== false) { this.map.drawMinimap(this.mini, p, this.zombies, this.pickups); ctx.globalAlpha = 0.85; const my = this.touch.on ? 62 : this.vh - this.mini.height - 40; ctx.drawImage(this.mini, this.vw - this.mini.width - 8, my); ctx.globalAlpha = 1; ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.strokeRect(this.vw - this.mini.width - 8.5, my - 0.5, this.mini.width + 1, this.mini.height + 1); }
     if (this.admin) { ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#ffd23a'; ctx.textAlign = 'center'; ctx.fillText('ADMIN' + (this.god ? ' · GOD' : '') + (this.infAmmo ? ' · ∞AMMO' : ''), this.vw / 2, 4); ctx.textAlign = 'left'; ctx.font = F; }
     if (this.settings.fps) { ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#8bc46e'; ctx.fillText(`${this.fps} FPS  Z:${this.zombies.length} P:${this.particles.length}`, this.vw - 140, this.vh - 10); }
   }

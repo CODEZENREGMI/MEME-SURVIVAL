@@ -810,6 +810,7 @@ class Player {
     // arcade steering: WASD = the direction on screen you want to go; the car swings its nose toward it
     const k = input.keys; let ix = 0, iy = 0;
     if (k.w || k.ArrowUp) iy -= 1; if (k.s || k.ArrowDown) iy += 1; if (k.a || k.ArrowLeft) ix -= 1; if (k.d || k.ArrowRight) ix += 1;
+    if (input.stick) { ix = input.stick.x; iy = input.stick.y; }   // phone: the move stick
     const pushing = ix !== 0 || iy !== 0;
     let left = false, right = false;
     if (pushing) {
@@ -1146,6 +1147,7 @@ class Player {
     if (zipping) { this.moving = true; this.fireTimer -= dt; this.invuln -= dt; this.hurtFlash -= dt; this.tickReload(dt); if (input.keys.r) this.startReload(); if (input.mouseDown && this.fireTimer <= 0 && !this.reloading) this.shoot(); return; }
     if (input.keys.w || input.keys.ArrowUp) dy -= 1; if (input.keys.s || input.keys.ArrowDown) dy += 1;
     if (input.keys.a || input.keys.ArrowLeft) dx -= 1; if (input.keys.d || input.keys.ArrowRight) dx += 1;
+    if (input.stick) { dx = input.stick.x; dy = input.stick.y; }   // phone: the move stick
     this.moving = dx !== 0 || dy !== 0;
     if (this.rollT > 0) this.eggRoll(dt, dx, dy);
     else if (this.moving) {
