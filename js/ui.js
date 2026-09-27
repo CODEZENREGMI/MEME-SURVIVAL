@@ -73,14 +73,13 @@ class UI {
     this.initAdmin();
     this.refreshTitle();
   }
-  /* ------------------------------------------------------- admin panel (Ctrl+Shift+A) */
+  /* ------------------------------------------------------- admin panel (Ctrl+Shift+\) */
   initAdmin() {
     const g = () => this.game, m = $('#modal-admin');
     window.addEventListener('keydown', e => {
       if (e.target && e.target.tagName === 'INPUT' && e.key !== 'Escape') return;
-      const isA = e.code === 'KeyA' || (e.key || '').toLowerCase() === 'a';
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && isA) { e.preventDefault(); e.stopPropagation(); this.toggleAdmin(); }   // Ctrl+Shift+A or Cmd+Shift+A
-      else if (e.key === '`' || e.code === 'Backquote') { e.preventDefault(); this.toggleAdmin(); }                          // backtick fallback
+      const isSlash = e.code === 'Backslash' || e.key === '\\' || e.key === '|';   // with Shift held, "\" arrives as "|"
+      if (e.ctrlKey && e.shiftKey && isSlash) { e.preventDefault(); e.stopPropagation(); this.toggleAdmin(); }   // Ctrl+Shift+\
     }, true);
     const mark = () => { g().admin = true; };
     const inRun = () => { const s = g().state; return s !== 'menu' && s !== 'gameover'; };
