@@ -32,16 +32,16 @@
 <link rel="preload" href="/assets/fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/ibm-plex-mono-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/img/horror_menu.webp" as="image" fetchpriority="high">
-<link rel="stylesheet" href="css/style.css?v=230">
-<script src="js/sprites.js?v=230" defer></script>
-<script src="js/config.js?v=230" defer></script>
-<script src="js/audio.js?v=230" defer></script>
-<script src="js/map.js?v=230" defer></script>
-<script src="js/entities.js?v=230" defer></script>
-<script src="js/touch.js?v=230" defer></script>
-<script src="js/game.js?v=230" defer></script>
-<script src="js/ui.js?v=230" defer></script>
-<script src="js/main.js?v=230" defer></script>
+<link rel="stylesheet" href="css/style.css?v=238">
+<script src="js/sprites.js?v=238" defer></script>
+<script src="js/config.js?v=238" defer></script>
+<script src="js/audio.js?v=238" defer></script>
+<script src="js/map.js?v=238" defer></script>
+<script src="js/entities.js?v=238" defer></script>
+<script src="js/touch.js?v=238" defer></script>
+<script src="js/game.js?v=238" defer></script>
+<script src="js/ui.js?v=238" defer></script>
+<script src="js/main.js?v=238" defer></script>
 <script type="application/ld+json">
 {
  "@context": "https://schema.org",
@@ -215,12 +215,13 @@
   <div class="modal" id="modal-settings">
     <div class="modal-box">
       <header>SETTINGS<button class="icon-btn close" data-close>✕</button></header>
+      <div class="setting touch-only"><span>Touch controls</span><button class="btn small" id="editHud">EDIT CONTROLS</button></div>
       <label class="setting"><span>SFX Volume</span><input type="range" id="setSfx" min="0" max="100" value="70"></label>
       <label class="setting"><span>Music Volume</span><input type="range" id="setMusic" min="0" max="100" value="40"></label>
       <label class="setting"><span>Screen Shake</span><input type="checkbox" id="setShake" checked></label>
       <label class="setting"><span>Blood &amp; Gore</span><input type="checkbox" id="setBlood" checked></label>
       <label class="setting"><span>Show FPS</span><input type="checkbox" id="setFps"></label>
-      <label class="setting"><span>Aim Line</span><input type="checkbox" id="setAimLine" checked></label>
+      <label class="setting keys-only-flex"><span>Aim Line</span><input type="checkbox" id="setAimLine" checked></label>
       <label class="setting"><span>Minimap</span><input type="checkbox" id="setMinimap" checked></label>
       <div class="setting-actions"><button class="btn danger small" id="resetProgress">RESET HIGH SCORE</button></div>
     </div>

@@ -262,6 +262,7 @@ class UI {
     const s = this.save.settings;
     const bind = (id, key, isRange) => { const el = $(id); el[isRange ? 'value' : 'checked'] = isRange ? s[key] * 100 : s[key]; el.addEventListener('input', () => { s[key] = isRange ? el.value / 100 : el.checked; this.applySettings(); this.saveGame(); }); };
     bind('#setSfx', 'sfx', true); bind('#setMusic', 'music', true); bind('#setShake', 'shake'); bind('#setBlood', 'blood'); bind('#setFps', 'fps'); bind('#setAimLine', 'aimLine'); bind('#setMinimap', 'minimap');
+    $('#editHud').addEventListener('click', () => this.game && this.game.touch.openEditor());   // phones: the custom HUD
     $('#resetProgress').addEventListener('click', () => { if (confirm('Reset high score and best wave?')) { this.save.highScore = 0; this.save.bestWave = 0; this.saveGame(); this.refreshTitle(); this.toast('Progress reset.'); } });
     this.applySettings();
   }
