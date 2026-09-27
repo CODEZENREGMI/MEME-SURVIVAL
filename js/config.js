@@ -275,7 +275,7 @@ const CHARACTERS = {
             portraitImg: 'assets/img/patapim_portrait.png',   // the Brr Brr Patapim painting redrawn in pixels (eye hand-placed); the sprite is hand-placed in js/sprites.js
             desc: 'The forest troll with the enormous nose and even bigger feet. FOREST FRIENDS: a flock of birds and a gang of frogs swarm the zombies for 15 s. Every peck does exactly 1 damage.',
             pal: { K: '#1a1410', G: '#5a8a34', g: '#2f4f1e', S: '#e4b184', s: '#b8845a', N: '#f0c592', E: '#140c08', B: '#3a2a1e', R: '#9a7452' },
-            forest: { name: 'FOREST FRIENDS', duration: 15, cooldown: 25, birds: 10, frogs: 8, damage: 1, rate: 0.35, seek: 320, slow: 0.35 } },   // 1 damage a peck, on purpose: they mostly just annoy (a pecked zombie stumbles)
+            forest: { name: 'FOREST FRIENDS', duration: 15, cooldown: 25, birds: 10, frogs: 8, damage: 1, rate: 0.35, seek: 320 } },   // exactly 1 damage a peck, and nothing else: on purpose
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg', 'giga', 'doge', 'bishnu', 'patapim'];
 

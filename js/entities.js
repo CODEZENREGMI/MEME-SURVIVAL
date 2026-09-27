@@ -1777,7 +1777,6 @@ class Zombie {
     if (song && d < song.radius + this.r) { if (!(this.charm > 0)) this.charmT = 0; this.charm = 0.5; }
     const charmed = this.charm > 0; if (charmed) { this.charm -= dt; this.charmT = (this.charmT || 0) + dt; }
     let sp = this.speed;
-    if (this.pecked > 0) { this.pecked -= dt; sp *= 0.65; }   // swatting at birds and frogs
     let steer = null;
     if (this.bk && !charmed) { const r = this.bossAI(dt, player, d, dx, dy); sp *= r.speedMult; steer = r.steer; }
     if (this.cfg.guard && this.post) {
@@ -2519,7 +2518,6 @@ class Critter {
     const g = this.game, F = this.owner.char.forest;
     this.cd = F.rate * (0.8 + Math.random() * 0.4);
     z.takeDamage(F.damage, Math.atan2(z.y - this.y, z.x - this.x), undefined, 0, true);   // exactly 1
-    z.pecked = Math.max(z.pecked || 0, F.slow);
     if (Math.random() < 0.3) g.floatText(z.x + (Math.random() - 0.5) * 12, z.y - 14 * (z.scale || 1), '-1', '#ffffff');
     g.particles.push(new Particle(z.x, z.y - 6, (Math.random() - 0.5) * 40, -20 - Math.random() * 20, 0.3, this.kind === 'bird' ? this.col[1] : '#9ccf72', 1.5, 'dot'));
     if (Math.random() < 0.12) Audio8.tone(this.kind === 'bird' ? 1400 + Math.random() * 500 : 180, 0.05, this.kind === 'bird' ? 'sine' : 'triangle', 0.04, this.kind === 'bird' ? 300 : -30);
