@@ -166,7 +166,7 @@ const CHARACTERS = {
             desc: 'Outruns anything, can\'t take many hits. RUSH (Space): 15 s of speed, infinite ammo, max fire rate. TELEPORT (E): open the map, click anywhere, blink there. Q: weapon ability.',
             pal: { B: '#c8382a', b: '#8a1f18', D: '#e0b040', J: '#2a2d36' },
             rush: { name: 'RUSH', duration: 15, cooldown: 45, sound: 'assets/audio/runner_rush.mp3', speed: 1.8, interval: 0.06 },
-            tele: { name: 'TELEPORT', cooldown: 30, invuln: 1.2, radius: 80, push: 150, damage: 25 } },   // E: the whole map opens up, click where to blink
+            tele: { name: 'TELEPORT', cooldown: 30, sound: 'assets/audio/runner_teleport.mp3', invuln: 1.2, radius: 80, push: 150, damage: 25 } },   // E: the whole map opens up, click where to blink
   heavy:  { name: 'Heavy',    tag: 'Tough & slow',   hp: 160, speed: 0.82, damage: 1.15, firerate: 0.95, reload: 1.15, regen: 0,
             desc: 'Walking wall. Hits hard, moves like a tank. Ability: SQUAD — calls in 6 clones of himself for 20 s.',
             pal: { B: '#4a5d3a', b: '#2f3d25', D: '#1a1a1a', J: '#3b3b3b', S: '#d8a47a' },

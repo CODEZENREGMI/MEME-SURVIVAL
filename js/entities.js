@@ -150,7 +150,7 @@ class Player {
       const a = Math.atan2(z.y - this.y, z.x - this.x), k = z.cfg.boss ? 0.15 : z.type === 'tank' ? 0.4 : 1;
       z.kx += Math.cos(a) * tp.push * k; z.ky += Math.sin(a) * tp.push * k; z.hit = 0.1; z.takeDamage(tp.damage * this.damageMult, a);
     }
-    Audio8.tone(1600, 0.18, 'sine', 0.16, -1300); Audio8.tone(220, 0.25, 'triangle', 0.14, 900, 0.12); Audio8.noise(0.2, 0.12, 3000);
+    if (tp.sound) Audio8.playClip(tp.sound, 1); else { Audio8.tone(1600, 0.18, 'sine', 0.16, -1300); Audio8.tone(220, 0.25, 'triangle', 0.14, 900, 0.12); Audio8.noise(0.2, 0.12, 3000); }
     g.floatText(this.x, this.y - 22, 'BLINK', '#5ec2ff');
     return true;
   }
