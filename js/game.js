@@ -918,7 +918,7 @@ class Game {
     this.ebullets.forEach(b => b.draw(ctx));
     this.particles.forEach(p => inView(p) && glowP(p) && p.draw(ctx));
     this.map.fires.forEach(f => { const g = ctx.createRadialGradient(f.x, f.y, 2, f.x, f.y, 40 + Math.sin(this.time * 12) * 4); g.addColorStop(0, 'rgba(255,140,40,0.28)'); g.addColorStop(1, 'rgba(255,80,0,0)'); ctx.fillStyle = g; ctx.fillRect(f.x - 50, f.y - 50, 100, 100); });
-    if (this.state === 'playing' || this.state === 'wavebreak') {
+    if ((this.state === 'playing' || this.state === 'wavebreak') && !this.touch.on) {   // phones aim with the thumb: no cursor, no aim line
       const p = this.player;
       if (this.settings.aimLine) { ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.setLineDash([2, 4]); ctx.beginPath(); ctx.moveTo(p.x + Math.cos(p.angle) * 14, p.y + Math.sin(p.angle) * 14); ctx.lineTo(this.input.worldX, this.input.worldY); ctx.stroke(); ctx.setLineDash([]); }
       const mx = this.input.worldX, my = this.input.worldY; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;

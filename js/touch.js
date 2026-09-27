@@ -1,8 +1,8 @@
 /* ============================================================
    touch.js — phones & tablets: twin thumb sticks, ability buttons, touch-sized view
    Left half of the screen: wherever your thumb lands becomes the move stick.
-   Right half: wherever it lands becomes the aim stick — push to aim, and it fires while you hold it
-   (with a little aim assist toward the zombie you're pointing at). Buttons sit in an arc in the
+   Right half: wherever it lands becomes the aim stick — push to aim, and it fires while you hold it.
+   Aiming is entirely yours: no assist, no lock-on. Buttons sit in an arc in the
    bottom-right corner, built each frame from what the current character can actually do.
    The sticks and buttons are drawn on their own full-resolution layer (#touchlayer) in real CSS
    pixels, so they stay sharp and finger-sized however the pixel-art game canvas is scaled.
@@ -78,17 +78,6 @@ class TouchControls {
     }
   }
   vec(s) { const dx = s.x - s.ox, dy = s.y - s.oy, d = Math.hypot(dx, dy); return d < 0.01 ? { x: 0, y: 0, m: 0 } : { x: dx / d, y: dy / d, m: Math.min(1, d / TOUCH_STICK_R) }; }
-  /* a gentle pull toward the zombie closest to where you're pointing */
-  assist(p, a) {
-    let best = null, bs = Infinity;
-    for (const z of this.g.zombies) {
-      if (z.dead || z.captured > 0) continue;
-      const dx = z.x - p.x, dy = z.y - p.y, d = Math.hypot(dx, dy); if (d > 280 || d < 4) continue;
-      let da = Math.atan2(dy, dx) - a; da = Math.abs(Math.atan2(Math.sin(da), Math.cos(da))); if (da > 0.3) continue;
-      const s = da * 300 + d; if (s < bs) { bs = s; best = z; }
-    }
-    return best;
-  }
   /* called every game frame before the world reads the input: turns the sticks into the mouse + WASD the game already speaks */
   frame() {
     const g = this.g, p = g.player, inp = g.input; if (!p) return;
@@ -96,9 +85,7 @@ class TouchControls {
     const mv = this.move && this.vec(this.move); inp.stick = mv && mv.m > 0.2 ? mv : null;
     const av = this.aim && this.vec(this.aim);
     if (av && av.m > 0.25) {
-      let a = Math.atan2(av.y, av.x), d = 40 + av.m * 150; const z = this.assist(p, a);
-      if (z) { a = Math.atan2(z.y - p.y, z.x - p.x); d = Math.hypot(z.x - p.x, z.y - p.y); }
-      this.aimA = a; this.aimD = d; inp.mouseDown = true;
+      this.aimA = Math.atan2(av.y, av.x); this.aimD = 40 + av.m * 150; inp.mouseDown = true;   // exactly where the thumb points
     } else { inp.mouseDown = false; if (!this.aim && inp.stick) { this.aimA = Math.atan2(inp.stick.y, inp.stick.x); this.aimD = 60; } }   // not aiming: face where you walk
     inp.mouseX = p.x - g.cam.x + Math.cos(this.aimA) * this.aimD; inp.mouseY = p.y - g.cam.y + Math.sin(this.aimA) * this.aimD;
   }
