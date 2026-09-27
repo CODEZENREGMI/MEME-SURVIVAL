@@ -209,6 +209,8 @@ title-screen menu links point at memesurvival.com in a new tab. Website-only ima
 re-upload after each update. On itch: tick **This file will be played in the browser**, viewport **1280 × 720**,
 **Fullscreen button** on.
 
+`python3 tools/build_crazygames.py` writes `dist/meme-survival-crazygames.zip` for CrazyGames (upload as an **HTML5** game): the same relative-path build, with the title-screen MENU removed (CrazyGames doesn't allow links out of a game), and the canonical / social / verification tags and JSON-LD dropped.
+
 ## Industrial Zone
 
 The yard is fully paved, and `block()` deliberately leaves road tiles alone (so other maps' buildings never cover their
