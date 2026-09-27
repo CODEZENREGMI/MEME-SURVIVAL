@@ -718,28 +718,30 @@ class Game {
     const k = this.input.keys;
     window.addEventListener('keydown', e => {
       if (e.target.tagName === 'INPUT') return;
-      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key; k[key] = true;
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if (this.telePick) { if (key === 'Escape' || key === 'e') this.closeTelePick(); return; }   // the teleport map swallows the keyboard until you pick or back out
+      k[key] = true;
       if (key === 'Escape') { if (this.ui.closeModals()) return; if (this.state === 'shop') { this.closeShop(); return; } if (this.state === 'playing' || this.state === 'wavebreak') this.pause(); else if (this.state === 'paused') this.resume(); }
       if (key === 't') k.t = true;
       if (key === 'b' || key === 'Tab') { if (this.state === 'shop' || this.state === 'playing' || this.state === 'wavebreak') { e.preventDefault(); this.toggleShop(); } }
       if (key === 'f') { if (e.shiftKey || !((this.player.char.pull || this.player.char.wife) && (this.state === 'playing' || this.state === 'wavebreak'))) this.ui.toggleFullscreen(); else k.f = true; } // F = WEB PULL for Spider Mad; Shift+F always = fullscreen
       if (this.state === 'playing' || this.state === 'wavebreak') {
         if (key >= '1' && key <= '9') { const id = this.player.weaponOrder[key - 1]; if (id) this.player.switchTo(id); }
-        if (key === 'q') { if (this.player.char.mg) k.q = true; else this.player.cycle(1); }   // Doge: Q = weapon ability (E is his machine gun, F stays fullscreen)
+        if (key === 'q') { if (this.player.char.mg || this.player.char.tele) k.q = true; else this.player.cycle(1); }   // Doge / Runner: Q = weapon ability (E is their machine gun / teleport, F stays fullscreen)
       }
       if (this.state === 'levelup' && key >= '1' && key <= '4') this.chooseUpgrade(Object.keys(UPGRADES)[key - 1]);
       if (['w', 'a', 's', 'd', ' ', 'e', 'g', 'f', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) e.preventDefault();
     });
     window.addEventListener('keyup', e => { const key = e.key.length === 1 ? e.key.toLowerCase() : e.key; k[key] = false; });
-    window.addEventListener('blur', () => { for (const i in k) k[i] = false; this.input.mouseDown = false; this.input.rightDown = false; if (this.state === 'playing' || this.state === 'wavebreak') this.pause(); }); // never get eaten while you're looking at another window
+    window.addEventListener('blur', () => { this.closeTelePick(); for (const i in k) k[i] = false; this.input.mouseDown = false; this.input.rightDown = false; if (this.state === 'playing' || this.state === 'wavebreak') this.pause(); }); // never get eaten while you're looking at another window
     const c = this.canvas;
     const toLogical = e => { const r = c.getBoundingClientRect(); this.input.mouseX = clamp((e.clientX - r.left) / r.width * this.vw, 0, this.vw); this.input.mouseY = clamp((e.clientY - r.top) / r.height * this.vh, 0, this.vh); };
     c.addEventListener('mousemove', toLogical);
-    c.addEventListener('mousedown', e => { toLogical(e); Audio8.init(); Audio8.resume(); if (e.button === 2) { this.input.rightDown = true; return; } if (e.button !== 0) return;
+    c.addEventListener('mousedown', e => { toLogical(e); Audio8.init(); Audio8.resume(); if (this.telePick) { if (e.button === 0) this.pickTeleport(); else this.closeTelePick(); return; } if (e.button === 2) { this.input.rightDown = true; return; } if (e.button !== 0) return;
       const r = this.cartRect; if (r && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= r.x && this.input.mouseX <= r.x + r.w && this.input.mouseY >= r.y && this.input.mouseY <= r.y + r.h) { this.openShop(); return; }
       const ar = this.abilityRect; if (ar && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= ar.x && this.input.mouseX <= ar.x + ar.w && this.input.mouseY >= ar.y && this.input.mouseY <= ar.y + ar.h) { this.player.useAbility(); return; }
       const cr = this.carRect; if (cr && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= cr.x && this.input.mouseX <= cr.x + cr.w && this.input.mouseY >= cr.y && this.input.mouseY <= cr.y + cr.h) { this.player.toggleCar(); return; }
-      const tr2 = this.transformRect2; if (tr2 && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr2.x && this.input.mouseX <= tr2.x + tr2.w && this.input.mouseY >= tr2.y && this.input.mouseY <= tr2.y + tr2.h) { if (this.player.char.wife) this.player.useWife(); else if (this.player.char.mg) this.player.useMachineGun(); else if (this.player.char.frog) this.player.useFrogArmy(); else if (this.player.char.symbiote) this.player.useCapture(); else this.player.usePull(); return; }
+      const tr2 = this.transformRect2; if (tr2 && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr2.x && this.input.mouseX <= tr2.x + tr2.w && this.input.mouseY >= tr2.y && this.input.mouseY <= tr2.y + tr2.h) { if (this.player.char.wife) this.player.useWife(); else if (this.player.char.mg) this.player.useMachineGun(); else if (this.player.char.tele) this.player.useTeleport(); else if (this.player.char.frog) this.player.useFrogArmy(); else if (this.player.char.symbiote) this.player.useCapture(); else this.player.usePull(); return; }
       const tr = this.transformRect; if (tr && (this.state === 'playing' || this.state === 'wavebreak') && this.input.mouseX >= tr.x && this.input.mouseX <= tr.x + tr.w && this.input.mouseY >= tr.y && this.input.mouseY <= tr.y + tr.h) { this.player.useCharAbility(); return; }
       this.input.mouseDown = true; });
     window.addEventListener('mouseup', e => { if (e.button === 2) this.input.rightDown = false; else this.input.mouseDown = false; });
@@ -752,9 +754,10 @@ class Game {
     const dt = Math.min(0.05, (t - this.last) / 1000 || 0); this.last = t;
     if (window.innerWidth !== this._lastW || window.innerHeight !== this._lastH) this.resize();
     this._fpsAcc += dt; this._fpsN++; if (this._fpsAcc >= 0.5) { this.fps = Math.round(this._fpsN / this._fpsAcc); this._fpsAcc = 0; this._fpsN = 0; }
-    Audio8.muteLoops(this.state !== 'playing' && this.state !== 'wavebreak');   // paused / cart / level-up: the ability is frozen, so is its sound
+    Audio8.muteLoops((this.state !== 'playing' && this.state !== 'wavebreak') || !!this.telePick);   // paused / cart / level-up: the ability is frozen, so is its sound
     try { // one bad frame must never freeze the whole game
-      if (this.state === 'playing' || this.state === 'wavebreak' || this.state === 'gameover') this.update(dt);
+      if (this.telePick) { if (this.state !== 'playing' && this.state !== 'wavebreak') this.closeTelePick(); }   // the world holds still while Runner picks a spot
+      else if (this.state === 'playing' || this.state === 'wavebreak' || this.state === 'gameover') this.update(dt);
       else if (this.state === 'menu') this.updateAmbient(dt);
       this.draw();
     } catch (err) { this._errCount = (this._errCount || 0) + 1; if (this._errCount <= 3) console.error('frame error', err); }
@@ -928,9 +931,57 @@ class Game {
       const p = this.player;
       if (p.hp < p.maxHp * 0.3 && !p.dead) { ctx.globalAlpha = 0.25 + Math.sin(this.time * 6) * 0.12; ctx.drawImage(this.vignette('rgba(180,0,0,1)', 0.3), 0, 0); ctx.globalAlpha = 1; }
       this.drawHUD(ctx);
+      if (this.telePick) this.drawTelePick(ctx);
     }
   }
 
+  /* ---- Runner: TELEPORT — the whole map, frozen; click where to go ---- */
+  openTelePick() {
+    this.telePick = { t0: performance.now() }; this.input.mouseDown = false; this.input.rightDown = false;
+    for (const i in this.input.keys) this.input.keys[i] = false;
+    Audio8.tone(300, 0.2, 'sine', 0.12, 700); Audio8.noise(0.15, 0.06, 5000);
+  }
+  closeTelePick() { if (!this.telePick) return; this.telePick = null; Audio8.tone(700, 0.12, 'sine', 0.08, -400); }
+  telePickRect() {   // the map fitted into the screen, under a title line
+    const m = this.map, s = Math.min((this.vw - 32) / m.pw, (this.vh - 58) / m.ph), w = m.pw * s, h = m.ph * s;
+    return { x: Math.round((this.vw - w) / 2), y: Math.round(34 + (this.vh - 58 - h) / 2), w, h, s };
+  }
+  /* the cursor on the teleport map, in world pixels (null when it's off the map), and where he would really land */
+  telePickTarget() {
+    const R = this.telePickRect(), mx = this.input.mouseX, my = this.input.mouseY;
+    if (mx < R.x || my < R.y || mx > R.x + R.w || my > R.y + R.h) return null;
+    const x = (mx - R.x) / R.s, y = (my - R.y) / R.s; return { x, y, spot: this.map.openSpot(x, y, this.player.r) };
+  }
+  pickTeleport() {
+    const t = this.telePickTarget(); if (!t || !t.spot) { Audio8.play('empty'); return; }
+    this.telePick = null; this.player.teleportTo(t.spot.x, t.spot.y);
+  }
+  drawTelePick(ctx) {
+    const m = this.map, p = this.player, R = this.telePickRect(), now = performance.now() / 1000, open = Math.min(1, (performance.now() - this.telePick.t0) / 160);
+    ctx.save(); ctx.globalAlpha = open;
+    ctx.fillStyle = 'rgba(4,8,16,0.86)'; ctx.fillRect(0, 0, this.vw, this.vh);
+    ctx.imageSmoothingEnabled = true; if (m.canvas) ctx.drawImage(m.canvas, R.x, R.y, R.w, R.h); ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = 'rgba(40,120,200,0.1)'; for (let y = R.y; y < R.y + R.h; y += 3) ctx.fillRect(R.x, y, R.w, 1);   // scanlines: it's a map on a screen
+    ctx.strokeStyle = '#5ec2ff'; ctx.lineWidth = 1; ctx.strokeRect(R.x - 0.5, R.y - 0.5, R.w + 1, R.h + 1);
+    const at = (x, y) => [R.x + x * R.s, R.y + y * R.s];
+    for (const z of this.zombies) { if (z.dead) continue; const [x, y] = at(z.x, z.y), r = z.cfg.boss ? 3 : 1.5; ctx.fillStyle = z.cfg.boss ? '#c05aff' : '#ff4a3a'; ctx.fillRect(x - r, y - r, r * 2, r * 2); }
+    for (const k of this.pickups) { const [x, y] = at(k.x, k.y); ctx.fillStyle = k.type === 'coin' ? '#f5c518' : k.type === 'health' ? '#5aff7a' : '#ffffff'; ctx.fillRect(x - 1, y - 1, 2, 2); }
+    const [px, py] = at(p.x, p.y), pr = 3 + Math.sin(now * 8) * 1.2;
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(px - 2, py - 2, 4, 4); ctx.strokeStyle = '#5ec2ff'; ctx.beginPath(); ctx.arc(px, py, pr + 3, 0, TAU); ctx.stroke();
+    const t = this.telePickTarget();
+    if (t) {
+      const [cx, cy] = at(t.x, t.y);
+      if (t.spot) {
+        const [sx, sy] = at(t.spot.x, t.spot.y), rr = 7 + Math.sin(now * 10) * 1.5;
+        ctx.strokeStyle = 'rgba(94,194,255,0.45)'; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(sx, sy); ctx.stroke(); ctx.setLineDash([]);
+        ctx.strokeStyle = '#8af0ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy, rr, 0, TAU); ctx.stroke(); ctx.lineWidth = 1;
+        ctx.fillStyle = '#8af0ff'; ctx.fillRect(sx - 1, sy - rr - 4, 2, 4); ctx.fillRect(sx - 1, sy + rr, 2, 4); ctx.fillRect(sx - rr - 4, sy - 1, 4, 2); ctx.fillRect(sx + rr, sy - 1, 4, 2);
+      } else { ctx.strokeStyle = '#ff4a3a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx - 5, cy - 5); ctx.lineTo(cx + 5, cy + 5); ctx.moveTo(cx + 5, cy - 5); ctx.lineTo(cx - 5, cy + 5); ctx.stroke(); ctx.lineWidth = 1; }
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = '10px "Press Start 2P", monospace'; ctx.fillStyle = '#5ec2ff'; ctx.fillText('TELEPORT', this.vw / 2, 7);
+    ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = '#c9cfdb'; ctx.fillText('CLICK ANYWHERE ON THE MAP  ·  RMB / E / ESC TO CANCEL', this.vw / 2, 21);
+    ctx.textAlign = 'left'; ctx.restore();
+  }
   /* ---- Genom: a captured boss switches sides ---- */
   convertBoss(z) {
     if (z.dead) return; z.dead = true; z.captured = 0;
@@ -1210,7 +1261,7 @@ class Game {
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? '#ffb02a' : '#ffe08a') : active ? '#ff8a2a' : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
       ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = ready ? '#ffb02a' : active ? '#fff' : '#9aa3b5';
       ctx.fillText(ab.name, ax + 6, ay + 5);
-      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife ? 'F' : p.char.mg ? 'Q' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
+      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife ? 'F' : p.char.mg || p.char.tele ? 'Q' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
       ctx.font = F;
     }
     // xp bar (bottom-centre)

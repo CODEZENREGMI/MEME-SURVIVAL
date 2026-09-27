@@ -73,7 +73,7 @@ class Player {
     this.ability = { active: 0, cd: 0, weapon: null };   // weapon special (minigun OVERDRIVE)
     this.form = 'human'; this.morphT = 0; this.formTime = 0; this.formCd = 0; this.jump = null; this.height = 0; this.leapCd = 0; this.smashCd = 0; this.swipe = 0; this.swipeAngle = 0;
     this.beastAmmo = BEAST_GUN.mag; this.beastKills = 0; this.beastMuzzle = 0;
-    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null;
+    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null; this.teleCd = 0;
     this.squadTime = 0; this.squadCd = 0;
     this.fieldTime = 0; this.fieldCd = 0;
     this.car = null; this.carCd = 0;
@@ -128,6 +128,30 @@ class Player {
     if (r.sound) { Audio8.stopHandle(this.rushLoop); this.rushLoop = Audio8.playClip(r.sound, 1, { loop: true }); }   // run!, on repeat until the rush wears off
     this.game.showAbilityBanner('RUSH', `${r.duration}s · run like hell · ∞ ammo · max fire rate on every gun`);
     for (let i = 0; i < 24; i++) { const a = i / 24 * TAU; this.game.particles.push(new Particle(this.x, this.y, Math.cos(a) * 140, Math.sin(a) * 140, 0.35, '#5ec2ff', 2, 'dot')); }
+    return true;
+  }
+  /* ---- Runner: TELEPORT — the whole map opens up; click anywhere and he blinks there ---- */
+  useTeleport() {
+    const tp = this.char.tele, g = this.game; if (!tp) return false;
+    if (this.teleCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `TELEPORT IN ${Math.ceil(this.teleCd)}s`, '#9aa3b5'); return false; }
+    if (this.driving) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, 'GET OUT OF THE CAR', '#9aa3b5'); return false; }
+    g.openTelePick(); return true;
+  }
+  teleportTo(x, y) {
+    const tp = this.char.tele, g = this.game, spot = g.map.openSpot(x, y, this.r); if (!spot) return false;
+    for (let i = 0; i < 28; i++) { const a = i / 28 * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 26, this.y + Math.sin(a) * 26, -Math.cos(a) * 90, -Math.sin(a) * 90 - 10, 0.35, i % 2 ? '#5ec2ff' : '#e8f7ff', 2, 'dot')); }   // folds in on itself...
+    g.lights.push({ x: this.x, y: this.y, r: 90, life: 0.3, max: 0.3 });
+    this.x = spot.x; this.y = spot.y; this.trail = []; this.teleCd = tp.cooldown; this.invuln = Math.max(this.invuln, tp.invuln);
+    g.cam.x = clamp(this.x - g.vw / 2, 0, Math.max(0, g.map.pw - g.vw)); g.cam.y = clamp(this.y - g.vh / 2, 0, Math.max(0, g.map.ph - g.vh));
+    for (let i = 0; i < 36; i++) { const a = i / 36 * TAU, s = 80 + Math.random() * 100; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * s, Math.sin(a) * s, 0.45, i % 3 ? '#5ec2ff' : '#ffffff', 2, 'dot')); }   // ...and unfolds here
+    g.lights.push({ x: this.x, y: this.y, r: 140, life: 0.4, max: 0.4 }); g.whiteFlash = 0.12; g.shake(5);
+    for (const z of g.zombies) {   // the arrival shoves back anything standing on the spot
+      if (z.dead || z.captured > 0) continue; const d = dist(this.x, this.y, z.x, z.y); if (d > tp.radius + z.r) continue;
+      const a = Math.atan2(z.y - this.y, z.x - this.x), k = z.cfg.boss ? 0.15 : z.type === 'tank' ? 0.4 : 1;
+      z.kx += Math.cos(a) * tp.push * k; z.ky += Math.sin(a) * tp.push * k; z.hit = 0.1; z.takeDamage(tp.damage * this.damageMult, a);
+    }
+    Audio8.tone(1600, 0.18, 'sine', 0.16, -1300); Audio8.tone(220, 0.25, 'triangle', 0.14, 900, 0.12); Audio8.noise(0.2, 0.12, 3000);
+    g.floatText(this.x, this.y - 22, 'BLINK', '#5ec2ff');
     return true;
   }
   /* ---- Heavy: SQUAD — six clones fight at his side ---- */
@@ -830,6 +854,8 @@ class Player {
     return true;
   }
   charAbility2() {
+    const tp = this.char.tele;
+    if (tp) { if (this.game.telePick) return { name: tp.name, state: 'busy', frac: 1, sub: 'PICK A SPOT' }; if (this.teleCd > 0) return { name: tp.name, state: 'cd', frac: 1 - this.teleCd / tp.cooldown, sub: `RECHARGING ${Math.ceil(this.teleCd)}s` }; return { name: tp.name, state: 'ready', frac: 1, sub: '[E] OPEN THE MAP' }; }
     const mg = this.char.mg;
     if (mg) { if (this.mgT > 0) return { name: mg.name, state: 'busy', frac: this.mgT / mg.duration, sub: `${Math.ceil(this.mgT)}s · NO RELOADS` }; if (this.mgCd > 0) return { name: mg.name, state: 'cd', frac: 1 - this.mgCd / mg.cooldown, sub: `RECHARGING ${Math.ceil(this.mgCd)}s` }; return { name: mg.name, state: 'ready', frac: 1, sub: '[E] READY · CLICK' }; }
     const wf = this.char.wife;
@@ -1080,9 +1106,9 @@ class Player {
     // aim first so animations face the cursor
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x); this.flip = Math.cos(this.angle) < 0;
     if (input.keys[' ']) { input.keys[' '] = false; this.useCharAbility(); }
-    if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else if (this.char.wife) this.useWife(); else if (this.char.mg) this.useMachineGun(); else this.useAbility(); } // Eggreck: E = MY WIFE, Doge: E = MACHINE GUN (their weapon ability moves to F)
+    if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else if (this.char.wife) this.useWife(); else if (this.char.mg) this.useMachineGun(); else if (this.char.tele) this.useTeleport(); else this.useAbility(); } // Eggreck: E = MY WIFE, Doge: E = MACHINE GUN, Runner: E = TELEPORT (their weapon ability moves to F / Q)
     if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); else if (this.char.wife) this.useAbility(); }
-    if (input.keys.q) { input.keys.q = false; if (this.char.mg) this.useAbility(); }
+    if (input.keys.q) { input.keys.q = false; if (this.char.mg || this.char.tele) this.useAbility(); }
     if (input.keys.r && this.venom) { input.keys.r = false; this.useCapture(); }
     if (input.keys.r && this.frog) { input.keys.r = false; this.useFrogArmy(); } // R = FROG ARMY as the frog (no guns to reload) // R = CAPTURE in venom form (no guns to reload)
     if (input.keys.t) { input.keys.t = false; if (this.char.symbiote) this.toggleSymbiote(); }
@@ -1147,6 +1173,7 @@ class Player {
       if (this.mgT > 0) { this.mgT -= dt; this.mgSpin += dt * (this.game.input.mouseDown ? 40 : 8);
         if (this.mgT <= 0) { this.mgT = 0; this.mgCd = mg.cooldown; Audio8.stopHandle(this.mgLoop, 0.1); this.mgLoop = null; this.game.floatText(this.x, this.y - 18, 'BARRELS COOLING', '#c9cfdb'); Audio8.play('reloaded'); } }
       else if (this.mgCd > 0) { this.mgCd -= dt; if (this.mgCd <= 0) { this.mgCd = 0; this.game.floatText(this.x, this.y - 18, 'MACHINE GUN READY', '#ffd23a'); Audio8.play('xp'); } } }
+    if (this.char.tele && this.teleCd > 0) { this.teleCd -= dt; if (this.teleCd <= 0) { this.teleCd = 0; this.game.floatText(this.x, this.y - 18, 'TELEPORT READY', '#5ec2ff'); Audio8.play('xp'); } }
     if (this.char.strike && this.strikeCd > 0) { this.strikeCd -= dt; if (this.strikeCd <= 0) { this.strikeCd = 0; this.game.floatText(this.x, this.y - 18, 'AIR SUPPORT READY', '#ffd23a'); Audio8.play('xp'); } }
     if (this.char.spin) { const sn = this.char.spin;
       if (this.spinT > 0) { this.spinT -= dt; this.spinA += dt * 17;   // ~2.7 turns a second

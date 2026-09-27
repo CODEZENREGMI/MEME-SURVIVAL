@@ -73,6 +73,9 @@ QA = [
 
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
+ ("2026-09-27", [
+   "<strong>Runner can TELEPORT.</strong> Press E and the whole map opens up with every zombie on it; click anywhere and he blinks there, knocking back whatever was standing on the spot. 30 s recharge. His gun's ability moves to Q.",
+ ]),
  ("2026-09-26", [
    "<strong>Industrial Zone rebuilt.</strong> Its perimeter wall and all eight warehouses were missing — the yard was one flat open lot. They're back, with loading bays, lane markings, rooftop gear, steam vents and junction boxes that spark in the dark.",
    "<strong>New survivor: Doge.</strong> Much soldier, very tactical: a Shiba Inu in a plate carrier and the coolest shades on the battlefield. AIRSTRIKE calls in a jet that carpet-bombs wherever he points, and MACHINE GUN hands him a huge minigun firing incendiary rounds with unlimited ammo.",

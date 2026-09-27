@@ -469,6 +469,14 @@ class GameMap {
     x = Math.max(r, Math.min(this.pw - r, x)); y = Math.max(r, Math.min(this.ph - r, y));
     return { x, y };
   }
+  /* nearest spot around (x, y) where something of radius r can stand, or null */
+  openSpot(x, y, r) {
+    x = clamp(x, r, this.pw - r); y = clamp(y, r, this.ph - r);
+    const ok = (px, py) => px > r && py > r && px < this.pw - r && py < this.ph - r && !this.solidAt(px, py) && (() => { const q = this.resolve(px, py, r); return Math.abs(q.x - px) + Math.abs(q.y - py) < 1; })();
+    if (ok(x, y)) return { x, y };
+    for (let d = 6; d <= 240; d += 6) for (let i = 0, n = Math.max(8, Math.round(d / 3)); i < n; i++) { const a = i / n * TAU, px = x + Math.cos(a) * d, py = y + Math.sin(a) * d; if (ok(px, py)) return { x: px, y: py }; }
+    return null;
+  }
   unstick(x, y) {
     const ts = this.ts, tx = Math.floor(x / ts), ty = Math.floor(y / ts);
     for (let ring = 1; ring < 8; ring++) {
