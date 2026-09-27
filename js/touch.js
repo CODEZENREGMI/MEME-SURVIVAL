@@ -9,7 +9,8 @@
    Everything here only runs once the device has been touched (or reports a coarse pointer);
    keyboard + mouse play is untouched.
    ============================================================ */
-const TOUCH_STICK_R = 50;   // CSS px the knob travels before the base follows your thumb
+const TOUCH_STICK_R = 50;   // CSS px the move knob travels before the base follows your thumb
+const TOUCH_AIM_R = 42;     // the aim stick is a little smaller, and rests right beside the buttons
 
 class TouchControls {
   constructor(game) {
@@ -50,8 +51,8 @@ class TouchControls {
       const b = this.hit(x, y);
       if (b) { this.held.set(id, b); b.pressed = true; if (b.down) b.down(); if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) {} continue; }
       const cr = g.cartRect; if (cr && lx >= cr.x && lx <= cr.x + cr.w && ly >= cr.y && ly <= cr.y + cr.h) { g.openShop(); continue; }
-      if (x < W * 0.45) { if (!this.move) this.move = { id, ox: x, oy: y, x, y }; }
-      else if (!this.aim) this.aim = { id, ox: x, oy: y, x, y };
+      if (x < W * 0.45) { if (!this.move) this.move = { id, ox: x, oy: y, x, y, R: TOUCH_STICK_R }; }
+      else if (!this.aim) this.aim = { id, ox: x, oy: y, x, y, R: TOUCH_AIM_R };
     }
   }
   onMove(e) {
@@ -62,7 +63,7 @@ class TouchControls {
       if (this.tele === id) { [inp.mouseX, inp.mouseY] = this.toLogical(x, y); }
       for (const s of [this.move, this.aim]) if (s && s.id === id) {
         s.x = x; s.y = y; const dx = x - s.ox, dy = y - s.oy, d = Math.hypot(dx, dy);
-        if (d > TOUCH_STICK_R) { s.ox = x - dx / d * TOUCH_STICK_R; s.oy = y - dy / d * TOUCH_STICK_R; }   // the base trails your thumb
+        if (d > s.R) { s.ox = x - dx / d * s.R; s.oy = y - dy / d * s.R; }   // the base trails your thumb
       }
     }
   }
@@ -77,7 +78,7 @@ class TouchControls {
       const b = this.held.get(id); if (b) { this.held.delete(id); b.pressed = false; if (b.up) b.up(); }
     }
   }
-  vec(s) { const dx = s.x - s.ox, dy = s.y - s.oy, d = Math.hypot(dx, dy); return d < 0.01 ? { x: 0, y: 0, m: 0 } : { x: dx / d, y: dy / d, m: Math.min(1, d / TOUCH_STICK_R) }; }
+  vec(s) { const dx = s.x - s.ox, dy = s.y - s.oy, d = Math.hypot(dx, dy); return d < 0.01 ? { x: 0, y: 0, m: 0 } : { x: dx / d, y: dy / d, m: Math.min(1, d / s.R) }; }
   /* called every game frame before the world reads the input: turns the sticks into the mouse + WASD the game already speaks */
   frame() {
     const g = this.g, p = g.player, inp = g.input; if (!p) return;
@@ -141,14 +142,16 @@ class TouchControls {
     const t = this.g.time;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     // sticks: a faint ghost where to put your thumbs, the real thing wherever you do
-    const stick = (s, gx, gy, col) => {
+    const stick = (s, gx, gy, R, col) => {
       const ox = s ? s.ox : gx, oy = s ? s.oy : gy, kx = s ? s.x : gx, ky = s ? s.y : gy;
-      ctx.globalAlpha = s ? 0.55 : 0.2; ctx.fillStyle = 'rgba(10,12,18,0.4)'; ctx.beginPath(); ctx.arc(ox, oy, TOUCH_STICK_R, 0, TAU); ctx.fill();
+      ctx.globalAlpha = s ? 0.55 : 0.2; ctx.fillStyle = 'rgba(10,12,18,0.4)'; ctx.beginPath(); ctx.arc(ox, oy, R, 0, TAU); ctx.fill();
       ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.stroke();
-      ctx.globalAlpha = s ? 0.85 : 0.25; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(kx, ky, 22, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.globalAlpha = s ? 0.85 : 0.25; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(kx, ky, R * 0.44, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
     };
-    stick(this.move, Math.max(90, W * 0.2), H - 95, '#ffffff');
-    stick(this.aim, W * 0.6, H - 120, '#ff6a5a');
+    stick(this.move, Math.max(90, W * 0.2), H - 95, TOUCH_STICK_R, '#ffffff');
+    // the aim stick's resting spot: just left of the button cluster, so the whole right thumb works in one corner
+    let left = W; for (const b of this.buttons) if (b.id !== 'pause' && b.y > H * 0.45) left = Math.min(left, b.x - b.r);
+    stick(this.aim, Math.max(W * 0.5, left - 18 - TOUCH_AIM_R), H - 105, TOUCH_AIM_R, '#ff6a5a');
     for (const b of this.buttons) {
       const st = b.st, ready = !st || st.state === 'ready', active = st && (st.state === 'active' || st.state === 'busy'), cd = st && st.state === 'cd';
       ctx.fillStyle = b.pressed ? 'rgba(90,104,136,0.92)' : 'rgba(12,14,20,0.66)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
