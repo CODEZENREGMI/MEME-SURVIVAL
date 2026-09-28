@@ -279,8 +279,9 @@ const CHARACTERS = {
             forest: { name: 'FOREST FRIENDS', duration: 15, cooldown: 25, sound: 'assets/audio/patapim_song.mp3', birds: 10, frogs: 8, damage: 1, rate: 0.35, seek: 320 } },   // exactly 1 damage a peck, and nothing else: on purpose
   skibidi:  { name: 'Skibidi Toilet', tag: 'Meme', hp: 110, speed: 0.95, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'skibidi', portrait: 'skibidi',
             portraitImg: 'assets/img/skibidi_portrait.png',   // the Skibidi Toilet meme redrawn in pixels; the sprite (tank, head, grin, bowl) is hand-placed in js/sprites.js
-            desc: 'A head in a toilet, grinning at the end of the world. Nobody knows how he gets around. Nobody asks.',
-            pal: { K: '#1a1512', H: '#1e1814', S: '#c08a66', s: '#8f5e42', E: '#f4f2ea', P: '#141010', T: '#fff4d0', W: '#ece6da', w: '#b3ab9c', B: '#6c7064' } },
+            desc: 'A head in a toilet, grinning at the end of the world. FLUSH: for 6 s a whirlpool spins around him and sucks zombies in and down the toilet. Bosses are too big to go down, but they still get dragged in and hurt.',
+            pal: { K: '#1a1512', H: '#1e1814', S: '#c08a66', s: '#8f5e42', E: '#f4f2ea', P: '#141010', T: '#fff4d0', W: '#ece6da', w: '#b3ab9c', B: '#6c7064' },
+            flush: { name: 'FLUSH', duration: 6, cooldown: 25, radius: 130, pull: 85, spin: 120, bossPull: 0.2, bossDps: 40 } },   // zombies in the whirlpool spiral in and go down the toilet; bosses are dragged and hurt
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg', 'giga', 'doge', 'bishnu', 'patapim', 'skibidi'];
 

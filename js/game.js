@@ -122,7 +122,7 @@ class Game {
   reset() {
     this.map = this.getMap(this.loadout.map); this.resize();
     this.player = new Player(this, this.map.playerStart.x, this.map.playerStart.y, this.loadout.char, this.loadout.weapons);
-    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = []; this.scared = new Set(); this.strikes = [];
+    this.zombies = []; this.bullets = []; this.ebullets = []; this.pickups = []; this.particles = []; this.clones = []; this.lures = []; this.milk = []; this.sinkers = []; this.flushes = []; this.scared = new Set(); this.strikes = [];
     this.wave = 0; this.toSpawn = 0; this.spawnTimer = 0; this.score = 0; this.coins = 0; this.admin = false; this.god = false; this.infAmmo = false;
     this.kills = { normal: 0, fast: 0, tank: 0, exploder: 0, boss: 0, guard: 0 }; this.picked = { health: 0, ammo: 0, coin: 0, xp: 0 };
     this.pendingLevelUps = 0; this.breakTimer = 0; this.boss = null; this.bannerTimer = 0; this.heartsBought = 0;
@@ -320,7 +320,10 @@ class Game {
   onZombieDeath(z) {
     this.kills[z.type]++; this.score += z.cfg.score; Audio8.play('zdie'); this.player.onBeastKill();
     if (z.bk && z.bk.bona) { this.bonaGone(z); this.shake(14); this.whiteFlash = 0.4; Audio8.play('roar'); Audio8.play('explode'); this.floatText(z.x, z.y - 60, 'BONA FALLS', '#ffb060'); }
-    if ((z.sunk || 0) > 0.4) { // drowned: it slips under with a last gasp of bubbles — no blood, and an exploder's fuse just fizzles
+    if (z.flushed) {   // Skibidi's whirlpool: it spins down into the toilet — no blood, and an exploder's fuse just goes out
+      this.flushes.push({ z, t: 0, dur: 0.55, x0: z.x, y0: z.y, tx: z.flushTo.x, ty: z.flushTo.y });
+      this.floatText(z.x, z.y - 12 * z.scale, 'FLUSHED', '#9cc8f2'); if (Math.random() < 0.5) Audio8.tone(700, 0.12, 'sine', 0.06, -500);
+    } else if ((z.sunk || 0) > 0.4) { // drowned: it slips under with a last gasp of bubbles — no blood, and an exploder's fuse just fizzles
       this.sinkers.push({ z, t: 0, dur: z.cfg.boss ? 1.4 : 0.9 });
       for (let i = 0; i < (z.cfg.boss ? 26 : 12); i++) this.particles.push(new Particle(z.x + (Math.random() - 0.5) * 12 * z.scale, z.y, (Math.random() - 0.5) * 16, -10 - Math.random() * 20, 0.7 + Math.random() * 0.6, Math.random() < 0.5 ? '#e6f3ff' : '#9cc8f2', 2 + (Math.random() < 0.3 ? 1 : 0), 'smoke'));
       this.floatText(z.x, z.y - 12 * z.scale, 'GLUG', '#9cc8f2');
@@ -403,6 +406,21 @@ class Game {
     }
   }
 
+  /* ---- Skibidi Toilet's FLUSH: a swirling whirlpool of water around him, spiral arms turning inward ---- */
+  drawWhirlpool(ctx, p) {
+    const F = p.char.flush, R = F.radius, t = this.time, fade = Math.min(1, (F.duration - p.flushT) * 4, p.flushT * 2);
+    ctx.save(); ctx.globalAlpha = fade;
+    const gr = ctx.createRadialGradient(p.x, p.y + 2, 4, p.x, p.y + 2, R); gr.addColorStop(0, 'rgba(20,50,70,0.75)'); gr.addColorStop(0.35, 'rgba(60,130,160,0.45)'); gr.addColorStop(1, 'rgba(120,200,220,0)');
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.ellipse(p.x, p.y + 2, R, R * 0.62, 0, 0, TAU); ctx.fill();
+    ctx.lineCap = 'round';
+    for (let arm = 0; arm < 5; arm++) {   // spiral arms, winding in
+      ctx.strokeStyle = arm % 2 ? 'rgba(230,246,255,0.55)' : 'rgba(160,220,235,0.45)'; ctx.lineWidth = 2; ctx.beginPath();
+      for (let i = 0; i <= 26; i++) { const u = i / 26, a = arm / 5 * TAU + t * 5 + u * 5.2, r = R * (1 - u) * 0.95 + 6; const x = p.x + Math.cos(a) * r, y = p.y + 2 + Math.sin(a) * r * 0.62; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(230,246,255,0.5)'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 8]); ctx.lineDashOffset = -t * 60; ctx.beginPath(); ctx.ellipse(p.x, p.y + 2, R, R * 0.62, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]);   // foam at the rim
+    ctx.lineCap = 'butt'; ctx.restore();
+  }
   /* ---- Cry XD's flood: a pool of tears around him, ripples rolling out, foam at the edge ---- */
   drawFlood(ctx) {
     const p = this.player; if (!p || !(p.floodR > 0)) return;
@@ -819,6 +837,7 @@ class Game {
     if (this.map.id === 'industrial') this.industrialFx(dt);
     this.updateMilk(dt);
     this.updateSinkers(dt);
+    for (const F of this.flushes) F.t += dt; this.flushes = this.flushes.filter(F => F.t < F.dur);
     for (const b of this.bullets) {
       b.update(dt); if (b.dead) continue;
       if (this.siege) {
@@ -887,6 +906,11 @@ class Game {
     if (this.siege) this.drawHouse(ctx);
     if (this.map.cars.length) this.drawCars(ctx);
     this.drawFlood(ctx);
+    if (this.player && this.player.flushT > 0) this.drawWhirlpool(ctx, this.player);
+    for (const F of this.flushes) {   // spinning and shrinking into the bowl
+      const k = F.t / F.dur, e = k * k, z = F.z; ctx.save(); ctx.globalAlpha = 1 - k * 0.8;
+      ctx.translate(F.x0 + (F.tx - F.x0) * e, F.y0 + (F.ty - F.y0) * e); ctx.rotate(k * 9); ctx.scale(1 - k * 0.9, 1 - k * 0.9); ctx.translate(-z.x, -z.y); z.draw(ctx); ctx.restore();
+    }
     this.drawSinkers(ctx);
     this.drawMilk(ctx);
     this.drawLures(ctx);
