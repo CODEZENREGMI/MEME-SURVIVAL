@@ -321,7 +321,7 @@ class Game {
     this.kills[z.type]++; this.score += z.cfg.score; Audio8.play('zdie'); this.player.onBeastKill();
     if (z.bk && z.bk.bona) { this.bonaGone(z); this.shake(14); this.whiteFlash = 0.4; Audio8.play('roar'); Audio8.play('explode'); this.floatText(z.x, z.y - 60, 'BONA FALLS', '#ffb060'); }
     if (z.flushed) {   // Skibidi's whirlpool: it spins down into the toilet — no blood, and an exploder's fuse just goes out
-      this.flushes.push({ z, t: 0, dur: 0.55, x0: z.x, y0: z.y, tx: z.flushTo.x, ty: z.flushTo.y });
+      this.flushes.push({ z, t: 0, dur: 0.5, x0: z.x, y0: z.y, tx: z.flushTo.x, ty: z.flushTo.y });
       this.floatText(z.x, z.y - 12 * z.scale, 'FLUSHED', '#9cc8f2'); if (Math.random() < 0.5) Audio8.tone(700, 0.12, 'sine', 0.06, -500);
     } else if ((z.sunk || 0) > 0.4) { // drowned: it slips under with a last gasp of bubbles — no blood, and an exploder's fuse just fizzles
       this.sinkers.push({ z, t: 0, dur: z.cfg.boss ? 1.4 : 0.9 });
@@ -908,8 +908,9 @@ class Game {
     this.drawFlood(ctx);
     if (this.player && this.player.flushT > 0) this.drawWhirlpool(ctx, this.player);
     for (const F of this.flushes) {   // spinning and shrinking into the bowl
-      const k = F.t / F.dur, e = k * k, z = F.z; ctx.save(); ctx.globalAlpha = 1 - k * 0.8;
-      ctx.translate(F.x0 + (F.tx - F.x0) * e, F.y0 + (F.ty - F.y0) * e); ctx.rotate(k * 9); ctx.scale(1 - k * 0.9, 1 - k * 0.9); ctx.translate(-z.x, -z.y); z.draw(ctx); ctx.restore();
+      const k = F.t / F.dur, e = k * k, z = F.z, ox = F.x0 - F.tx, oy = F.y0 - F.ty, a = k * 7, sh = 1 - e;   // it corkscrews down the drain: circling in while it spins and shrinks
+      ctx.save(); ctx.globalAlpha = 1 - k * 0.8;
+      ctx.translate(F.tx + (ox * Math.cos(a) - oy * Math.sin(a)) * sh, F.ty + (ox * Math.sin(a) + oy * Math.cos(a)) * sh); ctx.rotate(k * 24); ctx.scale(1 - k * 0.9, 1 - k * 0.9); ctx.translate(-z.x, -z.y); z.draw(ctx); ctx.restore();
     }
     this.drawSinkers(ctx);
     this.drawMilk(ctx);

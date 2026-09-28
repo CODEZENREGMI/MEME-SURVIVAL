@@ -281,7 +281,7 @@ const CHARACTERS = {
             portraitImg: 'assets/img/skibidi_portrait.png',   // the Skibidi Toilet meme redrawn in pixels; the sprite (tank, head, grin, bowl) is hand-placed in js/sprites.js
             desc: 'A head in a toilet, grinning at the end of the world. FLUSH: for 20 s a whirlpool spins around him and sucks zombies in and down the toilet. Bosses are too big to go down, but they still get dragged in and hurt.',
             pal: { K: '#1a1512', H: '#1e1814', S: '#c08a66', s: '#8f5e42', E: '#f4f2ea', P: '#141010', T: '#fff4d0', W: '#ece6da', w: '#b3ab9c', B: '#6c7064' },
-            flush: { name: 'FLUSH', duration: 20, cooldown: 35, sound: 'assets/audio/skibidi_flush.mp3', radius: 150, grow: 5, start: 0.22, pull: 130, spin: 150, bossPull: 0.25, bossDps: 55 } },   // it opens small and spreads to full size over grow seconds   // zombies in the whirlpool spiral in and go down the toilet; bosses are dragged and hurt
+            flush: { name: 'FLUSH', duration: 20, cooldown: 35, sound: 'assets/audio/skibidi_flush.mp3', radius: 150, grow: 5, start: 0.22, pull: 130, spin: 210, bossPull: 0.25, bossDps: 55 } },   // it opens small and spreads to full size over grow seconds   // zombies in the whirlpool spiral in and go down the toilet; bosses are dragged and hurt
 };
 const CHARACTER_ORDER = ['rookie', 'runner', 'heavy', 'medic', 'drone', 'canimal', 'samay', 'spidermad', 'genom', 'frogepepe', 'bezuko', 'eggreck', 'videoman', 'kiya', 'jeffry', 'jonny', 'shark', 'cry', 'blackegg', 'giga', 'doge', 'bishnu', 'patapim', 'skibidi'];
 

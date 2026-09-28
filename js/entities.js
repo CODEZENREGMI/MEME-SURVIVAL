@@ -593,7 +593,7 @@ class Player {
       const dx = this.x - z.x, dy = this.y - z.y, d = Math.hypot(dx, dy) || 1; if (d > R + z.r) continue;
       const k = z.cfg.boss ? F.bossPull : 1, grip = 0.6 + 0.4 * (1 - Math.min(1, d / R));   // stronger near the middle
       const px = (dx / d * F.pull - dy / d * F.spin) * grip * k, py = (dy / d * F.pull + dx / d * F.spin) * grip * k;   // in, and round
-      const q = g.map.resolve(z.x + px * dt, z.y + py * dt, Math.min(z.r, 7)); z.x = q.x; z.y = q.y; z.kx = z.ky = 0;
+      const q = g.map.resolve(z.x + px * dt, z.y + py * dt, Math.min(z.r, 7)); z.x = q.x; z.y = q.y; z.kx = z.ky = 0; z.swirled = 0.15;   // helpless while the water has it
       if (z.cfg.boss) { z.takeDamage(F.bossDps * this.damageMult * dt, Math.atan2(-dy, -dx), undefined, 0, true); continue; }
       if (d < 13) { z.flushed = true; z.flushTo = { x: this.x, y: this.y }; z.takeDamage(z.hp + 99999, Math.atan2(-dy, -dx), undefined, 0, true); }   // down it goes
     }
@@ -1809,6 +1809,11 @@ class Zombie {
     if (this.dead) return;
     this.target = player; // whoever is closest: the player or one of his clones
     this.webImmune -= dt;
+    if (this.swirled > 0) {   // caught in Skibidi's whirlpool: swept round and helpless — it can't walk, bite, shoot, charge or light a fuse
+      this.swirled -= dt; this.hit -= dt; this.attackCd = Math.max(this.attackCd, 0.5); this.gunCd = Math.max(this.gunCd || 0, 0.5); this.aiming = 0; this.burstLeft = 0; this.charge = 0; this.leap = null; this.rush = null; this.slam = 0; this.drum = null; this.height = 0; this.fuse = -1;
+      if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; this.burnFx(dt); if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); if (this.dead) return; } }
+      this.kx = this.ky = 0; this.walk += dt * 16; this.flip = Math.sin(this.walk * 0.7) > 0; return;
+    }
     if (this.pullT > 0) { // reeled in by Spider Mad's web, then frozen
       this.pullT -= dt; const pb = this.pullBy, pl = pb.char.pull, ddx = pb.x - this.x, ddy = pb.y - this.y, dd = Math.hypot(ddx, ddy) || 1, step = pl.speed * dt;
       if (dd - step <= this.r + pb.r + 6) { const p = this.game.map.resolve(pb.x - ddx / dd * (this.r + pb.r + 8), pb.y - ddy / dd * (this.r + pb.r + 8), this.r); this.x = p.x; this.y = p.y; this.pullT = 0; }
