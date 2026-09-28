@@ -170,7 +170,7 @@ const CHARACTERS = {
   heavy:  { name: 'Heavy',    tag: 'Tough & slow',   hp: 160, speed: 0.82, damage: 1.15, firerate: 0.95, reload: 1.15, regen: 0,
             desc: 'Walking wall. Hits hard, moves like a tank. SQUAD: calls in 6 clones of himself for 20 s.',
             pal: { B: '#4a5d3a', b: '#2f3d25', D: '#1a1a1a', J: '#3b3b3b', S: '#d8a47a' },
-            squad: { name: 'SQUAD', duration: 20, cooldown: 35, count: 6, hp: 140, gun: { damage: 9, interval: 0.11, speed: 460, spread: 0.1, range: 280, pellets: 1, pierce: 0, kick: 1, sound: 'smg' } } },
+            squad: { name: 'SQUAD', duration: 20, cooldown: 35, sound: 'assets/audio/heavy_squad.mp3', count: 6, hp: 140, gun: { damage: 9, interval: 0.11, speed: 460, spread: 0.1, range: 280, pellets: 1, pierce: 0, kick: 1, sound: 'smg' } } },
   medic:  { name: 'Medic',    tag: 'Self-healing',   hp: 100, speed: 1.0,  damage: 0.85, firerate: 1.0, reload: 0.9,  regen: 1.5,
             desc: 'Regenerates health over time, and health packs heal double. MED FIELD: a healing aura for 20 s.',
             pal: { B: '#e8e6dc', b: '#b8b6ae', D: '#7a3a1a', J: '#3d4257' },

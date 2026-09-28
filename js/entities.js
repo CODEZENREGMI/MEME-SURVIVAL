@@ -161,7 +161,7 @@ class Player {
     if (this.squadCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `SQUAD IN ${Math.ceil(this.squadCd)}s`, '#9aa3b5'); return false; }
     this.squadTime = sq.duration;
     for (let i = 0; i < sq.count; i++) { const a = i / sq.count * TAU; const pos = g.map.resolve(this.x + Math.cos(a) * 34, this.y + Math.sin(a) * 34, 6); g.clones.push(new Clone(g, this, pos.x, pos.y, i)); for (let k = 0; k < 8; k++) g.particles.push(new Particle(pos.x, pos.y + 4, (Math.random() - 0.5) * 40, -20 - Math.random() * 30, 0.6, '#8bd35a', 2, 'smoke')); }
-    Audio8.play('levelup'); Audio8.play('weapon'); g.shake(4); g.whiteFlash = 0.12; g.lights.push({ x: this.x, y: this.y, r: 120, life: 0.3, max: 0.3 });
+    if (sq.sound) Audio8.playClip(sq.sound, 1); else Audio8.play('levelup'); Audio8.play('weapon'); g.shake(4); g.whiteFlash = 0.12; g.lights.push({ x: this.x, y: this.y, r: 120, life: 0.3, max: 0.3 });   // his call-in sound as the squad appears
     g.showAbilityBanner('SQUAD', `${sq.count} clones · ${sq.duration}s · they draw fire and shoot back`);
     return true;
   }
