@@ -170,7 +170,7 @@ class Player {
     const f = this.char.field, g = this.game; if (!f) return false;
     if (this.fieldTime > 0) return false;
     if (this.fieldCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `MED FIELD IN ${Math.ceil(this.fieldCd)}s`, '#9aa3b5'); return false; }
-    this.fieldTime = f.duration; Audio8.play('health'); Audio8.play('levelup'); g.shake(2); g.lights.push({ x: this.x, y: this.y, r: 120, life: 0.3, max: 0.3 });
+    this.fieldTime = f.duration; Audio8.play('health'); if (f.sound) { Audio8.stopHandle(this.fieldLoop); this.fieldLoop = Audio8.playClip(f.sound, 1, { loop: true }); } else Audio8.play('levelup'); g.shake(2);   // the healing hum, for as long as the field is up g.lights.push({ x: this.x, y: this.y, r: 120, life: 0.3, max: 0.3 });
     for (let i = 0; i < 20; i++) { const a = i / 20 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 90, Math.sin(a) * 90, 0.4, '#7fd35a', 2, 'dot')); }
     g.showAbilityBanner('MED FIELD', `${f.duration}s of steady healing · stay in the circle`);
     return true;
@@ -1318,7 +1318,7 @@ class Player {
     if (this.fieldTime > 0) { const f = this.char.field; this.fieldTime -= dt;
       if (this.hp < this.maxHp) { this.hp = Math.min(this.maxHp, this.hp + f.heal * dt); if (Math.random() < 0.25) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * f.radius * 1.6, this.y + (Math.random() - 0.5) * f.radius * 1.6, 0, -22, 0.9, '#7fd35a', 2, 'text', '+')); }
       this.game.clones.forEach(c => { if (dist(c.x, c.y, this.x, this.y) < f.radius) c.hp = Math.min(c.maxHp, c.hp + f.heal * dt); });
-      if (this.fieldTime <= 0) { this.fieldTime = 0; this.fieldCd = f.cooldown; this.game.floatText(this.x, this.y - 18, 'FIELD FADED', '#9aa3b5'); Audio8.play('reloaded'); } }
+      if (this.fieldTime <= 0) { this.fieldTime = 0; this.fieldCd = f.cooldown; Audio8.stopHandle(this.fieldLoop, 0.6); this.fieldLoop = null; this.game.floatText(this.x, this.y - 18, 'FIELD FADED', '#9aa3b5'); Audio8.play('reloaded'); } }
     else if (this.fieldCd > 0) { this.fieldCd -= dt; if (this.fieldCd <= 0) { this.fieldCd = 0; this.game.floatText(this.x, this.y - 18, 'MED FIELD READY', '#7fd35a'); Audio8.play('xp'); } }
     if (this.squadTime > 0) { this.squadTime -= dt; if (this.squadTime <= 0) { this.squadTime = 0; this.squadCd = this.char.squad.cooldown; this.game.clones.forEach(c => c.vanish()); this.game.floatText(this.x, this.y - 18, 'SQUAD OUT', '#9aa3b5'); Audio8.play('reloaded'); } }
     else if (this.squadCd > 0) { this.squadCd -= dt; if (this.squadCd <= 0) { this.squadCd = 0; this.game.floatText(this.x, this.y - 18, 'SQUAD READY', '#8bd35a'); Audio8.play('xp'); } }

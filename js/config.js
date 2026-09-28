@@ -174,7 +174,7 @@ const CHARACTERS = {
   medic:  { name: 'Medic',    tag: 'Self-healing',   hp: 100, speed: 1.0,  damage: 0.85, firerate: 1.0, reload: 0.9,  regen: 1.5,
             desc: 'Regenerates health over time, and health packs heal double. MED FIELD: a healing aura for 20 s.',
             pal: { B: '#e8e6dc', b: '#b8b6ae', D: '#7a3a1a', J: '#3d4257' },
-            field: { name: 'MED FIELD', duration: 20, cooldown: 45, radius: 64, heal: 12 } },
+            field: { name: 'MED FIELD', duration: 20, cooldown: 45, radius: 64, heal: 12, sound: 'assets/audio/medic_heal.mp3' } },
   drone:  { name: 'Drone',    tag: 'Transforms',     hp: 90,  speed: 1.05, damage: 0.9,  firerate: 1.0, reload: 1.0, regen: 0, sprite: 'drone',
             desc: 'Looks harmless. TRANSFORM: for 35 s he becomes a hulking brute with a flesh cannon who smashes and leaps onto the horde.',
             pal: { D: '#1a1a1a', B: '#3f9a3c', b: '#2a6b28', J: '#2f3f6b', Y: '#f0c419', O: '#ee8b2b', W: '#f4f2ea' },
