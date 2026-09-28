@@ -345,7 +345,8 @@ class Game {
   dropLoot(z) {
     const lucky = 1; const p = this.player;
     const noAmmo = Object.values(p.weapons).every(w => w.reserve <= 0 && w.mag <= 0);
-    if (Math.random() < z.cfg.coin * lucky) this.dropAt('coin', z.x, z.y);
+    if (z.flushed) { const n = (p.char.flush && p.char.flush.coins) || 3; for (let i = 0; i < n; i++) this.dropAt('coin', z.x, z.y); }   // down the toilet, and the coins come back up
+    else if (Math.random() < z.cfg.coin * lucky) this.dropAt('coin', z.x, z.y);
     if (Math.random() < 0.22 * lucky) this.dropAt('xp', z.x, z.y);
     if (Math.random() < (noAmmo ? 0.5 : 0.09) * lucky) this.dropAt('ammo', z.x, z.y);
     if (Math.random() < (p.hp < p.maxHp * 0.4 ? 0.14 : 0.045) * lucky) this.dropAt('health', z.x, z.y);
