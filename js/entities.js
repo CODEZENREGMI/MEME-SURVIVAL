@@ -592,7 +592,7 @@ class Player {
     if (this.moreCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `MORE SKIBIDI IN ${Math.ceil(this.moreCd)}s`, '#9aa3b5'); return false; }
     this.moreT = M.duration;
     for (let i = 0; i < M.count; i++) { const a = i / M.count * TAU + 0.3, pos = g.map.resolve(this.x + Math.cos(a) * 46, this.y + Math.sin(a) * 34, 10); g.clones.push(new BigSkibidi(g, this, pos.x, pos.y, i)); }
-    Audio8.tone(90, 0.8, 'sawtooth', 0.12, 60); Audio8.noise(0.8, 0.2, 500); g.shake(6); g.lights.push({ x: this.x, y: this.y, r: 160, life: 0.4, max: 0.4 });
+    if (M.sound) Audio8.playClip(M.sound, 1); else { Audio8.tone(90, 0.8, 'sawtooth', 0.12, 60); Audio8.noise(0.8, 0.2, 500); } g.shake(6);   // the giants arrive g.lights.push({ x: this.x, y: this.y, r: 160, life: 0.4, max: 0.4 });
     g.showAbilityBanner('MORE SKIBIDI', `${M.count} giant Skibidis · ${M.duration}s · they eat zombies whole`);
     return true;
   }
