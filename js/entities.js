@@ -577,7 +577,7 @@ class Player {
     if (this.flushT > 0) return false;
     if (this.flushCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `FLUSH IN ${Math.ceil(this.flushCd)}s`, '#9aa3b5'); return false; }
     this.flushT = F.duration; this.flushSpin = 0;
-    if (F.sound) Audio8.playClip(F.sound, 1); else { Audio8.noise(1.2, 0.22, 700); Audio8.noise(0.6, 0.14, 2600); Audio8.tone(220, 0.9, 'sine', 0.08, -140); }   // the flush
+    if (F.sound) { Audio8.stopHandle(this.flushLoop); this.flushLoop = Audio8.playClip(F.sound, 1, { loop: true }); } else { Audio8.noise(1.2, 0.22, 700); Audio8.noise(0.6, 0.14, 2600); Audio8.tone(220, 0.9, 'sine', 0.08, -140); }   // the flush
     g.shake(4); g.lights.push({ x: this.x, y: this.y, r: 150, life: 0.4, max: 0.4 });
     for (let i = 0; i < 26; i++) { const a = i / 26 * TAU; g.particles.push(new Particle(this.x + Math.cos(a) * 20, this.y + Math.sin(a) * 12, -Math.sin(a) * 90, Math.cos(a) * 55 - 10, 0.5, i % 2 ? '#bfe6ef' : '#e6f3ff', 2, 'dot')); }
     g.showAbilityBanner('FLUSH', `${F.duration}s · everything near him goes down the toilet`);
@@ -1243,7 +1243,7 @@ class Player {
       if (this.invis > 0) { this.invis -= dt; if (this.invis <= 0) { this.invis = 0; this.invisCd = st.cooldown; this.game.floatText(this.x, this.y - 18, 'VISIBLE AGAIN', '#c9cfdb'); Audio8.play('flicker'); } }
       else if (this.invisCd > 0) { this.invisCd -= dt; if (this.invisCd <= 0) { this.invisCd = 0; this.game.floatText(this.x, this.y - 18, 'VANISH READY', '#8bd35a'); Audio8.play('xp'); } } }
     if (this.char.flush) { const F = this.char.flush;
-      if (this.flushT > 0) { this.flushT -= dt; this.flushPull(dt); if (this.flushT <= 0) { this.flushT = 0; this.flushCd = F.cooldown; this.game.floatText(this.x, this.y - 18, 'TANK REFILLING', '#9cc8f2'); } }
+      if (this.flushT > 0) { this.flushT -= dt; this.flushPull(dt); if (this.flushT <= 0) { this.flushT = 0; this.flushCd = F.cooldown; Audio8.stopHandle(this.flushLoop, 0.6); this.flushLoop = null; this.game.floatText(this.x, this.y - 18, 'TANK REFILLING', '#9cc8f2'); } }
       else if (this.flushCd > 0) { this.flushCd -= dt; if (this.flushCd <= 0) { this.flushCd = 0; this.game.floatText(this.x, this.y - 18, 'FLUSH READY', '#9cc8f2'); Audio8.play('xp'); } } }
     if (this.char.forest) { const F = this.char.forest;
       if (this.forestT > 0) { this.forestT -= dt; if (this.forestT <= 0) { this.forestT = 0; this.forestCd = F.cooldown; Audio8.stopHandle(this.forestLoop, 0.6); this.forestLoop = null; this.game.floatText(this.x, this.y - 18, 'THE FOREST GOES HOME', '#9ccf72'); } }
