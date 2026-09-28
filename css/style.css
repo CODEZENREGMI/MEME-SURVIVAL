@@ -330,7 +330,22 @@ html.touch .touch-hint{display:flex;flex-wrap:wrap;justify-content:center;gap:8p
   #charCards .card.selected small{-webkit-line-clamp:unset;display:block}
   #charCards .stats{display:none}
   #charCards .card .tag{font-size:9px}
-  #weaponCards,#mapCards{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  #mapCards{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px}
+  #mapCards .card{padding:6px 6px 8px;gap:3px}
+  #mapCards .card canvas.map{max-width:170px}
+  #mapCards .card b{font-size:11px}
+  #mapCards .card .tag{font-size:8px}
+  #mapCards .card small{font-size:9px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* weapons on a phone: small cards, six or so a row — the gun, its name and type, and one stats line */
+  #weaponCards{grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:7px}
+  #weaponCards .card{padding:18px 6px 8px;gap:3px}
+  #weaponCards .card canvas.gun{width:72px;height:36px}
+  #weaponCards .card b{font-size:11px;letter-spacing:.04em}
+  #weaponCards .card .tag{font-size:8px;letter-spacing:.05em;line-height:1.3}
+  #weaponCards .card small{font-size:9px;line-height:1.35}
+  #weaponCards .card small:first-of-type,#weaponCards .stats{display:none}
+  #weaponCards .card .slot{font-size:8px;top:5px;left:7px}
+  #weaponCards .card.selected::after,#weaponCards .card.fixed::after{top:3px;right:6px;font-size:11px}
   .stat{grid-template-columns:52px 1fr;font-size:9px}
   .setup-foot{position:sticky;bottom:0;background:rgba(8,10,16,.94);padding:6px 0;z-index:2}
   .upgrade-cards{grid-template-columns:repeat(4,minmax(100px,150px));gap:8px}
