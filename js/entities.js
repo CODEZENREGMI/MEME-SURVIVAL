@@ -73,7 +73,7 @@ class Player {
     this.ability = { active: 0, cd: 0, weapon: null };   // weapon special (minigun OVERDRIVE)
     this.form = 'human'; this.morphT = 0; this.formTime = 0; this.formCd = 0; this.jump = null; this.height = 0; this.leapCd = 0; this.smashCd = 0; this.swipe = 0; this.swipeAngle = 0;
     this.beastAmmo = BEAST_GUN.mag; this.beastKills = 0; this.beastMuzzle = 0;
-    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null; this.teleCd = 0; this.starT = 0; this.starCd = 0; this.forestT = 0; this.forestCd = 0; this.flushT = 0; this.flushCd = 0; this.moreT = 0; this.moreCd = 0; this.ropeCd = 0; this.roping = null;
+    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null; this.teleCd = 0; this.starT = 0; this.starCd = 0; this.forestT = 0; this.forestCd = 0; this.flushT = 0; this.flushCd = 0; this.moreT = 0; this.moreCd = 0; this.camT = 0; this.camCd = 0; this.ropeCd = 0; this.roping = null;
     this.squadTime = 0; this.squadCd = 0;
     this.fieldTime = 0; this.fieldCd = 0;
     this.car = null; this.carCd = 0;
@@ -552,12 +552,22 @@ class Player {
     g.showAbilityBanner('GOING VIRAL', `${vr.duration}s · everyone stops to record · they take double damage`);
     return true;
   }
+  /* ---- Videoman: CAMERA — his clip plays, and every zombie in the circle stops to film him ---- */
+  useCamera() {
+    const cm = this.char.camera, g = this.game; if (!cm) return false;
+    if (this.camT > 0) return false;
+    if (this.camCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `CAMERA IN ${Math.ceil(this.camCd)}s`, '#9aa3b5'); return false; }
+    this.camT = cm.duration; if (cm.track) Audio8.playTrack(cm.track, cm.duration, { loud: true, once: true });
+    Audio8.play('click'); g.whiteFlash = 0.2; g.shake(2); g.lights.push({ x: this.x, y: this.y, r: 150, life: 0.3, max: 0.3 });
+    g.showAbilityBanner('CAMERA', 'Tu video kahe bana raha hai bhai? · everyone in the circle films him · double damage');
+    return true;
+  }
   /* ---- Videoman: LAVA STONES — while his clip plays, LMB hurls exploding lava rocks at the cursor ---- */
   useLava() {
     const lv = this.char.lava, g = this.game; if (!lv) return false;
     if (this.lavaT > 0) return false;
     if (this.lavaCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `LAVA IN ${Math.ceil(this.lavaCd)}s`, '#9aa3b5'); return false; }
-    this.lavaT = lv.duration; this.reloading = false; Audio8.playTrack(lv.track, lv.duration); Audio8.play('levelup'); g.shake(3); g.lights.push({ x: this.x, y: this.y, r: 140, life: 0.4, max: 0.4 });
+    this.lavaT = lv.duration; this.reloading = false; if (lv.track) Audio8.playTrack(lv.track, lv.duration); Audio8.play('levelup'); g.shake(3); g.lights.push({ x: this.x, y: this.y, r: 140, life: 0.4, max: 0.4 });
     for (let i = 0; i < 20; i++) { const a = i / 20 * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 70, Math.sin(a) * 70 - 30, 0.5, i % 2 ? '#ff7a1a' : '#ffd080', 3, 'fire')); }
     g.showAbilityBanner('LAVA STONES', `Tu video kahe bana raha hai bhai? · ${Math.round(lv.duration)}s · LMB throws lava at the cursor`);
     return true;
@@ -981,6 +991,8 @@ class Player {
     return true;
   }
   charAbility2() {
+    const cm = this.char.camera;
+    if (cm) { if (this.camT > 0) return { name: cm.name, state: 'active', frac: this.camT / cm.duration, sub: `${Math.ceil(this.camT)}s · REC` }; if (this.camCd > 0) return { name: cm.name, state: 'cd', frac: 1 - this.camCd / cm.cooldown, sub: `RECHARGING ${Math.ceil(this.camCd)}s` }; return { name: cm.name, state: 'ready', frac: 1, sub: '[E] ROLL CAMERA' }; }
     const mo = this.char.more;
     if (mo) { if (this.moreT > 0) return { name: mo.name, state: 'active', frac: this.moreT / mo.duration, sub: `${Math.ceil(this.moreT)}s · NOM NOM` }; if (this.moreCd > 0) return { name: mo.name, state: 'cd', frac: 1 - this.moreCd / mo.cooldown, sub: `RECHARGING ${Math.ceil(this.moreCd)}s` }; return { name: mo.name, state: 'ready', frac: 1, sub: '[E] SUMMON THE GIANTS' }; }
     const rp = this.char.rope;
@@ -1243,9 +1255,9 @@ class Player {
     // aim first so animations face the cursor
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x); this.flip = Math.cos(this.angle) < 0;
     if (input.keys[' ']) { input.keys[' '] = false; this.useCharAbility(); }
-    if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else if (this.char.wife) this.useWife(); else if (this.char.mg) this.useMachineGun(); else if (this.char.tele) this.useTeleport(); else if (this.char.rope) this.useRope(); else if (this.char.more) this.useMoreSkibidi(); else this.useAbility(); } // Eggreck: E = MY WIFE, Doge: E = MACHINE GUN, Runner: E = TELEPORT (their weapon ability moves to F / Q)
+    if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else if (this.char.wife) this.useWife(); else if (this.char.mg) this.useMachineGun(); else if (this.char.tele) this.useTeleport(); else if (this.char.rope) this.useRope(); else if (this.char.more) this.useMoreSkibidi(); else if (this.char.camera) this.useCamera(); else this.useAbility(); } // Eggreck: E = MY WIFE, Doge: E = MACHINE GUN, Runner: E = TELEPORT (their weapon ability moves to F / Q)
     if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); else if (this.char.wife) this.useAbility(); }
-    if (input.keys.q) { input.keys.q = false; if (this.char.mg || this.char.tele || this.char.rope || this.char.more) this.useAbility(); }
+    if (input.keys.q) { input.keys.q = false; if (this.char.mg || this.char.tele || this.char.rope || this.char.more || this.char.camera) this.useAbility(); }
     if (input.keys.r && this.venom) { input.keys.r = false; this.useCapture(); }
     if (input.keys.r && this.frog) { input.keys.r = false; this.useFrogArmy(); } // R = FROG ARMY as the frog (no guns to reload) // R = CAPTURE in venom form (no guns to reload)
     if (input.keys.t) { input.keys.t = false; if (this.char.symbiote) this.toggleSymbiote(); }
@@ -1257,6 +1269,16 @@ class Player {
     if (this.char.stealth) { const st = this.char.stealth;
       if (this.invis > 0) { this.invis -= dt; if (this.invis <= 0) { this.invis = 0; this.invisCd = st.cooldown; this.game.floatText(this.x, this.y - 18, 'VISIBLE AGAIN', '#c9cfdb'); Audio8.play('flicker'); } }
       else if (this.invisCd > 0) { this.invisCd -= dt; if (this.invisCd <= 0) { this.invisCd = 0; this.game.floatText(this.x, this.y - 18, 'VANISH READY', '#8bd35a'); Audio8.play('xp'); } } }
+    if (this.char.camera) { const cm = this.char.camera, g = this.game;
+      if (this.camT > 0) { this.camT -= dt;
+        for (const z of g.zombies) {   // inside the circle: it stops and films him — ordinary zombies for as long as they stay in, bosses in bursts
+          if (z.dead || z.captured > 0 || z.heldBy || dist(z.x, z.y, this.x, this.y) > cm.radius + z.r) continue;
+          if (z.cfg.boss) { if (z.web > 0 || z.webImmune > 0) continue; z.web = cm.bossFilm; }
+          else { if (!(z.web > 0)) g.floatText(z.x, z.y - 12 * z.scale, 'REC', '#ff5a4a'); z.web = Math.max(z.web, 0.25); z.webImmune = 0; }
+          z.filming = true; z.kx = z.ky = 0;
+        }
+        if (this.camT <= 0) { this.camT = 0; this.camCd = cm.cooldown; if (cm.track) Audio8.stopTrack(); g.floatText(this.x, this.y - 18, 'CUT!', '#c9cfdb'); Audio8.play('reloaded'); } }
+      else if (this.camCd > 0) { this.camCd -= dt; if (this.camCd <= 0) { this.camCd = 0; g.floatText(this.x, this.y - 18, 'CAMERA READY', '#ff5a4a'); Audio8.play('xp'); } } }
     if (this.char.more) { const M = this.char.more;
       if (this.moreT > 0) { this.moreT -= dt; if (this.moreT <= 0) { this.moreT = 0; this.moreCd = M.cooldown; this.game.floatText(this.x, this.y - 18, 'THE GIANTS SINK AWAY', '#9cc8f2'); } }
       else if (this.moreCd > 0) { this.moreCd -= dt; if (this.moreCd <= 0) { this.moreCd = 0; this.game.floatText(this.x, this.y - 18, 'MORE SKIBIDI READY', '#9cc8f2'); Audio8.play('xp'); } } }
@@ -1270,7 +1292,7 @@ class Player {
       if (this.starT > 0) { this.starT -= dt; if (this.starT <= 0) { this.starT = 0; this.starCd = ns.cooldown; this.game.floatText(this.x, this.y - 18, 'OUT OF STARS', '#c9cfdb'); Audio8.play('reloaded'); } }
       else if (this.starCd > 0) { this.starCd -= dt; if (this.starCd <= 0) { this.starCd = 0; this.game.floatText(this.x, this.y - 18, 'STARS READY', '#c9d1dc'); Audio8.play('xp'); } } }
     if (this.char.lava) { const lv = this.char.lava;
-      if (this.lavaT > 0) { this.lavaT -= dt; if (this.lavaT <= 0) { this.lavaT = 0; this.lavaCd = lv.cooldown; Audio8.stopTrack(); this.game.floatText(this.x, this.y - 18, 'VIDEO KHATAM', '#c9cfdb'); Audio8.play('reloaded'); } }
+      if (this.lavaT > 0) { this.lavaT -= dt; if (this.lavaT <= 0) { this.lavaT = 0; this.lavaCd = lv.cooldown; if (lv.track) Audio8.stopTrack(); this.game.floatText(this.x, this.y - 18, 'VIDEO KHATAM', '#c9cfdb'); Audio8.play('reloaded'); } }
       else if (this.lavaCd > 0) { this.lavaCd -= dt; if (this.lavaCd <= 0) { this.lavaCd = 0; this.game.floatText(this.x, this.y - 18, 'LAVA READY', '#8bd35a'); Audio8.play('xp'); } } }
     if (this.char.wife) { const wf = this.char.wife; this.shieldHit -= dt;
       if (this.wifeT > 0) { this.wifeT -= dt; const W = this.wifePos, tx = this.x - (this.flip ? -1 : 1) * 16, ty = this.y + 2; W.x += (tx - W.x) * Math.min(1, dt * 6); W.y += (ty - W.y) * Math.min(1, dt * 6);
@@ -1426,6 +1448,14 @@ class Player {
     if (this.demonState !== 'human') { this.drawDemon(ctx); return; }
     if (this.giant) { this.drawGiant(ctx); return; }
     const bob = this.moving ? Math.sin(this.walk) * 1.2 : 0;
+    if (this.camT > 0) { // CAMERA: a big viewfinder circle, corner brackets, and a blinking REC over his head
+      const cm = this.char.camera, tt = performance.now() / 1000, R = cm.radius, fade = Math.min(1, this.camT / 1.2, (cm.duration - this.camT) * 4);
+      const gd = ctx.createRadialGradient(this.x, this.y, 8, this.x, this.y, R); gd.addColorStop(0, `rgba(255,70,60,${0.03 * fade})`); gd.addColorStop(0.85, `rgba(255,70,60,${0.1 * fade})`); gd.addColorStop(1, 'rgba(255,70,60,0)'); ctx.fillStyle = gd; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.fill();
+      ctx.strokeStyle = `rgba(255,110,100,${0.7 * fade})`; ctx.lineWidth = 1.5; ctx.setLineDash([2, 6]); ctx.lineDashOffset = -tt * 20; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = `rgba(255,255,255,${0.75 * fade})`; ctx.lineWidth = 2; const b = R * 0.62, L = 10;   // viewfinder corners
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sy]) => { const cx = this.x + sx * b, cy = this.y + sy * b * 0.8; ctx.beginPath(); ctx.moveTo(cx, cy - sy * L); ctx.lineTo(cx, cy); ctx.lineTo(cx - sx * L, cy); ctx.stroke(); });
+      if (Math.sin(tt * 6) > -0.2) { ctx.fillStyle = `rgba(255,50,40,${fade})`; ctx.beginPath(); ctx.arc(this.x - 9, this.y - 26, 2.5, 0, TAU); ctx.fill(); ctx.font = '6px "Press Start 2P", monospace'; ctx.textAlign = 'left'; ctx.fillStyle = `rgba(255,255,255,${fade})`; ctx.fillText('REC', this.x - 5, this.y - 29); }
+    }
     if (this.viralT > 0) { // GOING VIRAL: a cyan ring of attention, with camera flashes popping around the edge
       const vr = this.char.viral, tt = performance.now() / 1000, R = vr.radius + Math.sin(tt * 3) * 3, fade = Math.min(1, this.viralT / 1.5);
       const gd = ctx.createRadialGradient(this.x, this.y, 6, this.x, this.y, R); gd.addColorStop(0, `rgba(120,230,255,${0.05 * fade})`); gd.addColorStop(0.8, `rgba(120,230,255,${0.12 * fade})`); gd.addColorStop(1, 'rgba(120,230,255,0)'); ctx.fillStyle = gd; ctx.beginPath(); ctx.arc(this.x, this.y, R, 0, TAU); ctx.fill();
@@ -1873,7 +1903,7 @@ class Zombie {
     if (this.web > 0) { // stuck in Samay's web: can't move, shoot or bite
       this.web -= dt; this.hit -= dt; this.attackCd = Math.max(this.attackCd, 0.5); this.flip = player.x < this.x; this.walk += dt * 2;
       if (this.burn > 0) { this.burn -= dt; this.burnTick += dt; this.burnFx(dt); if (this.burnTick > 0.25) { this.burnTick = 0; this.takeDamage(2.5 + this.maxHp * 0.01, 0, undefined, 0, true); } }
-      if (this.web <= 0) { this.web = 0; this.tiedByRope = false; this.webImmune = this.game.player.char.tapri ? this.game.player.char.tapri.immune : 1.5; }
+      if (this.web <= 0) { this.web = 0; this.tiedByRope = false; this.filming = false; this.webImmune = this.game.player.char.tapri ? this.game.player.char.tapri.immune : 1.5; }
       return;
     }
     const dx = player.x - this.x, dy = player.y - this.y, d = Math.hypot(dx, dy) || 1;
@@ -2205,7 +2235,16 @@ class Zombie {
       for (let i = 0; i < 3; i++) { const dx = Math.sin(tt * 3 + i * 2.1) * 5 * s, dy = ((tt * 22 + i * 7) % 14) - 10; ctx.fillStyle = `rgba(244,242,234,${0.9 - Math.abs(dy) / 16})`; ctx.fillRect(Math.round(this.x + dx), Math.round(this.y - 8 * s + dy), 2, 3); }
     }
     if (this.charm > 0) { const tt = this.charmT || 0; ctx.font = '7px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.fillStyle = `rgba(255,120,190,${0.6 + Math.sin(tt * 8) * 0.3})`; ctx.fillText(tt % 1 < 0.5 ? '♪' : '♫', this.x + Math.sin(tt * 5) * 3, this.y - 12 * s - 6 + Math.sin(tt * 6) * 2); ctx.textAlign = 'left'; }
-    if (this.web > 0 && this.game.player.char.viral) { // held by Kiya's crowd: it stopped to film her
+    if (this.web > 0 && this.game.player.char.camera && this.filming) { // Videoman's circle: it holds up a camcorder and films him
+      const tt = this.game.time, P = this.game.player, dir = P.x >= this.x ? 1 : -1, cx = this.x + dir * 5 * s, cy = this.y - 9 * s;
+      ctx.fillStyle = '#16161c'; ctx.fillRect(Math.round(cx - 4), Math.round(cy - 3), 8, 6);                        // body
+      ctx.fillStyle = '#2c2c36'; ctx.fillRect(Math.round(cx - 4), Math.round(cy - 3), 8, 2);                        // top
+      ctx.fillStyle = '#3a3a48'; ctx.fillRect(Math.round(cx + dir * 4 - (dir < 0 ? 3 : 0)), Math.round(cy - 2), 3, 4);   // lens barrel toward him
+      ctx.fillStyle = `rgba(120,200,255,${0.6 + Math.sin(tt * 9 + this.x) * 0.3})`; ctx.fillRect(Math.round(cx + dir * 6 - (dir < 0 ? 1 : 0)), Math.round(cy - 1), 1, 2);   // glass glint
+      ctx.fillStyle = `rgba(150,235,255,${0.55 + Math.sin(tt * 5 + this.y) * 0.2})`; ctx.fillRect(Math.round(cx - dir * 6 - (dir > 0 ? 2 : 0)), Math.round(cy - 3), 2, 4);   // flip-out screen
+      if (Math.sin(tt * 7 + this.x) > 0) { ctx.fillStyle = '#ff2a20'; ctx.fillRect(Math.round(cx - 3), Math.round(cy - 5), 2, 2); }   // blinking REC light
+    }
+    else if (this.web > 0 && this.game.player.char.viral) { // held by Kiya's crowd: it stopped to film her
       const tt = this.game.time, px = this.x, py = this.y - 12 * s, glow = 0.5 + Math.sin(tt * 8 + this.walk) * 0.3;
       ctx.fillStyle = '#1a1a22'; ctx.fillRect(Math.round(px - 3), Math.round(py - 5), 6, 9);
       ctx.fillStyle = `rgba(150,235,255,${glow})`; ctx.fillRect(Math.round(px - 2), Math.round(py - 4), 4, 7);

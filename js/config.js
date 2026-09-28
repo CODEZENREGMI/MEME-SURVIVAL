@@ -220,9 +220,10 @@ const CHARACTERS = {
             stealth: { name: 'VANISH', duration: 20, cooldown: 20 },
             wife: { name: 'MY WIFE', duration: 20, cooldown: 20, radius: 34 } },   // E: she shows up and holds a shield over him — bites and shells bounce off
   videoman: { name: 'Videoman', tag: 'Lava · meme', hp: 100, speed: 1.0, damage: 1.0, firerate: 1.0, reload: 1.0, regen: 0, sprite: 'videoman', portrait: 'videoman_portrait',
-            desc: 'Tu video kahe bana raha hai bhai? LAVA STONES: his clip plays, and while it runs he hurls burning lava rocks that explode and set everything ablaze.',
+            desc: 'Tu video kahe bana raha hai bhai? LAVA STONES: he hurls burning lava rocks that explode and set everything ablaze. CAMERA: his clip plays and every zombie in a big circle stops to film him, taking double damage while it records.',
             pal: { K: '#14100c', H: '#2a1c12', S: '#b5733f', s: '#8f5730', M: '#1a1008', W: '#f4f2ea', B: '#3a7ad8', b: '#2a5aa8', E: '#2a1a10', L: '#d9906a' },
-            lava: { name: 'LAVA STONES', duration: 11.2, cooldown: 50, track: 'assets/audio/videoman.m4a',
+            camera: { name: 'CAMERA', duration: 11.2, cooldown: 30, radius: 165, bossFilm: 1.4, track: 'assets/audio/videoman.m4a' },   // the circle: everyone inside stops and films him (his clip now plays here)
+            lava: { name: 'LAVA STONES', duration: 11.2, cooldown: 50,
                     stone: { damage: 70, interval: 0.32, speed: 280, spread: 0.03, range: 340, pellets: 1, pierce: 0, kick: 1.2, explosive: 46, burn: 3, lava: true } } },
   kiya:    { name: 'Kiya Malida', tag: 'Crowd control · meme', hp: 105, speed: 1.05, damage: 1.0, firerate: 1.1, reload: 0.9, regen: 0, sprite: 'kiya', portrait: 'kiya_portrait',
             desc: 'Glasses, braids, and far too much attention. GOING VIRAL: every zombie around her freezes to film her for 14 s, and takes double damage while it gawks.',
