@@ -580,7 +580,8 @@ class Player {
     for (let i = 0; i < F.birds + F.frogs; i++) { const a = i / (F.birds + F.frogs) * TAU, bird = i % 2 === 0 && i / 2 < F.birds || i >= F.frogs * 2;
       const pos = g.map.resolve(this.x + Math.cos(a) * 18, this.y + Math.sin(a) * 18, 3); g.clones.push(new Critter(g, this, pos.x, pos.y, bird ? 'bird' : 'frog', i)); }
     for (let k = 0; k < 22; k++) { const a = Math.random() * TAU; g.particles.push(new Particle(this.x, this.y, Math.cos(a) * 70, Math.sin(a) * 50 - 30, 0.5, k % 3 ? '#5a8a34' : '#e4b184', 2, 'dot')); }
-    [880, 1180, 990, 1320].forEach((f, i) => Audio8.tone(f, 0.08, 'sine', 0.08, 300, i * 0.07)); Audio8.tone(160, 0.25, 'triangle', 0.1, -40, 0.1);   // chirps and a croak
+    if (F.sound) { Audio8.stopHandle(this.forestLoop); this.forestLoop = Audio8.playClip(F.sound, 1, { loop: true }); }   // his song, for as long as the forest is out
+    else { [880, 1180, 990, 1320].forEach((f, i) => Audio8.tone(f, 0.08, 'sine', 0.08, 300, i * 0.07)); Audio8.tone(160, 0.25, 'triangle', 0.1, -40, 0.1); }   // chirps and a croak
     g.shake(2); g.showAbilityBanner('FOREST FRIENDS', `${F.birds} birds · ${F.frogs} frogs · ${F.duration}s · 1 damage a peck`);
     return true;
   }
@@ -1213,7 +1214,7 @@ class Player {
       if (this.invis > 0) { this.invis -= dt; if (this.invis <= 0) { this.invis = 0; this.invisCd = st.cooldown; this.game.floatText(this.x, this.y - 18, 'VISIBLE AGAIN', '#c9cfdb'); Audio8.play('flicker'); } }
       else if (this.invisCd > 0) { this.invisCd -= dt; if (this.invisCd <= 0) { this.invisCd = 0; this.game.floatText(this.x, this.y - 18, 'VANISH READY', '#8bd35a'); Audio8.play('xp'); } } }
     if (this.char.forest) { const F = this.char.forest;
-      if (this.forestT > 0) { this.forestT -= dt; if (this.forestT <= 0) { this.forestT = 0; this.forestCd = F.cooldown; this.game.floatText(this.x, this.y - 18, 'THE FOREST GOES HOME', '#9ccf72'); } }
+      if (this.forestT > 0) { this.forestT -= dt; if (this.forestT <= 0) { this.forestT = 0; this.forestCd = F.cooldown; Audio8.stopHandle(this.forestLoop, 0.6); this.forestLoop = null; this.game.floatText(this.x, this.y - 18, 'THE FOREST GOES HOME', '#9ccf72'); } }
       else if (this.forestCd > 0) { this.forestCd -= dt; if (this.forestCd <= 0) { this.forestCd = 0; this.game.floatText(this.x, this.y - 18, 'FRIENDS READY', '#9ccf72'); Audio8.play('xp'); } } }
     if (this.char.stars) { const ns = this.char.stars;
       if (this.starT > 0) { this.starT -= dt; if (this.starT <= 0) { this.starT = 0; this.starCd = ns.cooldown; this.game.floatText(this.x, this.y - 18, 'OUT OF STARS', '#c9cfdb'); Audio8.play('reloaded'); } }
