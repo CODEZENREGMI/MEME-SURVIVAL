@@ -583,19 +583,21 @@ class Player {
     g.showAbilityBanner('FLUSH', `${F.duration}s · everything near him goes down the toilet`);
     return true;
   }
+  /* how far the whirlpool reaches right now: it opens small and spreads out to full size over F.grow seconds */
+  flushRadius() { const F = this.char.flush, k = Math.min(1, (F.duration - this.flushT) / F.grow), e = 1 - (1 - k) * (1 - k); return F.radius * (F.start + (1 - F.start) * e); }
   /* the whirlpool at work: every zombie in reach spirals in; ordinary ones that reach the bowl are flushed */
   flushPull(dt) {
-    const F = this.char.flush, g = this.game; this.flushSpin = (this.flushSpin || 0) + dt;
+    const F = this.char.flush, g = this.game, R = this.flushRadius(); this.flushSpin = (this.flushSpin || 0) + dt;
     for (const z of g.zombies) {
       if (z.dead || z.captured > 0 || z.flushed) continue;
-      const dx = this.x - z.x, dy = this.y - z.y, d = Math.hypot(dx, dy) || 1; if (d > F.radius + z.r) continue;
-      const k = z.cfg.boss ? F.bossPull : 1, grip = 0.6 + 0.4 * (1 - d / F.radius);   // stronger near the middle
+      const dx = this.x - z.x, dy = this.y - z.y, d = Math.hypot(dx, dy) || 1; if (d > R + z.r) continue;
+      const k = z.cfg.boss ? F.bossPull : 1, grip = 0.6 + 0.4 * (1 - Math.min(1, d / R));   // stronger near the middle
       const px = (dx / d * F.pull - dy / d * F.spin) * grip * k, py = (dy / d * F.pull + dx / d * F.spin) * grip * k;   // in, and round
       const q = g.map.resolve(z.x + px * dt, z.y + py * dt, Math.min(z.r, 7)); z.x = q.x; z.y = q.y; z.kx = z.ky = 0;
       if (z.cfg.boss) { z.takeDamage(F.bossDps * this.damageMult * dt, Math.atan2(-dy, -dx), undefined, 0, true); continue; }
       if (d < 13) { z.flushed = true; z.flushTo = { x: this.x, y: this.y }; z.takeDamage(z.hp + 99999, Math.atan2(-dy, -dx), undefined, 0, true); }   // down it goes
     }
-    if (Math.random() < 0.6) { const a = Math.random() * TAU, r = F.radius * (0.3 + Math.random() * 0.7); g.particles.push(new Particle(this.x + Math.cos(a) * r, this.y + Math.sin(a) * r * 0.6, -Math.sin(a) * 60, Math.cos(a) * 36, 0.4, Math.random() < 0.5 ? '#bfe6ef' : '#e6f3ff', 1.5, 'dot')); }
+    if (Math.random() < 0.6) { const a = Math.random() * TAU, r = R * (0.3 + Math.random() * 0.7); g.particles.push(new Particle(this.x + Math.cos(a) * r, this.y + Math.sin(a) * r * 0.6, -Math.sin(a) * 60, Math.cos(a) * 36, 0.4, Math.random() < 0.5 ? '#bfe6ef' : '#e6f3ff', 1.5, 'dot')); }
     this.flushGurgle = (this.flushGurgle || 0) - dt; if (!F.sound && this.flushGurgle <= 0) { this.flushGurgle = 0.5; Audio8.noise(0.4, 0.05, 500); }
   }
   /* ---- Brr Brr Patapim: FOREST FRIENDS — birds and frogs swarm the zombies, 1 damage a peck ---- */

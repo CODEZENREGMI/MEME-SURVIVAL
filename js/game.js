@@ -408,7 +408,7 @@ class Game {
 
   /* ---- Skibidi Toilet's FLUSH: a swirling whirlpool of water around him, spiral arms turning inward ---- */
   drawWhirlpool(ctx, p) {
-    const F = p.char.flush, R = F.radius, t = this.time, fade = Math.min(1, (F.duration - p.flushT) * 4, p.flushT * 2);
+    const F = p.char.flush, R = p.flushRadius(), t = this.time, fade = Math.min(1, (F.duration - p.flushT) * 4, p.flushT * 2);   // grows from small to full over the first seconds
     ctx.save(); ctx.globalAlpha = fade;
     const gr = ctx.createRadialGradient(p.x, p.y + 2, 4, p.x, p.y + 2, R); gr.addColorStop(0, 'rgba(20,50,70,0.75)'); gr.addColorStop(0.35, 'rgba(60,130,160,0.45)'); gr.addColorStop(1, 'rgba(120,200,220,0)');
     ctx.fillStyle = gr; ctx.beginPath(); ctx.ellipse(p.x, p.y + 2, R, R * 0.62, 0, 0, TAU); ctx.fill();
