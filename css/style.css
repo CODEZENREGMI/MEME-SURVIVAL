@@ -405,3 +405,10 @@ html.portal .portal-only{display:inline-flex!important}
 .btn.pick-btn{margin:-6px 0 6px;font-family:var(--pixel);font-size:10px;letter-spacing:1px;padding:9px 16px;min-width:0;background:rgba(14,17,24,.85);border:1.5px solid #c9ced8}
 .btn.pick-btn:hover{background:rgba(40,48,64,.95)}
 @media (max-height:520px){.btn.pick-btn{margin:12px 0 0;font-size:8px;padding:7px 12px}}
+
+/* phones: the wave / boss announcement sits small in the top middle, under the boss bar, clear of the HUD on both sides */
+@media (max-height:520px){
+  .overlay.banner{padding-top:50px}
+  .banner-text{font-size:18px;line-height:1.35;max-width:min(400px,52vw);text-shadow:3px 3px 0 #000,0 0 14px rgba(211,55,43,.7)}
+  .banner-sub{font-size:10px;line-height:1.4;margin-top:6px;max-width:min(400px,52vw);padding:3px 10px;border-radius:10px;background:rgba(10,12,18,.62)}
+}
