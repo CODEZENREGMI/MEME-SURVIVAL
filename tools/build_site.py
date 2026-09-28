@@ -34,7 +34,7 @@ QA = [
   "<p>It depends on what you want. If you're after a big PC or console game, fans usually point to classics like <em>Left 4 Dead 2</em>, "
   "<em>Project Zomboid</em>, <em>7 Days to Die</em> and <em>Dying Light</em>, but they cost money, take a big download and a good machine.</p>"
   "<p>If you want a zombie survival game you can play <strong>right now, for free, with no download</strong>, Meme Survival is built for exactly that. "
-  "It loads in seconds in your browser, a run takes minutes, and 23 meme survivors with wild abilities keep it fun to replay. "
+  "It loads in seconds in your browser, a run takes minutes, and 24 meme survivors with wild abilities keep it fun to replay. "
   "The best way to decide is to try it: <a href=\"/play\">play Meme Survival now</a>.</p>"),
  ("Is Meme Survival free? Do I need to download it?", "free-no-download",
   "<p>Yes, Meme Survival is <strong>completely free</strong>. There's nothing to download or install and you don't need an account. "
@@ -49,7 +49,7 @@ QA = [
   "<li><kbd>Space</kbd>: use your survivor's special ability</li>"
   "<li><kbd>Esc</kbd>: pause, <kbd>F</kbd>: fullscreen</li></ul>"),
  ("What characters can I play in Meme Survival?", "characters",
-  "<p>There are <strong>23 survivors</strong>, each with their own stats, and most with a special ability. A few favourites:</p>"
+  "<p>There are <strong>24 survivors</strong>, each with their own stats, and most with a special ability. A few favourites:</p>"
   "<ul><li><strong>Cry XD</strong>: cries a flood. Zombies in the water can't shoot, slow down and drown.</li>"
   "<li><strong>Frogepepe</strong>: transforms into a frog and spawns an army of small frog clones.</li>"
   "<li><strong>Sharkjutta</strong>: an apex predator that eats zombies whole.</li>"
@@ -73,6 +73,9 @@ QA = [
 
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
+ ("2026-09-28", [
+   "<strong>New survivor: Skibidi Toilet.</strong> A head in a toilet, grinning at the end of the world.",
+ ]),
  ("2026-09-27", [
    "<strong>Bishnu Grinder learned ROPE.</strong> He lassos the zombie you aim at and ties it up tight for 5 seconds: it can't move, shoot or bite.",
    "<strong>New survivor: Brr Brr Patapim.</strong> The forest troll with the giant nose and bigger feet. FOREST FRIENDS sends 10 birds and 8 frogs after the horde for 15 s, and every single peck does exactly 1 damage.",
