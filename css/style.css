@@ -325,11 +325,14 @@ html.touch .touch-hint{display:flex;flex-wrap:wrap;justify-content:center;gap:8p
   .card canvas.map{max-width:200px}
   .card b{font-size:13px}
   .card small{font-size:10px}
-  #charCards{grid-template-columns:repeat(auto-fill,minmax(128px,1fr))}
-  #charCards .card small{font-size:9px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  #charCards{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:7px}
+  #charCards .card{padding:7px 6px 8px;gap:3px}
+  #charCards .card canvas{width:52px;height:52px}
+  #charCards .card b{font-size:11px;letter-spacing:.04em}
+  #charCards .card small{font-size:8.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   #charCards .card.selected small{-webkit-line-clamp:unset;display:block}
   #charCards .stats{display:none}
-  #charCards .card .tag{font-size:9px}
+  #charCards .card .tag{font-size:8px;letter-spacing:.05em}
   #mapCards{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px}
   #mapCards .card{padding:6px 6px 8px;gap:3px}
   #mapCards .card canvas.map{max-width:170px}
