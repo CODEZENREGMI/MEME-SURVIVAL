@@ -73,7 +73,7 @@ class Player {
     this.ability = { active: 0, cd: 0, weapon: null };   // weapon special (minigun OVERDRIVE)
     this.form = 'human'; this.morphT = 0; this.formTime = 0; this.formCd = 0; this.jump = null; this.height = 0; this.leapCd = 0; this.smashCd = 0; this.swipe = 0; this.swipeAngle = 0;
     this.beastAmmo = BEAST_GUN.mag; this.beastKills = 0; this.beastMuzzle = 0;
-    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null; this.teleCd = 0; this.starT = 0; this.starCd = 0; this.forestT = 0; this.forestCd = 0; this.flushT = 0; this.flushCd = 0; this.ropeCd = 0; this.roping = null;
+    this.rush = 0; this.rushCd = 0; this.trail = []; this.rushLoop = null; this.teleCd = 0; this.starT = 0; this.starCd = 0; this.forestT = 0; this.forestCd = 0; this.flushT = 0; this.flushCd = 0; this.moreT = 0; this.moreCd = 0; this.ropeCd = 0; this.roping = null;
     this.squadTime = 0; this.squadCd = 0;
     this.fieldTime = 0; this.fieldCd = 0;
     this.car = null; this.carCd = 0;
@@ -585,11 +585,22 @@ class Player {
   }
   /* how far the whirlpool reaches right now: it opens small and spreads out to full size over F.grow seconds */
   flushRadius() { const F = this.char.flush, k = Math.min(1, (F.duration - this.flushT) / F.grow), e = 1 - (1 - k) * (1 - k); return F.radius * (F.start + (1 - F.start) * e); }
+  /* ---- Skibidi Toilet: MORE SKIBIDI — five giant clones rise up and eat the horde, one zombie at a time ---- */
+  useMoreSkibidi() {
+    const M = this.char.more, g = this.game; if (!M) return false;
+    if (this.moreT > 0) return false;
+    if (this.moreCd > 0) { Audio8.play('empty'); g.floatText(this.x, this.y - 16, `MORE SKIBIDI IN ${Math.ceil(this.moreCd)}s`, '#9aa3b5'); return false; }
+    this.moreT = M.duration;
+    for (let i = 0; i < M.count; i++) { const a = i / M.count * TAU + 0.3, pos = g.map.resolve(this.x + Math.cos(a) * 46, this.y + Math.sin(a) * 34, 10); g.clones.push(new BigSkibidi(g, this, pos.x, pos.y, i)); }
+    Audio8.tone(90, 0.8, 'sawtooth', 0.12, 60); Audio8.noise(0.8, 0.2, 500); g.shake(6); g.lights.push({ x: this.x, y: this.y, r: 160, life: 0.4, max: 0.4 });
+    g.showAbilityBanner('MORE SKIBIDI', `${M.count} giant Skibidis · ${M.duration}s · they eat zombies whole`);
+    return true;
+  }
   /* the whirlpool at work: every zombie in reach spirals in; ordinary ones that reach the bowl are flushed */
   flushPull(dt) {
     const F = this.char.flush, g = this.game, R = this.flushRadius(); this.flushSpin = (this.flushSpin || 0) + dt;
     for (const z of g.zombies) {
-      if (z.dead || z.captured > 0 || z.flushed) continue;
+      if (z.dead || z.captured > 0 || z.flushed || z.heldBy) continue;   // one being eaten stays with its giant
       const dx = this.x - z.x, dy = this.y - z.y, d = Math.hypot(dx, dy) || 1; if (d > R + z.r) continue;
       const k = z.cfg.boss ? F.bossPull : 1, grip = 0.6 + 0.4 * (1 - Math.min(1, d / R));   // stronger near the middle
       const px = (dx / d * F.pull - dy / d * F.spin) * grip * k, py = (dy / d * F.pull + dx / d * F.spin) * grip * k;   // in, and round
@@ -970,6 +981,8 @@ class Player {
     return true;
   }
   charAbility2() {
+    const mo = this.char.more;
+    if (mo) { if (this.moreT > 0) return { name: mo.name, state: 'active', frac: this.moreT / mo.duration, sub: `${Math.ceil(this.moreT)}s · NOM NOM` }; if (this.moreCd > 0) return { name: mo.name, state: 'cd', frac: 1 - this.moreCd / mo.cooldown, sub: `RECHARGING ${Math.ceil(this.moreCd)}s` }; return { name: mo.name, state: 'ready', frac: 1, sub: '[E] SUMMON THE GIANTS' }; }
     const rp = this.char.rope;
     if (rp) { if (this.roping) return { name: rp.name, state: 'busy', frac: 1, sub: 'THROWING' }; if (this.ropeCd > 0) return { name: rp.name, state: 'cd', frac: 1 - this.ropeCd / rp.cooldown, sub: `RECHARGING ${Math.ceil(this.ropeCd)}s` }; return { name: rp.name, state: 'ready', frac: 1, sub: '[E] AIM AT A ZOMBIE' }; }
     const tp = this.char.tele;
@@ -1230,9 +1243,9 @@ class Player {
     // aim first so animations face the cursor
     this.angle = Math.atan2(input.worldY - this.y, input.worldX - this.x); this.flip = Math.cos(this.angle) < 0;
     if (input.keys[' ']) { input.keys[' '] = false; this.useCharAbility(); }
-    if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else if (this.char.wife) this.useWife(); else if (this.char.mg) this.useMachineGun(); else if (this.char.tele) this.useTeleport(); else if (this.char.rope) this.useRope(); else this.useAbility(); } // Eggreck: E = MY WIFE, Doge: E = MACHINE GUN, Runner: E = TELEPORT (their weapon ability moves to F / Q)
+    if (input.keys.e) { input.keys.e = false; if (this.beast) this.beastLeap(); else if (this.char.wife) this.useWife(); else if (this.char.mg) this.useMachineGun(); else if (this.char.tele) this.useTeleport(); else if (this.char.rope) this.useRope(); else if (this.char.more) this.useMoreSkibidi(); else this.useAbility(); } // Eggreck: E = MY WIFE, Doge: E = MACHINE GUN, Runner: E = TELEPORT (their weapon ability moves to F / Q)
     if (input.keys.f) { input.keys.f = false; if (this.char.pull) this.usePull(); else if (this.char.wife) this.useAbility(); }
-    if (input.keys.q) { input.keys.q = false; if (this.char.mg || this.char.tele || this.char.rope) this.useAbility(); }
+    if (input.keys.q) { input.keys.q = false; if (this.char.mg || this.char.tele || this.char.rope || this.char.more) this.useAbility(); }
     if (input.keys.r && this.venom) { input.keys.r = false; this.useCapture(); }
     if (input.keys.r && this.frog) { input.keys.r = false; this.useFrogArmy(); } // R = FROG ARMY as the frog (no guns to reload) // R = CAPTURE in venom form (no guns to reload)
     if (input.keys.t) { input.keys.t = false; if (this.char.symbiote) this.toggleSymbiote(); }
@@ -1244,6 +1257,9 @@ class Player {
     if (this.char.stealth) { const st = this.char.stealth;
       if (this.invis > 0) { this.invis -= dt; if (this.invis <= 0) { this.invis = 0; this.invisCd = st.cooldown; this.game.floatText(this.x, this.y - 18, 'VISIBLE AGAIN', '#c9cfdb'); Audio8.play('flicker'); } }
       else if (this.invisCd > 0) { this.invisCd -= dt; if (this.invisCd <= 0) { this.invisCd = 0; this.game.floatText(this.x, this.y - 18, 'VANISH READY', '#8bd35a'); Audio8.play('xp'); } } }
+    if (this.char.more) { const M = this.char.more;
+      if (this.moreT > 0) { this.moreT -= dt; if (this.moreT <= 0) { this.moreT = 0; this.moreCd = M.cooldown; this.game.floatText(this.x, this.y - 18, 'THE GIANTS SINK AWAY', '#9cc8f2'); } }
+      else if (this.moreCd > 0) { this.moreCd -= dt; if (this.moreCd <= 0) { this.moreCd = 0; this.game.floatText(this.x, this.y - 18, 'MORE SKIBIDI READY', '#9cc8f2'); Audio8.play('xp'); } } }
     if (this.char.flush) { const F = this.char.flush;
       if (this.flushT > 0) { this.flushT -= dt; this.flushPull(dt); if (this.flushT <= 0) { this.flushT = 0; this.flushCd = F.cooldown; Audio8.stopHandle(this.flushLoop, 0.6); this.flushLoop = null; this.game.floatText(this.x, this.y - 18, 'TANK REFILLING', '#9cc8f2'); } }
       else if (this.flushCd > 0) { this.flushCd -= dt; if (this.flushCd <= 0) { this.flushCd = 0; this.game.floatText(this.x, this.y - 18, 'FLUSH READY', '#9cc8f2'); Audio8.play('xp'); } } }
@@ -2645,6 +2661,97 @@ class Critter {
       ctx.fillStyle = '#2f5a22'; ctx.fillRect(-4, 0, 2, 1); ctx.fillRect(2, 0, 2, 1);                // legs
     }
     ctx.restore(); ctx.globalAlpha = 1;
+  }
+}
+
+/* Skibidi's MORE SKIBIDI: a giant clone that slides up to a zombie, lifts it to its mouth, chews it down bite by bite and swallows.
+   Slow on purpose: lift → chew (the mouth slams shut chomps times, the zombie shrinks and shakes, blood flies) → gulp (its body swells) → rest. */
+class BigSkibidi {
+  constructor(game, owner, x, y, idx) {
+    this.game = game; this.owner = owner; this.x = x; this.y = y; this.idx = idx; this.dead = false; this.pest = true; this.r = 12; this.hp = 1; this.maxHp = 1;
+    this.M = owner.char.more; this.S = this.M.scale; this.phase = 'rise'; this.t = 0; this.z = null; this.flip = false; this.bulge = 0; this.wob = Math.random() * 6; this.spawnT = 0;
+  }
+  hurt() { }   // nothing hunts the giants
+  mouth() { return { x: this.x + (this.flip ? -1 : 1) * 0.5, y: this.y + 7 - 7 * this.S * this.pop() }; }   // the grin sits 9 rows down a 16-row sprite whose feet are at +7
+  pop() { return this.phase === 'rise' ? Math.min(1, this.t / 0.5) : this.phase === 'sink' ? Math.max(0, 1 - this.t / 0.5) : 1; }
+  release() { const z = this.z; if (!z) return; z.heldBy = null; z.swirled = 0; if (!z.dead) { const q = this.game.map.resolve(z.x, this.y + 4, z.r); z.x = q.x; z.y = q.y; } this.z = null; }
+  pick() {
+    const g = this.game, o = this.owner; let best = null, bd = 1e9;
+    for (const z of g.zombies) {
+      if (z.dead || z.heldBy || z.flushed || z.captured > 0) continue; if (dist(o.x, o.y, z.x, z.y) > this.M.seek) continue;
+      let d = dist(this.x, this.y, z.x, z.y); if (z.eyedBy && z.eyedBy !== this && g.time - z.eyedAt < 0.5) d += 90; if (d < bd) { bd = d; best = z; } }   // spread out over the horde
+    if (best) { best.eyedBy = this; best.eyedAt = g.time; }
+    return best;
+  }
+  vanish() { if (this.dead) return; this.release(); this.dead = true;
+    for (let k = 0; k < 14; k++) this.game.particles.push(new Particle(this.x + (Math.random() - 0.5) * 20, this.y, (Math.random() - 0.5) * 60, -30 - Math.random() * 40, 0.5, k % 2 ? '#bfe6ef' : '#e6f3ff', 2, 'dot')); }
+  update(dt) {
+    if (this.dead) return;
+    const g = this.game, M = this.M; this.t += dt; this.spawnT += dt; this.bulge = Math.max(0, this.bulge - dt * 1.6); this.wob += dt;
+    if (!(this.owner.moreT > 0) || this.owner.dead) { if (this.phase !== 'sink') { this.release(); this.phase = 'sink'; this.t = 0; } }
+    if (this.phase === 'rise') { if (this.t === dt) Audio8.noise(0.5, 0.12, 600); if (this.t >= 0.5) { this.phase = 'seek'; this.t = 0; } return; }
+    if (this.phase === 'sink') { if (this.t >= 0.5) this.vanish(); return; }
+    const z = this.z;
+    if (z && z.dead && this.phase !== 'gulp') { this.z = null; this.phase = 'rest'; this.t = 0; }   // someone else killed its meal
+    if (this.phase === 'seek') {
+      if (!this.target || this.target.dead || this.target.heldBy) this.target = this.pick();
+      const T = this.target; if (!T) return;
+      const dx = T.x - this.x, dy = T.y - this.y, d = Math.hypot(dx, dy) || 1; this.flip = dx < 0;
+      if (d > 14 + T.r) { const sp = M.speed * (0.85 + Math.sin(this.wob * 3) * 0.15); const q = g.map.resolve(this.x + dx / d * sp * dt, this.y + dy / d * sp * dt, 10); this.x = q.x; this.y = q.y; return; }   // a heavy, lurching slide
+      this.z = T; T.heldBy = this; T.swirled = 0.2; this.phase = 'lift'; this.t = 0; this.from = { x: T.x, y: T.y }; this.target = null;
+      Audio8.tone(140, 0.25, 'triangle', 0.1, 40); g.floatText(T.x, T.y - 14, T.cfg.boss ? 'TOO BIG · BITE' : 'GOT YOU', '#9cc8f2');
+      return;
+    }
+    if (z) z.swirled = 0.2;   // helpless in its grip
+    const m = this.mouth();
+    if (this.phase === 'lift') {   // up off the ground to the mouth, legs kicking
+      const k = Math.min(1, this.t / M.lift), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      if (!z.cfg.boss) { z.x = this.from.x + (m.x - this.from.x) * e + Math.sin(this.t * 30) * (1 - k) * 1.5; z.y = this.from.y + (m.y + 4 - this.from.y) * e; }
+      if (k >= 1) { this.phase = 'chew'; this.t = 0; this.chomp = 0; }
+      return;
+    }
+    if (this.phase === 'chew') {   // the mouth slams shut chomps times; it shrinks and shakes; blood flies
+      const n = M.chomps, per = M.chew / n, i = Math.floor(this.t / per);
+      if (!z.cfg.boss) { z.x = m.x + Math.sin(this.t * 40) * 1.2; z.y = m.y + 4 + Math.sin(this.t * 33) * 0.8; }
+      if (i > this.chomp) { this.chomp = i;
+        Audio8.noise(0.08, 0.14, 900); Audio8.tone(110, 0.08, 'square', 0.06, -30); g.shake(1);
+        for (let k = 0; k < 4; k++) g.particles.push(new Particle(m.x + (Math.random() - 0.5) * 8, m.y, (Math.random() - 0.5) * 70, -30 - Math.random() * 50, 0.5, k % 2 ? '#b3221a' : '#6b1410', 2, 'blood'));
+        if (Math.random() < 0.5) g.floatText(m.x + (Math.random() - 0.5) * 16, m.y - 12, 'CHOMP', '#ffffff');
+        if (z.cfg.boss) z.takeDamage(M.bossBite / n * this.owner.damageMult, 0, undefined, 0, true);   // bosses lose a mouthful at a time
+      }
+      if (this.t >= M.chew) {
+        if (z.cfg.boss) { this.release(); this.phase = 'rest'; this.t = 0; return; }   // spat back out, one bite lighter
+        this.phase = 'gulp'; this.t = 0; z.eaten = true; z.takeDamage(z.hp + 99999, 0, undefined, 0, true); this.bulge = 1;
+        Audio8.tone(70, 0.35, 'sine', 0.14, -30); Audio8.noise(0.2, 0.08, 300); g.floatText(m.x, m.y - 16, 'GULP', '#9cc8f2');
+      }
+      return;
+    }
+    if (this.phase === 'gulp') { if (this.t >= M.gulp) { this.z = null; if (z) z.heldBy = null; this.phase = 'rest'; this.t = 0; } return; }
+    if (this.phase === 'rest') { if (this.t >= M.rest) { this.phase = 'seek'; this.t = 0; } }
+  }
+  /* how the meal looks in the mouth: full size while it's lifted, shrinking bite by bite, gone at the gulp */
+  mealScale() { const M = this.M; if (this.phase === 'lift') return 1; if (this.phase === 'chew') return 1 - 0.75 * Math.min(1, this.t / M.chew); if (this.phase === 'gulp') return 0.25 * (1 - Math.min(1, this.t / M.gulp)); return 1; }
+  mouthOpen() { if (this.phase === 'lift') return Math.min(1, this.t / this.M.lift); if (this.phase === 'chew') { const per = this.M.chew / this.M.chomps; return Math.abs(Math.cos((this.t % per) / per * Math.PI)); } if (this.phase === 'gulp') return 0; return 0.15; }
+  draw(ctx) {
+    const g = this.game, S = this.S * this.pop() * (1 + this.bulge * 0.08), m = this.mouth(), z = this.z; if (S <= 0.05) return;
+    const sway = this.phase === 'seek' ? Math.sin(this.wob * 6) * 0.05 : 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(this.x, this.y + 7, 8 * S, 2.6 * S, 0, 0, TAU); ctx.fill();
+    ctx.save(); ctx.translate(this.x, this.y + 7); ctx.rotate(sway); ctx.translate(-this.x, -this.y - 7);
+    Sprites.draw(ctx, 'player_skibidi', this.x, this.y, { scale: S, flip: this.flip, ox: -8 * S, oy: 7 - 16 * S });
+    const open = this.mouthOpen(), mw = 3.6 * S, mh = 0.8 + open * 2.4 * S;
+    ctx.fillStyle = '#2a0c08'; ctx.beginPath(); ctx.ellipse(m.x, m.y, mw, mh, 0, 0, TAU); ctx.fill();   // the mouth, stretched open
+    ctx.fillStyle = '#7a1c16'; ctx.beginPath(); ctx.ellipse(m.x, m.y + mh * 0.45, mw * 0.6, mh * 0.35, 0, 0, TAU); ctx.fill();   // tongue
+    ctx.restore();
+    const eating = z && !z.dead && !z.cfg.boss;
+    if (eating) {   // the meal: turned sideways as it comes up, held in the jaws, shrinking bite by bite and twitching
+      const k = this.mealScale() * 0.85, lift = this.phase === 'lift' ? Math.min(1, this.t / this.M.lift) : 1, side = (this.flip ? -1 : 1) * 1.35 * lift;
+      ctx.save(); ctx.translate(m.x, m.y - 1); ctx.rotate(side + Math.sin(this.t * 22) * 0.12); ctx.scale(k, k); ctx.translate(-z.x, -z.y); z.draw(ctx, true); ctx.restore();
+    } else if (this.phase === 'gulp') { const k = this.mealScale(); if (k > 0.02) { ctx.fillStyle = '#6b1410'; ctx.beginPath(); ctx.arc(m.x, m.y, 3 * k * S, 0, TAU); ctx.fill(); } }
+    if (eating || this.phase === 'gulp') {   // upper and lower teeth, clamping down over it on every chomp
+      const gap = mh * 0.9, tw = Math.round(mw * 1.7), th = Math.max(2, Math.round(S * 0.9)), tx = Math.round(m.x - tw / 2);
+      ctx.fillStyle = '#fff4d0'; ctx.fillRect(tx, Math.round(m.y - gap - th / 2), tw, th); ctx.fillRect(tx, Math.round(m.y + gap - th / 2), tw, th);
+      ctx.fillStyle = 'rgba(120,90,60,0.6)'; for (let i = 1; i < 4; i++) { const xx = tx + Math.round(tw * i / 4); ctx.fillRect(xx, Math.round(m.y - gap - th / 2), 1, th); ctx.fillRect(xx, Math.round(m.y + gap - th / 2), 1, th); }   // gaps between teeth
+    }
   }
 }
 

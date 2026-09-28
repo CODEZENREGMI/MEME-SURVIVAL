@@ -320,7 +320,9 @@ class Game {
   onZombieDeath(z) {
     this.kills[z.type]++; this.score += z.cfg.score; Audio8.play('zdie'); this.player.onBeastKill();
     if (z.bk && z.bk.bona) { this.bonaGone(z); this.shake(14); this.whiteFlash = 0.4; Audio8.play('roar'); Audio8.play('explode'); this.floatText(z.x, z.y - 60, 'BONA FALLS', '#ffb060'); }
-    if (z.flushed) {   // Skibidi's whirlpool: it spins down into the toilet — no blood, and an exploder's fuse just goes out
+    if (z.eaten) {   // swallowed whole by a giant Skibidi: no body, no blood on the floor
+      this.floatText(z.x, z.y - 14, '+' + z.cfg.score, '#ffd23a');
+    } else if (z.flushed) {   // Skibidi's whirlpool: it spins down into the toilet — no blood, and an exploder's fuse just goes out
       this.flushes.push({ z, t: 0, dur: 0.5, x0: z.x, y0: z.y, tx: z.flushTo.x, ty: z.flushTo.y });
       this.floatText(z.x, z.y - 12 * z.scale, 'FLUSHED', '#9cc8f2'); if (Math.random() < 0.5) Audio8.tone(700, 0.12, 'sine', 0.06, -500);
     } else if ((z.sunk || 0) > 0.4) { // drowned: it slips under with a last gasp of bubbles — no blood, and an exploder's fuse just fizzles
@@ -763,7 +765,7 @@ class Game {
       if (key === 'f') { if (e.shiftKey || !((this.player.char.pull || this.player.char.wife) && (this.state === 'playing' || this.state === 'wavebreak'))) this.ui.toggleFullscreen(); else k.f = true; } // F = WEB PULL for Spider Mad; Shift+F always = fullscreen
       if (this.state === 'playing' || this.state === 'wavebreak') {
         if (key >= '1' && key <= '9') { const id = this.player.weaponOrder[key - 1]; if (id) this.player.switchTo(id); }
-        if (key === 'q') { if (this.player.char.mg || this.player.char.tele || this.player.char.rope) k.q = true; else this.player.cycle(1); }   // Doge / Runner: Q = weapon ability (E is their machine gun / teleport, F stays fullscreen)
+        if (key === 'q') { if (this.player.char.mg || this.player.char.tele || this.player.char.rope || this.player.char.more) k.q = true; else this.player.cycle(1); }   // Doge / Runner: Q = weapon ability (E is their machine gun / teleport, F stays fullscreen)
       }
       if (this.state === 'levelup' && key >= '1' && key <= '4') this.chooseUpgrade(Object.keys(UPGRADES)[key - 1]);
       if (['w', 'a', 's', 'd', ' ', 'e', 'g', 'f', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) e.preventDefault();
@@ -918,7 +920,7 @@ class Game {
     this.drawLures(ctx);
     this.drawStrikes(ctx, 'ground');
     this.pickups.forEach(k => inView(k) && k.draw(ctx));
-    this.zombies.forEach(z => inView(z) && z.draw(ctx));
+    this.zombies.forEach(z => inView(z) && !(z.heldBy && !z.cfg.boss) && z.draw(ctx));   // one in a giant Skibidi's mouth is drawn by the giant
     this.clones.forEach(c => inView(c) && c.draw(ctx));
     if (inGame) this.player.draw(ctx);
     this.particles.forEach(p => inView(p) && !glowP(p) && p.draw(ctx));
@@ -990,7 +992,7 @@ class Game {
   }
 
   /* the character's second ability (the panel above the first): Spider Mad's pull, Eggreck's wife, Doge's machine gun... */
-  useSecond() { const p = this.player, c = p.char; if (c.wife) p.useWife(); else if (c.mg) p.useMachineGun(); else if (c.tele) p.useTeleport(); else if (c.rope) p.useRope(); else if (c.frog) p.useFrogArmy(); else if (c.symbiote) p.useCapture(); else p.usePull(); }
+  useSecond() { const p = this.player, c = p.char; if (c.wife) p.useWife(); else if (c.mg) p.useMachineGun(); else if (c.tele) p.useTeleport(); else if (c.rope) p.useRope(); else if (c.more) p.useMoreSkibidi(); else if (c.frog) p.useFrogArmy(); else if (c.symbiote) p.useCapture(); else p.usePull(); }
   /* ---- Runner: TELEPORT — the whole map, frozen; click where to go ---- */
   openTelePick() {
     this.telePick = { t0: performance.now() }; this.input.mouseDown = false; this.input.rightDown = false;
@@ -1319,7 +1321,7 @@ class Game {
       ctx.strokeStyle = ready ? (Math.sin(this.time * 8) > 0 ? '#ffb02a' : '#ffe08a') : active ? '#ff8a2a' : 'rgba(255,255,255,0.25)'; ctx.strokeRect(ax + 0.5, ay + 0.5, aw - 1, ah - 1);
       ctx.font = '6px "Press Start 2P", monospace'; ctx.fillStyle = ready ? '#ffb02a' : active ? '#fff' : '#9aa3b5';
       ctx.fillText(ab.name, ax + 6, ay + 5);
-      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife ? 'F' : p.char.mg || p.char.tele || p.char.rope ? 'Q' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
+      ctx.fillStyle = '#c9cfdb'; ctx.fillText(fit(active ? `${Math.ceil(p.ability.active)}s LEFT` : ready ? `[${p.char.wife ? 'F' : p.char.mg || p.char.tele || p.char.rope || p.char.more ? 'Q' : ab.key.toUpperCase()}] READY · CLICK` : `RECHARGING ${Math.ceil(cd)}s`, aw - 12), ax + 6, ay + 15);
       ctx.font = F;
     }
     // xp bar (bottom-centre)

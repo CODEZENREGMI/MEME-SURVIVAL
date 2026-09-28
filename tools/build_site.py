@@ -74,6 +74,7 @@ QA = [
 # ------------------------------------------------------------------ changelog, newest first (player-facing wording)
 UPDATES = [
  ("2026-09-28", [
+   "<strong>Skibidi Toilet learned MORE SKIBIDI.</strong> Five giant Skibidis rise out of the ground, pick zombies up one at a time and slowly eat them: lift, chomp chomp chomp, GULP. Bosses are too big to swallow, so they just get bitten.",
    "<strong>New survivor: Skibidi Toilet.</strong> A head in a toilet, grinning at the end of the world. FLUSH opens a whirlpool around him for 20 s and sucks every zombie nearby down the toilet; bosses are too big to go down, but they get dragged in and hurt.",
  ]),
  ("2026-09-27", [
